@@ -1,0 +1,16 @@
+# Dépendances
+node_modules/
+
+# Fichiers d'environnement (clés secrètes)
+.env
+.env.local
+.env.*.local
+
+# Builds
+.next/
+dist/
+out/
+
+# Logs & Système
+*.log
+.DS_Store
