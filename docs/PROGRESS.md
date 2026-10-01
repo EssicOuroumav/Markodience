@@ -24,7 +24,7 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 
 - [x] Étape 9 — Paliers + paiement : `lib/plans.ts` (source unique), PaymentProvider (PayDunya + mock dev), /api/checkout (montant recalculé serveur), webhook sans confiance au corps (vérification serveur-à-serveur + atomique + idempotent), retour /payment/return, cadenas + upsell, gating API + RLS restrictives (migration 4 appliquée et vérifiée : 18 cas), limite de profils, filigrane PDF selon plan. Vérifié dans le navigateur avec le mock (gratuit → paiement → Pro débloqué, annulation, faux webhooks rejetés). 47 tests. NON VÉRIFIÉ : échange réel avec PayDunya (clés sandbox manquantes).
 
-- [~] Étape 10 — audit : en-têtes de sécurité (CSP, HSTS, X-Frame-Options…) vérifiés en build production sans violation ; `npm run test:security` (23 contrôles RLS/paliers, comptes jetables auto-supprimés) ; aucun secret dans le bundle client ni dans Git. EN SUSPENS : Next 14.2.35 vulnérable (corrigé seulement en Next 16) → décision utilisateur ; déploiement Vercel → confirmation utilisateur.
+- [~] Étape 10 — audit : en-têtes de sécurité (CSP, HSTS, X-Frame-Options…) vérifiés en build production sans violation ; `npm run test:security` (23 contrôles RLS/paliers, comptes jetables auto-supprimés) ; aucun secret dans le bundle client ni dans Git. Next 14.2.35 (vulnérable) remplacé par Next 16.3.8 + React 19 (`npm audit` : 0 vulnérabilité) ; middleware → proxy.ts, cookies/params asynchrones, ESLint 9 flat config. Déploiement Vercel → confirmation utilisateur.
 
 ## Étape en cours
 - Étape 10 — décisions : mise à jour Next, déploiement Vercel, nettoyage des comptes de test.
@@ -39,6 +39,6 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 - Anthropic : modèle `claude-sonnet-5-5` (le prompt dit `claude-sonnet-5`).
 - Table `audits` ajoutée au schéma initial (absente du prompt 1).
 - Paiement derrière une interface `PaymentProvider` (CinetPay en V1).
-- Next 14.2.35 : `npm audit` signale des vulnérabilités corrigées seulement en Next 15+ — à traiter lors de l'audit final.
+- Stack : Next 16.3.8 (migré depuis 14 pour les correctifs de sécurité, décision utilisateur).
 
 - Fournisseur de paiement : PayDunya (pas CinetPay). Variables PAYDUNYA_* à remplir (clés sandbox).

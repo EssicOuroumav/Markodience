@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { callGenerate } from "@/lib/api";
@@ -169,7 +170,7 @@ export default function EditorialTab({
       <section className="card">
         <h1 className="text-[28px]">Ligne éditoriale</h1>
         <p className="mt-2 text-ink-secondary">La ligne éditoriale répartit vos piliers de contenu sur les semaines. Générez d&apos;abord vos piliers.</p>
-        <a href="/dashboard/pillars" className="btn-primary mt-6">Aller aux piliers de contenu</a>
+        <Link href="/dashboard/pillars" className="btn-primary mt-6">Aller aux piliers de contenu</Link>
       </section>
     );
   }

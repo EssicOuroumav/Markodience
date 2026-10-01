@@ -6,7 +6,7 @@ import { hasFeature, isPlanId } from "@/lib/plans";
 const body = z.object({ entry_id: z.string().uuid(), action: z.enum(["request", "validate"]) });
 
 export async function POST(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

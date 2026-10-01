@@ -15,9 +15,14 @@ type Props = {
 export default function EditableText({ value, onSave, placeholder = "Cliquez pour écrire", multiline = false, className = "", label }: Props) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
+  const [seen, setSeen] = useState(value);
+  // Resynchronise le brouillon quand la valeur change côté parent (sans effet).
+  if (seen !== value) {
+    setSeen(value);
+    setDraft(value);
+  }
   const ref = useRef<HTMLTextAreaElement | HTMLInputElement>(null);
 
-  useEffect(() => setDraft(value), [value]);
   useEffect(() => {
     if (editing) ref.current?.focus();
   }, [editing]);

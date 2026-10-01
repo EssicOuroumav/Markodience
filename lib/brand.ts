@@ -8,7 +8,7 @@ export const ACTIVE_BRAND_COOKIE = "active_brand";
 
 /** Utilisateur connecté + profils + profil actif (cookie, sinon le premier). */
 export async function getDashboardContext() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -24,7 +24,7 @@ export async function getDashboardContext() {
   const { data: sub } = await supabase.rpc("my_subscription").maybeSingle<{ plan: string; seats: number; current_period_end: string | null }>();
   const plan: PlanId = isPlanId(sub?.plan) ? sub.plan : "gratuit";
 
-  const wanted = cookies().get(ACTIVE_BRAND_COOKIE)?.value;
+  const wanted = (await cookies()).get(ACTIVE_BRAND_COOKIE)?.value;
   const active = profiles.find((p) => p.id === wanted) ?? profiles[0];
   return { supabase, user, profiles, active, plan, seats: sub?.seats ?? 1, periodEnd: sub?.current_period_end ?? null };
 }

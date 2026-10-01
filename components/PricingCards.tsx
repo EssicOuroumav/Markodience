@@ -25,7 +25,7 @@ export default function PricingCards({ currentPlan }: { currentPlan: PlanId }) {
       });
       const json = await res.json().catch(() => null);
       if (res.ok && json?.url) {
-        window.location.href = json.url;
+        window.location.assign(json.url);
         return;
       }
       setError(json?.error ?? "Le paiement n'a pas pu démarrer. Réessayez.");

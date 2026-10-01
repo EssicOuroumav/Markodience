@@ -10,7 +10,7 @@ const body = z.object({ plan: z.enum(["pro", "agence"]), seats: z.number().int()
 const fail = (status: number, error: string) => NextResponse.json({ ok: false, error }, { status });
 
 export async function POST(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return fail(401, "Connexion requise.");
 

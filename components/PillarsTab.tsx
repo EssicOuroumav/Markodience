@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { callGenerate } from "@/lib/api";
@@ -67,7 +68,7 @@ export default function PillarsTab({ brandId, initial, hasIdentity }: { brandId:
       <section className="card">
         <h1 className="text-[28px]">Piliers de contenu</h1>
         <p className="mt-2 text-ink-secondary">Les piliers s&apos;appuient sur votre identité de marque. Générez-la d&apos;abord.</p>
-        <a href="/dashboard/identity" className="btn-primary mt-6">Aller à l&apos;identité de marque</a>
+        <Link href="/dashboard/identity" className="btn-primary mt-6">Aller à l&apos;identité de marque</Link>
       </section>
     );
   }

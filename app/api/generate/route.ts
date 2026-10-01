@@ -18,7 +18,7 @@ function fail(status: number, error: string, code = "error") {
 }
 
 export async function POST(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
   }
 }
 
-type Supa = ReturnType<typeof createClient>;
+type Supa = Awaited<ReturnType<typeof createClient>>;
 
 function requiredFeature(type: string): Feature | null {
   if (type === "audit") return "audit";

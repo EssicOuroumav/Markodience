@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import { TABS } from "@/lib/tabs";
 
-export default function ComingSoonTab({ params }: { params: { tab: string } }) {
-  const tab = TABS.find((t) => t.slug === params.tab);
+export default async function ComingSoonTab({ params }: { params: Promise<{ tab: string }> }) {
+  const { tab: slug } = await params;
+  const tab = TABS.find((t) => t.slug === slug);
   if (!tab) notFound();
   return (
     <section className="card">

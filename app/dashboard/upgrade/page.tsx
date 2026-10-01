@@ -8,7 +8,8 @@ const MESSAGES: Record<string, { cls: string; text: string }> = {
   error: { cls: "bg-danger/15", text: "Nous n'avons pas pu confirmer ce paiement. Si vous avez été débité, contactez-nous avec votre reçu." },
 };
 
-export default async function UpgradePage({ searchParams }: { searchParams: { status?: string; reason?: string } }) {
+export default async function UpgradePage(props: { searchParams: Promise<{ status?: string; reason?: string }> }) {
+  const searchParams = await props.searchParams;
   const { plan, periodEnd, seats } = await getDashboardContext();
   const msg = searchParams.status ? MESSAGES[searchParams.status] : undefined;
   return (

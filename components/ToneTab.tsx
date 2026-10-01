@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { callGenerate } from "@/lib/api";
@@ -59,7 +60,7 @@ export default function ToneTab({ brandId, initial, hasIdentity }: { brandId: st
       <section className="card">
         <h1 className="text-[28px]">Tonalité &amp; voix</h1>
         <p className="mt-2 text-ink-secondary">La tonalité s&apos;appuie sur votre identité de marque. Générez-la d&apos;abord.</p>
-        <a href="/dashboard/identity" className="btn-primary mt-6">Aller à l&apos;identité de marque</a>
+        <Link href="/dashboard/identity" className="btn-primary mt-6">Aller à l&apos;identité de marque</Link>
       </section>
     );
   }

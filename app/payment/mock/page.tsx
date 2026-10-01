@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 
 // Page de paiement factice : développement uniquement.
-export default function MockCheckout({ searchParams }: { searchParams: { token?: string } }) {
+export default async function MockCheckout(props: { searchParams: Promise<{ token?: string }> }) {
+  const searchParams = await props.searchParams;
   if (process.env.PAYMENTS_MOCK !== "1" || process.env.NODE_ENV === "production") notFound();
   const token = encodeURIComponent(searchParams.token ?? "");
   return (

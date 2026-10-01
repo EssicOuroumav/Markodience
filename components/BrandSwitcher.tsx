@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { BrandProfile } from "@/types";
@@ -73,10 +74,10 @@ export default function BrandSwitcher({ profiles, activeId, canCreate }: { profi
               + Nouveau profil de marque
             </a>
           ) : (
-            <a href="/dashboard/upgrade?reason=profiles" className="block rounded-btn px-3 py-2 text-[15px] hover:bg-black/5">
+            <Link href="/dashboard/upgrade?reason=profiles" className="block rounded-btn px-3 py-2 text-[15px] hover:bg-black/5">
               <span className="text-ink-secondary">Limite de profils atteinte.</span>{" "}
               <span className="text-accent">Passer au palier supérieur</span>
-            </a>
+            </Link>
           )}
         </div>
       )}
