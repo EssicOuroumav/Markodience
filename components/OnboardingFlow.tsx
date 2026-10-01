@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { SECTORS } from "@/lib/sectors";
+import { setActiveBrandCookie } from "@/components/BrandSwitcher";
 import type { BrandStatus } from "@/types";
 
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
@@ -118,19 +119,20 @@ export default function OnboardingFlow() {
       logoUrl = supabase.storage.from("logos").getPublicUrl(path).data.publicUrl;
     }
 
-    const { error: insErr } = await supabase.from("brand_profiles").insert({
+    const { data: created, error: insErr } = await supabase.from("brand_profiles").insert({
       user_id: userId,
       name: brandName.trim(),
       sector: sector || null,
       logo_url: logoUrl,
       primary_color: color,
       status,
-    });
+    }).select("id").single();
     setLoading(false);
     if (insErr) {
       setError("Le profil n'a pas pu être créé : " + insErr.message);
       return;
     }
+    if (created) setActiveBrandCookie(created.id);
     router.push("/dashboard");
     router.refresh();
   }

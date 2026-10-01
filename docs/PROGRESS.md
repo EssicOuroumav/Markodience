@@ -9,12 +9,14 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 - [x] Étape 2 — Onboarding 2 étapes + connexion + dashboard vide. Vérifié dans le navigateur (inscription → profil → dashboard) et via l'API : trigger d'abonnement gratuit, RLS (isolation entre utilisateurs, abonnement non modifiable par l'utilisateur), storage logos par dossier utilisateur.
 - [x] Migrations 1 et 2 appliquées sur Supabase (vérifié). Confirm email désactivé, provider Email actif.
 
+- [x] Étape 3 — Dashboard (sidebar 7 onglets, sélecteur de profil glass, cookie `active_brand`), route `/api/generate` (auth + RLS + zod + persistance serveur), onglets Identité / Piliers / Tonalité avec édition inline et sauvegarde auto. Vérifié dans le navigateur en mode `AI_MOCK=1` (génération, édition, persistance après rechargement) ; sans mock, l'appel réel atteint Anthropic et renvoie un message clair « crédit épuisé » (clé valide, crédit à ajouter). 8 tests Vitest, lint, build OK.
+
 ## Étape en cours
-- Étape 3 — Dashboard (sidebar 7 onglets, sélecteur de profil), route /api/generate, onglets Identité / Piliers / Tonalité.
+- Étape 4 — Ligne éditoriale + workflow de validation (prompt 3).
 
 ## En attente côté utilisateur
 - SUPABASE_SERVICE_ROLE_KEY dans .env.local contient actuellement la clé anon (identique). À remplacer par la vraie clé service_role (nécessaire dès l'étape 9, webhook). Nettoyage des comptes de test (t1/t2/ui.test…@example.com) à faire avec cette clé.
-- ANTHROPIC_API_KEY : clé présente, crédit à ajouter (5 $ prévus le 2026-10-02).
+- ANTHROPIC_API_KEY : clé présente et valide, crédit à ajouter (5 $ prévus le 2026-10-02). Pour tester sans crédit : ajouter `AI_MOCK=1` dans .env.local (JAMAIS en production).
 - CinetPay : identifiants sandbox.
 
 ## Décisions
