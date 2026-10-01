@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -8,7 +9,8 @@ import type { BrandProfile } from "@/types";
 export const ACTIVE_BRAND_COOKIE = "active_brand";
 
 /** Utilisateur connecté + profils + profil actif (cookie, sinon le premier). */
-export async function getDashboardContext() {
+/** Mis en cache pour la durée d'une requête : le layout et la page partagent le même résultat. */
+export const getDashboardContext = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -29,4 +31,4 @@ export async function getDashboardContext() {
   const wanted = (await cookies()).get(ACTIVE_BRAND_COOKIE)?.value;
   const active = profiles.find((p) => p.id === wanted) ?? profiles[0];
   return { supabase, user, owner, profiles, active, plan, seats: sub?.seats ?? 1, periodEnd: sub?.current_period_end ?? null };
-}
+});

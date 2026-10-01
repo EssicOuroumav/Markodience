@@ -43,6 +43,10 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 
 - [x] Animations (respectent « réduire les animations ») : apparition au défilement (`Reveal`), entrée en cascade des pages et des cartes (`template.tsx`), squelettes de chargement (`loading.tsx`), orbes dérivants, titre à dégradé animé, reflet des boutons, anneaux de score qui se remplissent, illustrations vivantes, pages de connexion animées. Bloc de la marque cliquable → /dashboard, plus élégant (liseré à la couleur de la marque), sélecteur de marque avec logos. Onglet Règles : aides par section + modèles à insérer.
 
+- [x] Ajout de marques : page « Mes marques » (compteur utilisé/limite, une carte par marque, ouverture en un clic, suppression avec saisie du nom, carte « Ajouter une marque » ou « Limite atteinte »), page de création `/dashboard/brands/new` (formulaire partagé `BrandForm`), liens dans le sélecteur et la barre latérale. Vérifié (création, suppression, marque active).
+- [x] Barre latérale refondue : tuiles d'icônes, coches de progression par onglet, progression de la stratégie dans la carte de la marque, sections « Votre marque » / « Gestion », compteur de marques, pastille « Pro » sur les onglets verrouillés. `getDashboardContext` et `getBrandProgress` mis en cache par requête.
+- [~] Photos de l'accueil : emplacements prêts (`components/Photo.tsx`, `HeroVisual`, section « Pour qui ») avec visuel de remplacement ; fichiers attendus : public/photos/cm-1.jpg (hero), cm-2.jpg, cm-3.jpg, cm-4.jpg. EN ATTENTE du choix du propriétaire (ses propres photos, ou téléchargement Unsplash validé).
+
 ## Étape en cours
 - Reste : Supabase Site URL = https://markodience.vercel.app + Redirect URL https://markodience.vercel.app/** ; push de /auth/callback ; test d'inscription réelle ; crédit Anthropic (2026-10-02) puis test génération réelle ; webhook IPN PayDunya (test réel sur le site en ligne) ; plus tard : clés PayDunya production, SMTP personnalisé.
 

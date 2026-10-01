@@ -9,9 +9,9 @@ const WEEKS = [
 ];
 
 /** Maquette du produit en HTML/CSS : fenêtre de navigateur avec la ligne éditoriale et deux pastilles flottantes. */
-export default function ProductMockup() {
+export default function ProductMockup({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="relative mx-auto w-full max-w-[600px]">
+    <div className={`relative mx-auto w-full ${compact ? "max-w-[480px]" : "max-w-[600px]"}`}>
       <div aria-hidden className="absolute -inset-6 -z-10 rounded-[40px] bg-gradient-to-br from-accent/20 via-accent/5 to-transparent blur-2xl" />
       <div className="overflow-hidden rounded-[22px] border border-[var(--color-border-soft)] bg-white shadow-pop" role="img" aria-label="Aperçu de la ligne éditoriale dans Markodience">
         <div className="flex items-center gap-1.5 border-b border-[var(--color-border-soft)] bg-canvas px-4 py-3">
@@ -19,7 +19,7 @@ export default function ProductMockup() {
           <span className="mx-auto rounded-pill bg-white px-12 py-1 text-[11px] text-ink-secondary">markodience.vercel.app</span>
         </div>
         <div className="flex">
-          <div className="hidden w-14 shrink-0 flex-col items-center gap-3 border-r border-[var(--color-border-soft)] bg-white py-4 sm:flex">
+          <div className={`${compact ? "hidden" : "hidden sm:flex"} w-14 shrink-0 flex-col items-center gap-3 border-r border-[var(--color-border-soft)] bg-white py-4`}>
             {NAV.map((Icon, i) => (
               <span key={i} className={`flex h-9 w-9 items-center justify-center rounded-xl ${i === 4 ? "bg-accent-soft text-accent" : "text-ink-secondary"}`}><Icon size={17} strokeWidth={1.9} /></span>
             ))}
@@ -33,7 +33,7 @@ export default function ProductMockup() {
               <span className="rounded-pill bg-accent px-3 py-1 text-[11px] font-medium text-white">Générer</span>
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {WEEKS.map((w) => (
+              {(compact ? WEEKS.slice(0, 2) : WEEKS).map((w) => (
                 <div key={w.n} className="rounded-2xl border border-[var(--color-border-soft)] bg-white p-3.5 shadow-card">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-semibold uppercase tracking-wider text-ink-secondary">Semaine {w.n}</span>

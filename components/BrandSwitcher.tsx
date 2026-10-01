@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Layers, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import BrandLogo from "./BrandLogo";
 import { useRouter } from "next/navigation";
@@ -68,15 +68,11 @@ export default function BrandSwitcher({ profiles, activeId, canCreate }: { profi
             </button>
           ))}
           <div className="my-1 border-t border-black/5" />
+          <Link href="/dashboard/brands" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-btn px-3 py-2 text-[15px] hover:bg-black/5"><Layers size={16} className="text-ink-secondary" />Gérer mes marques</Link>
           {canCreate ? (
-            <a href="/signup" className="block rounded-btn px-3 py-2 text-[15px] text-accent hover:bg-black/5">
-              + Nouveau profil de marque
-            </a>
+            <Link href="/dashboard/brands/new" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-btn px-3 py-2 text-[15px] font-medium text-accent hover:bg-black/5"><Plus size={16} />Ajouter une marque</Link>
           ) : (
-            <Link href="/dashboard/upgrade?reason=profiles" className="block rounded-btn px-3 py-2 text-[15px] hover:bg-black/5">
-              <span className="text-ink-secondary">Limite de profils atteinte.</span>{" "}
-              <span className="text-accent">Passer au palier supérieur</span>
-            </Link>
+            <Link href="/dashboard/upgrade?reason=profiles" onClick={() => setOpen(false)} className="block rounded-btn px-3 py-2 text-[15px] hover:bg-black/5"><span className="text-ink-secondary">Limite de marques atteinte.</span> <span className="text-accent">Passer au palier supérieur</span></Link>
           )}
         </div>
       )}
