@@ -38,18 +38,19 @@ export default function PricingCards({ currentPlan }: { currentPlan: PlanId }) {
   const minSeats = PLANS.agence.minSeats ?? 2;
   return (
     <div>
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid items-stretch gap-6 md:grid-cols-3">
         {(["gratuit", "pro", "agence"] as const).map((id) => {
           const p = PLANS[id];
           const current = id === currentPlan;
           return (
-            <article key={id} className={`card flex flex-col ${current ? "ring-2 ring-accent" : ""}`}>
+            <article key={id} className={`relative flex flex-col rounded-[28px] p-7 ${id === "pro" ? "bg-night text-white shadow-pop" : "card-flat"} ${current ? "ring-2 ring-accent ring-offset-2" : ""}`}>
+              {current && <span className="absolute -top-3 right-6 rounded-pill bg-accent px-3 py-1 text-[12px] font-semibold text-white">Palier actuel</span>}
               <h2 className="text-[22px]">{p.label}</h2>
               <p className="mt-2 text-[28px] font-semibold tracking-heading">
                 {id === "gratuit" && "0 XOF"}
                 {id === "pro" && formatXof(priceFor("pro"))}
                 {id === "agence" && formatXof(priceFor("agence", seats))}
-                {id !== "gratuit" && <span className="text-[15px] font-normal text-ink-secondary"> / mois</span>}
+                {id !== "gratuit" && <span className={`text-[15px] font-normal ${id === "pro" ? "text-white/60" : "text-ink-secondary"}`}> / mois</span>}
               </p>
               {id === "agence" && (
                 <div className="mt-2 flex items-center gap-2">
@@ -65,7 +66,7 @@ export default function PricingCards({ currentPlan }: { currentPlan: PlanId }) {
                 {BULLETS[id].map((b) => (<li key={b}>{b}</li>))}
               </ul>
               {current ? (
-                <p className="mt-6 text-center text-[15px] font-medium text-accent">Votre palier actuel</p>
+                <p className={`mt-6 text-center text-[15px] font-medium ${id === "pro" ? "text-[#7cb8ff]" : "text-accent"}`}>Votre palier actuel</p>
               ) : id === "gratuit" ? null : (
                 <button type="button" className="btn-primary mt-6" disabled={busy !== null} onClick={() => choose(id)}>
                   {busy === id ? "Redirection…" : "Choisir ce palier"}

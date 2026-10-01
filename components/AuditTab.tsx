@@ -6,6 +6,8 @@ import { callGenerate } from "@/lib/api";
 import { ACCEPTED, MAX_FILES, storageName, validateFile } from "@/lib/audit";
 import AuditReport from "./AuditReport";
 import GenerateError from "./GenerateError";
+import PageHeader from "./PageHeader";
+import EmptyState from "./EmptyState";
 
 export type AuditRow = { id: string; created_at: string; report_data: unknown };
 
@@ -94,8 +96,7 @@ export default function AuditTab({ brandId, initial }: { brandId: string; initia
 
   return (
     <section>
-      <h1 className="text-[28px]">Audit</h1>
-      <p className="mt-1 text-ink-secondary">Déposez des captures ou des PDF de votre présence en ligne : l&apos;analyse tient compte de votre identité de marque.</p>
+      <PageHeader tab="audit" />
 
       <label
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
@@ -145,7 +146,7 @@ export default function AuditTab({ brandId, initial }: { brandId: string; initia
       <div className="mt-14">
         <h2 className="text-[22px]">Historique des audits</h2>
         {audits.length === 0 ? (
-          <p className="mt-3 text-ink-secondary">Aucun audit pour l&apos;instant. Lancez le premier ci-dessus.</p>
+          <div className="mt-4"><EmptyState illustration="audit" title="Aucun audit pour l’instant" text="Déposez vos captures ou PDF ci-dessus et lancez votre premier audit : le score apparaîtra ici." /></div>
         ) : (
           <ul className="mt-4 space-y-3">
             {audits.map((a) => (

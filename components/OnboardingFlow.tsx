@@ -145,7 +145,7 @@ export default function OnboardingFlow() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-[440px] flex-col justify-center px-6 pb-12 pt-24">
+    <div className="w-full">
       <p className="caption mb-2">Étape {step} sur 2</p>
 
       {step === 1 ? (
@@ -233,6 +233,6 @@ export default function OnboardingFlow() {
           </button>
         </>
       )}
-    </main>
+    </div>
   );
 }

@@ -1,5 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
+import { isAdmin } from "@/lib/admin";
 import { hasFeature, isPlanId, type Feature } from "@/lib/plans";
 import { consumeQuota, quotaMessage, refundQuota } from "@/lib/quota";
 import { createClient } from "@/lib/supabase/server";
@@ -35,14 +36,17 @@ export async function POST(request: Request) {
   if (!parsed.success) return fail(400, "Données invalides. Vérifiez les champs du formulaire.", "bad_request");
   const req = parsed.data;
 
+  const owner = isAdmin(user);
   const { data: planRaw } = await supabase.rpc("my_plan");
-  const plan = isPlanId(planRaw) ? planRaw : "gratuit";
+  const plan = owner ? "agence" : isPlanId(planRaw) ? planRaw : "gratuit";
   const feature = requiredFeature(req.type);
   if (feature && !hasFeature(plan, feature)) {
     return fail(403, "Cette fonctionnalité est réservée aux paliers payants.", "plan_required");
   }
 
   // Quota quotidien : consommé avant l'appel, rendu si la génération échoue.
+  // Le propriétaire (rôle admin) n'est soumis à aucun quota.
+  if (owner) return run(supabase, req);
   let quota;
   try {
     quota = await consumeQuota(user.id, plan);

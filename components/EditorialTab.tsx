@@ -8,6 +8,8 @@ import { nextStatus, periodRange, type EntryStatus, type PeriodMonths } from "@/
 import EditableText from "./EditableText";
 import GenerateError from "./GenerateError";
 import SaveIndicator, { type SaveState } from "./SaveIndicator";
+import PageHeader from "./PageHeader";
+import EmptyState from "./EmptyState";
 
 export type Entry = {
   id: string;
@@ -167,19 +169,18 @@ export default function EditorialTab({
 
   if (!hasPillars) {
     return (
-      <section className="card">
-        <h1 className="text-[28px]">Ligne éditoriale</h1>
-        <p className="mt-2 text-ink-secondary">La ligne éditoriale répartit vos piliers de contenu sur les semaines. Générez d&apos;abord vos piliers.</p>
-        <Link href="/dashboard/pillars" className="btn-primary mt-6">Aller aux piliers de contenu</Link>
+      <section>
+        <PageHeader tab="editorial" />
+        <EmptyState illustration="calendar" title="Il vous faut d’abord des piliers de contenu" text="La ligne éditoriale répartit vos piliers sur les semaines : générez-les pour commencer.">
+          <Link href="/dashboard/pillars" className="btn-primary">Aller aux piliers de contenu</Link>
+        </EmptyState>
       </section>
     );
   }
 
   return (
     <section>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-[28px]">Ligne éditoriale</h1>
-        <div className="flex items-center gap-3">
+      <PageHeader tab="editorial">
           <SaveIndicator state={save} />
           <div ref={menuRef} className="relative">
             <button type="button" className="btn-secondary gap-2" aria-haspopup="listbox" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
@@ -200,8 +201,7 @@ export default function EditorialTab({
               </div>
             )}
           </div>
-        </div>
-      </div>
+        </PageHeader>
 
       {lines.length > 0 && (
         <div role="tablist" aria-label="Canaux" className="mt-4 flex gap-1 overflow-x-auto border-b border-line">
@@ -242,22 +242,22 @@ export default function EditorialTab({
       )}
 
       {lines.length === 0 && !adding && (
-        <div className="card mt-6">
-          <p className="text-ink-secondary">Aucun canal pour l&apos;instant. Ajoutez le premier canal de cette marque pour générer sa ligne éditoriale.</p>
-          <button type="button" className="btn-primary mt-4" onClick={() => setAdding(true)}>+ Ajouter un canal</button>
+        <div className="mt-6">
+          <EmptyState illustration="calendar" title="Ajoutez votre premier canal" text="Facebook, Instagram, TikTok… Chaque canal a sa propre ligne éditoriale, générée à partir de vos piliers.">
+            <button type="button" className="btn-primary" onClick={() => setAdding(true)}>+ Ajouter un canal</button>
+          </EmptyState>
         </div>
       )}
 
       {error && <GenerateError message={error} onRetry={active && lineEntries.length === 0 ? generateLine : () => setError(null)} />}
 
       {active && lineEntries.length === 0 && !adding && (
-        <div className="card mt-6">
-          <p className="text-ink-secondary">
-            Aucune semaine planifiée pour {active.channel} ({active.period_start} → {active.period_end}). Vos piliers seront répartis en rotation sur la période.
-          </p>
-          <button type="button" className="btn-primary mt-4" onClick={generateLine} disabled={busy === "line"}>
-            {busy === "line" ? "Génération en cours…" : "Générer la ligne éditoriale"}
-          </button>
+        <div className="mt-6">
+          <EmptyState illustration="calendar" title={`Aucune semaine planifiée pour ${active.channel}`} text={`Période du ${active.period_start} au ${active.period_end}. Vos piliers seront répartis en rotation sur chaque semaine.`}>
+            <button type="button" className="btn-primary" onClick={generateLine} disabled={busy === "line"}>
+              {busy === "line" ? "Génération en cours…" : "Générer la ligne éditoriale"}
+            </button>
+          </EmptyState>
         </div>
       )}
 
@@ -271,9 +271,9 @@ export default function EditorialTab({
               return (
                 <li key={e.id} draggable onDragStart={() => (dragId.current = e.id)} onDragOver={(ev) => ev.preventDefault()} onDrop={() => dropOn(e.id)}
                   className={`card cursor-grab active:cursor-grabbing ${busy === e.id ? "opacity-50" : ""}`} aria-label={`Semaine ${e.week_number}`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="caption font-semibold uppercase tracking-wide">⠿ Semaine {e.week_number}</span>
-                    <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="caption whitespace-nowrap font-semibold uppercase tracking-wide">⠿ Semaine {e.week_number}</span>
+                    <div className="flex flex-wrap items-center gap-2">
                       {v === "en_attente" && <span className="rounded-pill bg-accent/10 px-2 py-0.5 text-[12px] text-accent" title={`Demandé par ${e.validation_requested_by ?? ""}`}>En attente de validation · {fmt(e.validation_requested_at)}</span>}
                       {v === "valide" && <span className="rounded-pill bg-success/20 px-2 py-0.5 text-[12px]" title={`Validé le ${fmt(e.validated_at)} par ${e.validated_by ?? ""}`}>Validé</span>}
                       <button type="button" aria-label={`Statut : ${st.label}. Cliquer pour changer`} className={`rounded-pill px-3 py-1 text-[13px] font-medium ${st.cls}`}

@@ -7,6 +7,8 @@ import { callGenerate } from "@/lib/api";
 import EditableText from "./EditableText";
 import GenerateError from "./GenerateError";
 import SaveIndicator, { type SaveState } from "./SaveIndicator";
+import PageHeader from "./PageHeader";
+import EmptyState from "./EmptyState";
 
 export type Pillar = { id: string; name: string | null; description: string | null; examples: string[] | null };
 
@@ -65,24 +67,20 @@ export default function PillarsTab({ brandId, initial, hasIdentity }: { brandId:
 
   if (!hasIdentity) {
     return (
-      <section className="card">
-        <h1 className="text-[28px]">Piliers de contenu</h1>
-        <p className="mt-2 text-ink-secondary">Les piliers s&apos;appuient sur votre identité de marque. Générez-la d&apos;abord.</p>
-        <Link href="/dashboard/identity" className="btn-primary mt-6">Aller à l&apos;identité de marque</Link>
+      <section>
+        <PageHeader tab="pillars" />
+        <EmptyState illustration="pillars" title="Commencez par votre identité de marque" text="Les piliers de contenu s’appuient sur votre positionnement : générez d’abord votre identité.">
+          <Link href="/dashboard/identity" className="btn-primary">Aller à l&apos;identité de marque</Link>
+        </EmptyState>
       </section>
     );
   }
 
   return (
     <section>
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-[28px]">Piliers de contenu</h1>
-        <SaveIndicator state={save} />
-      </div>
+      <PageHeader tab="pillars"><SaveIndicator state={save} /></PageHeader>
       {pillars.length === 0 ? (
-        <div className="card mt-6">
-          <p className="text-ink-secondary">Aucun pilier pour l&apos;instant. Générez-en 3 à 5 à partir de votre identité, ou ajoutez-les à la main.</p>
-        </div>
+        <div className="mt-6"><EmptyState illustration="pillars" title="Aucun pilier pour l’instant" text="Générez 3 à 5 piliers à partir de votre identité, ou ajoutez-les à la main avec le bouton « + »." /></div>
       ) : (
         <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {pillars.map((p) => (

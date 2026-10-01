@@ -7,6 +7,8 @@ import { callGenerate } from "@/lib/api";
 import EditableText from "./EditableText";
 import GenerateError from "./GenerateError";
 import SaveIndicator, { type SaveState } from "./SaveIndicator";
+import PageHeader from "./PageHeader";
+import EmptyState from "./EmptyState";
 
 type Lists = { do_list: string[]; dont_list: string[] };
 
@@ -57,29 +59,25 @@ export default function ToneTab({ brandId, initial, hasIdentity }: { brandId: st
 
   if (!hasIdentity) {
     return (
-      <section className="card">
-        <h1 className="text-[28px]">Tonalité &amp; voix</h1>
-        <p className="mt-2 text-ink-secondary">La tonalité s&apos;appuie sur votre identité de marque. Générez-la d&apos;abord.</p>
-        <Link href="/dashboard/identity" className="btn-primary mt-6">Aller à l&apos;identité de marque</Link>
+      <section>
+        <PageHeader tab="tone" />
+        <EmptyState illustration="chat" title="Commencez par votre identité de marque" text="La tonalité découle de votre positionnement : générez d’abord votre identité.">
+          <Link href="/dashboard/identity" className="btn-primary">Aller à l&apos;identité de marque</Link>
+        </EmptyState>
       </section>
     );
   }
 
   return (
     <section>
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-[28px]">Tonalité &amp; voix éditoriale</h1>
-        <SaveIndicator state={save} />
-      </div>
+      <PageHeader tab="tone"><SaveIndicator state={save} /></PageHeader>
       {lists ? (
         <div className="mt-6 grid gap-6 md:grid-cols-2">
           <ListColumn title="On dit / On fait" tone="do" items={lists.do_list ?? []} onChange={(v) => persist({ do_list: v })} />
           <ListColumn title="On évite / On ne fait pas" tone="dont" items={lists.dont_list ?? []} onChange={(v) => persist({ dont_list: v })} />
         </div>
       ) : (
-        <div className="card mt-6">
-          <p className="text-ink-secondary">Aucune tonalité définie. Générez-la à partir de votre identité de marque.</p>
-        </div>
+        <div className="mt-6"><EmptyState illustration="chat" title="Aucune tonalité définie" text="Générez la voix de votre marque à partir de votre identité : ce qu’on dit, et ce qu’on évite." /></div>
       )}
       {error && <GenerateError message={error} onRetry={generate} />}
       <button type="button" className="btn-primary mt-8" onClick={generate} disabled={loading}>

@@ -17,7 +17,7 @@ export default async function UpgradePage(props: { searchParams: Promise<{ statu
   const msg = searchParams.status ? MESSAGES[searchParams.status] : undefined;
   return (
     <section>
-      <h1 className="text-[28px]">Choisir mon palier</h1>
+      <h1 className="text-[32px]">Choisir mon palier</h1>
       <p className="mt-1 text-ink-secondary">
         Palier actuel : <strong>{PLANS[plan].label}</strong>
         {plan === "agence" ? ` (${seats} sièges)` : ""}

@@ -7,6 +7,8 @@ import { OBJECTIVES, OBJECTIVE_LABELS, moveItem, type LiveStep, type Objective }
 import EditableText from "./EditableText";
 import GenerateError from "./GenerateError";
 import SaveIndicator, { type SaveState } from "./SaveIndicator";
+import PageHeader from "./PageHeader";
+import EmptyState from "./EmptyState";
 
 export type Guide = { id: string; objective: Objective; structure_data: { steps?: LiveStep[] } | null };
 export type Member = { id: string; name: string; role: string | null; channel: string | null; rotation_week: number | null };
@@ -132,13 +134,12 @@ export default function LivesTab({
 
   if (!enabled) {
     return (
-      <section className="card">
-        <h1 className="text-[28px]">Guide Lives</h1>
-        <p className="mt-2 max-w-xl text-ink-secondary">
-          Préparez vos lives selon leur objectif (vente, formation, information, promotion, échange) : trame horodatée, organisation de l&apos;équipe, scripts et réponses rapides. Markodience prépare le live, il ne le diffuse jamais.
-        </p>
-        {error && <p role="alert" className="mt-3 text-danger">{error}</p>}
-        <button type="button" className="btn-primary mt-6" onClick={enable}>Activer les lives pour ce profil</button>
+      <section>
+        <PageHeader tab="lives" />
+        <EmptyState illustration="live" title="Préparez vos lives comme un pro" text="Trame horodatée, organisation de l’équipe, scripts et réponses rapides par objectif. Markodience prépare le live : il ne le diffuse jamais.">
+          {error && <p role="alert" className="w-full text-danger">{error}</p>}
+          <button type="button" className="btn-primary" onClick={enable}>Activer les lives pour ce profil</button>
+        </EmptyState>
       </section>
     );
   }
@@ -148,9 +149,7 @@ export default function LivesTab({
 
   return (
     <section>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-[28px]">Guide Lives</h1>
-        <div className="flex items-center gap-3">
+      <PageHeader tab="lives">
           <SaveIndicator state={save} />
           <div ref={menuRef} className="relative">
             <button type="button" className="btn-secondary gap-2" aria-haspopup="listbox" aria-expanded={menu} onClick={() => setMenu((v) => !v)}>
@@ -169,8 +168,7 @@ export default function LivesTab({
               </div>
             )}
           </div>
-        </div>
-      </div>
+        </PageHeader>
 
       {guides.length > 0 && (
         <div role="tablist" aria-label="Guides de live" className="mt-4 flex gap-1 overflow-x-auto border-b border-line">

@@ -16,9 +16,13 @@ const call = async (path, { method = "GET", key = A, token, body, raw } = {}) =>
 const stamp = Date.now();
 const users = [];
 async function mkUser(tag) {
-  const r = await call("/auth/v1/signup", { method: "POST", body: { email: `smoke.${tag}.${stamp}@example.com`, password: "SmokeTest-12345" } });
-  if (!r.json?.access_token) throw new Error("inscription impossible (Confirm email est-il désactivé ?)");
-  const u = { id: r.json.user.id, token: r.json.access_token }; users.push(u); return u;
+  // Comptes jetables créés avec la clé service (« Confirm email » peut rester activé), puis connexion par mot de passe.
+  const email = `smoke.${tag}.${stamp}@example.com`, password = "SmokeTest-12345";
+  const c = await call("/auth/v1/admin/users", { method: "POST", key: S, body: { email, password, email_confirm: true } });
+  if (!c.json?.id) throw new Error("création du compte jetable impossible : " + c.status);
+  const t = await call("/auth/v1/token?grant_type=password", { method: "POST", body: { email, password } });
+  if (!t.json?.access_token) throw new Error("connexion du compte jetable impossible");
+  const u = { id: c.json.id, token: t.json.access_token }; users.push(u); return u;
 }
 const rest = (u, path, opts = {}) => call(`/rest/v1/${path}`, { token: u.token, ...opts });
 const admin = (path, opts = {}) => call(path, { key: S, ...opts });
@@ -62,6 +66,11 @@ try {
   check("pro : 2e et 3e profil autorisés", (await rest(a, "brand_profiles", { method: "POST", body: { user_id: a.id, name: "A2" } })).status === 201 && (await rest(a, "brand_profiles", { method: "POST", body: { user_id: a.id, name: "A3" } })).status === 201);
   check("pro : 4e profil refusé", (await rest(a, "brand_profiles", { method: "POST", body: { user_id: a.id, name: "A4" } })).status === 403);
   check("B (gratuit) reste bloqué", (await rest(b, "operational_rules", { method: "POST", body: { brand_profile_id: aProfile, section: "x", content: "x" } })).status === 403);
+
+  // Rôle administrateur : modifiable uniquement avec la clé service
+  await call("/auth/v1/user", { method: "PUT", token: a.token, body: { app_metadata: { role: "admin" }, data: { role: "admin" } } });
+  const me = await call("/auth/v1/user", { token: a.token });
+  check("l'utilisateur ne peut pas s'attribuer le rôle admin", me.json?.app_metadata?.role !== "admin", JSON.stringify(me.json?.app_metadata));
 
   // Quota IA
   check("l'utilisateur ne peut pas écrire son quota", (await rest(a, "ai_usage", { method: "POST", body: { user_id: a.id, count: 0 } })).status === 403);

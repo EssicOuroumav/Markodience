@@ -7,6 +7,7 @@ import { CHANNELS, GOALS, type Questionnaire } from "@/lib/ai/schemas";
 import EditableText from "./EditableText";
 import GenerateError from "./GenerateError";
 import SaveIndicator, { type SaveState } from "./SaveIndicator";
+import PageHeader from "./PageHeader";
 
 type Segment = { name: string; description: string; need: string };
 type Color = { color: string; usage: string };
@@ -102,8 +103,7 @@ export default function IdentityTab({
     const set = <K extends keyof typeof q>(k: K, v: (typeof q)[K]) => setQ((s) => ({ ...s, [k]: v }));
     return (
       <section>
-        <h1 className="text-[28px]">Identité de marque</h1>
-        <p className="mt-1 text-ink-secondary">Répondez à quelques questions : nous générons le positionnement, les cibles et la palette.</p>
+        <PageHeader tab="identity" />
         <div className="mt-8 space-y-6">
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
@@ -202,11 +202,8 @@ export default function IdentityTab({
 
   return (
     <section>
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-[28px]">Identité de marque</h1>
-        <SaveIndicator state={save} />
-      </div>
-      <p className="caption mt-1">Cliquez sur un texte pour le modifier. Les changements sont enregistrés automatiquement.</p>
+      <PageHeader tab="identity"><SaveIndicator state={save} /></PageHeader>
+      <p className="caption -mt-4 mb-2">Cliquez sur un texte pour le modifier : les changements sont enregistrés automatiquement.</p>
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <article className="card">
           <h2 className="text-[20px]">Positionnement</h2>
@@ -228,7 +225,7 @@ export default function IdentityTab({
             {segments.map((s, i) => {
               const upd = (k: keyof Segment) => (v: string) => persist({ target_segments: segments.map((x, j) => (j === i ? { ...x, [k]: v } : x)) });
               return (
-                <div key={i} className="rounded-btn bg-bg p-3">
+                <div key={i} className="rounded-xl bg-canvas p-3">
                   <EditableText label={`Nom du segment ${i + 1}`} className="font-semibold" value={s.name} onSave={upd("name")} />
                   <EditableText multiline label={`Description du segment ${i + 1}`} className="text-[15px]" value={s.description} onSave={upd("description")} />
                   <EditableText multiline label={`Besoin du segment ${i + 1}`} className="text-[15px] text-ink-secondary" value={s.need} onSave={upd("need")} />

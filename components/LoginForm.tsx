@@ -30,7 +30,7 @@ export default function LoginForm({ notice }: { notice?: string }) {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-[440px] flex-col justify-center px-6 pb-12 pt-24">
+    <div className="w-full">
       <h1 className="text-[28px]">Connexion</h1>
       {notice && <p role="status" className="mt-4 rounded-btn bg-warning/15 px-4 py-3 text-[15px]">{notice}</p>}
       <div className="mt-8 space-y-5">
@@ -50,6 +50,6 @@ export default function LoginForm({ notice }: { notice?: string }) {
       <p className="caption mt-4 text-center">
         Pas encore de compte ? <a className="text-accent" href="/signup">Créer mon espace</a>
       </p>
-    </main>
+    </div>
   );
 }

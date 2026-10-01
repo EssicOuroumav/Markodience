@@ -1,11 +1,10 @@
-import Navbar from "@/components/Navbar";
+import AuthShell from "@/components/AuthShell";
 import OnboardingFlow from "@/components/OnboardingFlow";
 
 export default function SignupPage() {
   return (
-    <>
-      <Navbar />
+    <AuthShell>
       <OnboardingFlow />
-    </>
+    </AuthShell>
   );
 }

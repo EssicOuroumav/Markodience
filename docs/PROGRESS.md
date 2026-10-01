@@ -32,6 +32,11 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 - [x] DÉPLOYÉ sur Vercel : https://markodience.vercel.app (production, paiements en SANDBOX). Vérifié : pages publiques 200, routes protégées → /login, API 401, webhook forgé rejeté, mock inaccessible, en-têtes de sécurité, 0 secret dans le JS client. Variables Vercel : 7 (Supabase x3, Anthropic, PayDunya x3) ; framework Next.js réglé par CLI. Comptes de test supprimés.
 - [~] /auth/callback (retour du lien de confirmation email) + emailRedirectTo : code prêt, à pousser (git push par l'utilisateur) → redéploiement auto Vercel.
 
+- [x] Accès propriétaire : script `scripts/make-owner.mjs <email>` (rôle `admin` dans app_metadata + abonnement Agence permanent) appliqué au compte du propriétaire ; le propriétaire n'est soumis à aucun quota IA ; espace /admin (vue d'ensemble, utilisateurs avec gestion du palier / quota / suspension, paiements), 404 pour tout non-admin (pages et API), vérifié ; rôle non auto-attribuable (test de sécurité).
+- [x] Adaptation des logos (carré, rond, large, vertical) : `components/BrandLogo.tsx` (détection côté client, sans migration), pastille d'initiales sans logo.
+- [x] Refonte du design : jetons (canaux RGB → les teintes /10 fonctionnent enfin), cartes blanches sur fond canvas, icônes lucide, illustrations SVG maison (`components/illustrations.tsx`), accueil complet (hero + maquette, fonctionnalités, méthode, bandeau sombre, tarifs, FAQ, appel final), pages de connexion en écran partagé, sidebar (marque, palier, déconnexion), en-têtes de page, états vides illustrés, mobile vérifié. Aucune photo : uniquement des illustrations vectorielles (en attente des photos du propriétaire si souhaité).
+- [~] À pousser : tout ce lot (git push par l'utilisateur) → redéploiement auto Vercel.
+
 ## Étape en cours
 - Reste : Supabase Site URL = https://markodience.vercel.app + Redirect URL https://markodience.vercel.app/** ; push de /auth/callback ; test d'inscription réelle ; crédit Anthropic (2026-10-02) puis test génération réelle ; webhook IPN PayDunya (test réel sur le site en ligne) ; plus tard : clés PayDunya production, SMTP personnalisé.
 

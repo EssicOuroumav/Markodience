@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { EMPTY_KPI, dateLabel, deadlineFor, deadlineState, kpiData, monthLabel, recentMonths, wasOnTime, type KpiData } from "@/lib/kpi";
 import SaveIndicator, { type SaveState } from "./SaveIndicator";
+import PageHeader from "./PageHeader";
 
 export type KpiReport = { id: string; month: string; data: unknown; submitted_at: string | null; deadline: string | null };
 
@@ -105,9 +106,7 @@ export default function KpiTab({ brandId, brandName, deadlineDay: initialDay, in
 
   return (
     <section>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-[28px]">KPIs &amp; Reporting</h1>
-        <div className="flex items-center gap-3">
+      <PageHeader tab="kpi">
           <SaveIndicator state={save} />
           <div ref={menuRef} className="relative">
             <button type="button" className="btn-secondary gap-2" aria-haspopup="listbox" aria-expanded={menu} onClick={() => setMenu((v) => !v)}>
@@ -124,8 +123,7 @@ export default function KpiTab({ brandId, brandName, deadlineDay: initialDay, in
               </div>
             )}
           </div>
-        </div>
-      </div>
+        </PageHeader>
 
       {state === "submitted" && bannerReport?.submitted_at && (
         <p role="status" className="mt-4 text-[15px] text-ink-secondary">Rapport de {monthLabel(bannerMonth)} envoyé le {dateLabel(bannerReport.submitted_at)}.</p>

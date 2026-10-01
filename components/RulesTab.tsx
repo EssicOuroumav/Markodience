@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { RULE_SECTIONS, type RuleKey } from "@/lib/rules";
 import MarkdownView from "./MarkdownView";
 import SaveIndicator, { type SaveState } from "./SaveIndicator";
+import PageHeader from "./PageHeader";
 
 function Section({ brandId, k, label, initial, defaultOpen, onSave }: { brandId: string; k: RuleKey; label: string; initial: string; defaultOpen: boolean; onSave: (s: SaveState) => void }) {
   const supabase = createClient();
@@ -75,10 +76,7 @@ export default function RulesTab({ brandId, initial }: { brandId: string; initia
   const [save, setSave] = useState<SaveState>("idle");
   return (
     <section>
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-[28px]">Règles opérationnelles</h1>
-        <SaveIndicator state={save} />
-      </div>
+      <PageHeader tab="rules"><SaveIndicator state={save} /></PageHeader>
       <p className="mt-1 text-ink-secondary">Les règles de travail de ce profil de marque, section par section.</p>
       <div className="mt-6 space-y-3">
         {RULE_SECTIONS.map((s, i) => (
