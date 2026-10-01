@@ -1,6 +1,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { hasFeature, isPlanId, type Feature } from "@/lib/plans";
+import { consumeQuota, quotaMessage, refundQuota } from "@/lib/quota";
 import { createClient } from "@/lib/supabase/server";
 import { AiError, AI_MESSAGES, generateJson } from "@/lib/ai/anthropic";
 import { mockAudit, mockLiveScripts, mockLiveStructure, mockEditorial, mockIdentity, mockPillars, mockTone } from "@/lib/ai/mock";
@@ -8,7 +9,7 @@ import { liveScriptsPrompt, liveStepPrompt, liveStructurePrompt, type LiveContex
 import type { LiveStep } from "@/lib/lives";
 import { OBJECTIVES, type Objective } from "@/lib/lives";
 import { pillarRotation, weeksForPeriod, type PeriodMonths } from "@/lib/editorial";
-import { liveScriptsOutput, liveStepOutput, liveStructureOutput, auditOutput, editorialOutput, generateRequest, identityOutput, pillarsOutput, toneOutput } from "@/lib/ai/schemas";
+import { liveScriptsOutput, liveStepOutput, liveStructureOutput, auditOutput, editorialOutput, generateRequest, type GenerateRequest, identityOutput, pillarsOutput, toneOutput } from "@/lib/ai/schemas";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -34,14 +35,28 @@ export async function POST(request: Request) {
   if (!parsed.success) return fail(400, "Données invalides. Vérifiez les champs du formulaire.", "bad_request");
   const req = parsed.data;
 
+  const { data: planRaw } = await supabase.rpc("my_plan");
+  const plan = isPlanId(planRaw) ? planRaw : "gratuit";
   const feature = requiredFeature(req.type);
-  if (feature) {
-    const { data: planRaw } = await supabase.rpc("my_plan");
-    if (!hasFeature(isPlanId(planRaw) ? planRaw : "gratuit", feature)) {
-      return fail(403, "Cette fonctionnalité est réservée aux paliers payants.", "plan_required");
-    }
+  if (feature && !hasFeature(plan, feature)) {
+    return fail(403, "Cette fonctionnalité est réservée aux paliers payants.", "plan_required");
   }
 
+  // Quota quotidien : consommé avant l'appel, rendu si la génération échoue.
+  let quota;
+  try {
+    quota = await consumeQuota(user.id, plan);
+  } catch {
+    return fail(503, "Le service est momentanément indisponible. Réessayez dans un instant.", "quota_unavailable");
+  }
+  if (!quota.ok) return fail(429, quotaMessage(plan, quota.limit), "quota");
+
+  const response = await run(supabase, req);
+  if (!response.ok) await refundQuota(user.id).catch(() => undefined);
+  return response;
+}
+
+async function run(supabase: Supa, req: GenerateRequest): Promise<NextResponse> {
   try {
     if (req.type === "editorial_line" || req.type === "editorial_week") {
       return await handleEditorial(supabase, req);

@@ -26,8 +26,10 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 
 - [~] Étape 10 — audit : en-têtes de sécurité (CSP, HSTS, X-Frame-Options…) vérifiés en build production sans violation ; `npm run test:security` (23 contrôles RLS/paliers, comptes jetables auto-supprimés) ; aucun secret dans le bundle client ni dans Git. Next 14.2.35 (vulnérable) remplacé par Next 16.3.8 + React 19 (`npm audit` : 0 vulnérabilité) ; middleware → proxy.ts, cookies/params asynchrones, ESLint 9 flat config. Déploiement Vercel → confirmation utilisateur.
 
+- [~] Quota IA quotidien : code écrit (gratuit 10 / pro 60 / agence 200 par jour, 00:00 UTC, remboursé si échec) + migration 5. EN ATTENTE : migration 5 à exécuter, puis `npm run test:security` et test route (429).
+
 ## Étape en cours
-- Étape 10 — décisions : mise à jour Next, déploiement Vercel, nettoyage des comptes de test.
+- Étape 10 — migration 5, puis checklist de mise en production (prévenir l'utilisateur avant) : Confirm email, URL Supabase, variables Vercel, clés PayDunya, crédit Anthropic, retrait des *_MOCK, nettoyage des comptes de test.
 
 ## En attente côté utilisateur
 - GitHub : dépôt EssicOuroumav/Markodience passé en PRIVÉ ; le `git push` a été bloqué par le garde-fou de la session (6+ commits locaux non poussés). À pousser quand l'utilisateur l'autorise explicitement.

@@ -63,6 +63,17 @@ try {
   check("pro : 4e profil refusé", (await rest(a, "brand_profiles", { method: "POST", body: { user_id: a.id, name: "A4" } })).status === 403);
   check("B (gratuit) reste bloqué", (await rest(b, "operational_rules", { method: "POST", body: { brand_profile_id: aProfile, section: "x", content: "x" } })).status === 403);
 
+  // Quota IA
+  check("l'utilisateur ne peut pas écrire son quota", (await rest(a, "ai_usage", { method: "POST", body: { user_id: a.id, count: 0 } })).status === 403);
+  check("l'utilisateur ne peut pas appeler consume_ai_quota", (await call("/rest/v1/rpc/consume_ai_quota", { method: "POST", token: a.token, body: { p_user: a.id, p_limit: 999 } })).status === 403);
+  const q = [];
+  for (let i = 0; i < 3; i++) q.push((await admin("/rest/v1/rpc/consume_ai_quota", { method: "POST", body: { p_user: b.id, p_limit: 2 } })).json);
+  check("quota : 1, 2 puis refus (-1) à la limite", JSON.stringify(q) === "[1,2,-1]", JSON.stringify(q));
+  await admin("/rest/v1/rpc/refund_ai_quota", { method: "POST", body: { p_user: b.id } });
+  check("quota : remboursement puis nouvelle consommation autorisée", (await admin("/rest/v1/rpc/consume_ai_quota", { method: "POST", body: { p_user: b.id, p_limit: 2 } })).json === 2);
+  check("quota : lecture de son propre compteur", (await rest(b, "ai_usage?select=count")).json?.[0]?.count === 2);
+  check("quota : isolation des compteurs", (await rest(a, "ai_usage?select=count")).json?.length === 0);
+
   // Expiration
   await admin(`/rest/v1/subscriptions?user_id=eq.${a.id}`, { method: "PATCH", body: { current_period_end: "2020-01-01" } });
   check("pro expiré : retour au palier gratuit", (await call("/rest/v1/rpc/my_plan", { method: "POST", token: a.token, body: {} })).json === "gratuit");

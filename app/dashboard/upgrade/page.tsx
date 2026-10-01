@@ -10,7 +10,10 @@ const MESSAGES: Record<string, { cls: string; text: string }> = {
 
 export default async function UpgradePage(props: { searchParams: Promise<{ status?: string; reason?: string }> }) {
   const searchParams = await props.searchParams;
-  const { plan, periodEnd, seats } = await getDashboardContext();
+  const { plan, periodEnd, seats, supabase, user } = await getDashboardContext();
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: usage } = await supabase.from("ai_usage").select("count").eq("user_id", user.id).eq("day", today).maybeSingle();
+  const used = usage?.count ?? 0;
   const msg = searchParams.status ? MESSAGES[searchParams.status] : undefined;
   return (
     <section>
@@ -20,6 +23,7 @@ export default async function UpgradePage(props: { searchParams: Promise<{ statu
         {plan === "agence" ? ` (${seats} sièges)` : ""}
         {periodEnd ? ` · valable jusqu'au ${periodEnd}` : ""}
       </p>
+      <p className="caption mt-1">Générations IA aujourd&apos;hui : {used} / {PLANS[plan].aiDailyLimit} (remise à zéro chaque jour à minuit UTC)</p>
       {searchParams.reason === "profiles" && (
         <p role="status" className="mt-4 rounded-btn bg-warning/15 px-4 py-3 text-[15px]">Vous avez atteint la limite de profils de marque de votre palier. Passez au palier supérieur pour en créer d&apos;autres.</p>
       )}

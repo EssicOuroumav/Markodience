@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { quotaMessage } from "./quota";
 import { PAID_FEATURES, PLANS, canCreateProfile, hasFeature, normalizeSeats, priceFor } from "./plans";
 
 describe("paliers", () => {
@@ -36,6 +37,19 @@ describe("paliers", () => {
     expect(normalizeSeats("agence", 51)).toBeNull();
     expect(normalizeSeats("pro", 1)).toBe(1);
     expect(normalizeSeats("pro", 4)).toBeNull();
+  });
+});
+
+describe("quota IA", () => {
+  it("limites croissantes par palier", () => {
+    expect(PLANS.gratuit.aiDailyLimit).toBeGreaterThan(0);
+    expect(PLANS.pro.aiDailyLimit).toBeGreaterThan(PLANS.gratuit.aiDailyLimit);
+    expect(PLANS.agence.aiDailyLimit).toBeGreaterThan(PLANS.pro.aiDailyLimit);
+  });
+  it("messages", () => {
+    expect(quotaMessage("gratuit", 10)).toContain("10 générations par jour");
+    expect(quotaMessage("gratuit", 10)).toContain("Pro");
+    expect(quotaMessage("pro", 60)).not.toContain("palier Pro en offre");
   });
 });
 

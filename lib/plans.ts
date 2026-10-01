@@ -18,6 +18,7 @@ type PlanDef = {
   maxProfiles: number | null; // null = illimité
   features: readonly Feature[];
   exportWatermark: boolean;
+  aiDailyLimit: number; // générations IA par jour et par utilisateur (00:00 UTC)
 };
 
 const BASE = ["identity", "pillars", "tone"] as const;
@@ -30,6 +31,7 @@ export const PLANS: Record<PlanId, PlanDef> = {
     maxProfiles: 1,
     features: BASE,
     exportWatermark: true,
+    aiDailyLimit: 10,
   },
   pro: {
     label: "Pro",
@@ -37,6 +39,7 @@ export const PLANS: Record<PlanId, PlanDef> = {
     maxProfiles: 3,
     features: PRO_FEATURES,
     exportWatermark: false,
+    aiDailyLimit: 60,
   },
   agence: {
     label: "Agence",
@@ -45,6 +48,7 @@ export const PLANS: Record<PlanId, PlanDef> = {
     maxProfiles: null,
     features: [...PRO_FEATURES, "white_label", "multi_export"],
     exportWatermark: false,
+    aiDailyLimit: 200,
   },
 };
 
