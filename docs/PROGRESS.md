@@ -6,11 +6,14 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 ## Terminé
 - [x] Étape 1 — Socle : Next.js 14, tokens de design, Navbar glass, clients Supabase, middleware d'auth, migration initiale (`supabase/migrations/20261001000100_init_schema.sql`), `.env.example`. Build + lint + typecheck OK.
 
+- [x] Étape 2 — Onboarding 2 étapes + connexion + dashboard vide. Vérifié dans le navigateur (inscription → profil → dashboard) et via l'API : trigger d'abonnement gratuit, RLS (isolation entre utilisateurs, abonnement non modifiable par l'utilisateur), storage logos par dossier utilisateur.
+- [x] Migrations 1 et 2 appliquées sur Supabase (vérifié). Confirm email désactivé, provider Email actif.
+
 ## Étape en cours
-- Étape 2 — Onboarding en 2 étapes (inscription, profil de marque, redirection dashboard vide).
+- Étape 3 — Dashboard (sidebar 7 onglets, sélecteur de profil), route /api/generate, onglets Identité / Piliers / Tonalité.
 
 ## En attente côté utilisateur
-- Appliquer la migration sur Supabase (méthode à confirmer).
+- SUPABASE_SERVICE_ROLE_KEY dans .env.local contient actuellement la clé anon (identique). À remplacer par la vraie clé service_role (nécessaire dès l'étape 9, webhook). Nettoyage des comptes de test (t1/t2/ui.test…@example.com) à faire avec cette clé.
 - ANTHROPIC_API_KEY : clé présente, crédit à ajouter (5 $ prévus le 2026-10-02).
 - CinetPay : identifiants sandbox.
 
