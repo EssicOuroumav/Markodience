@@ -1,0 +1,15 @@
+export const SECTORS = [
+  "Mode & beauté",
+  "Restauration & alimentation",
+  "Hôtellerie & tourisme",
+  "Immobilier",
+  "Éducation & formation",
+  "Santé & bien-être",
+  "Technologie & numérique",
+  "Commerce & distribution",
+  "Banque, finance & assurance",
+  "Associations & ONG",
+  "Institutions publiques",
+  "Médias & divertissement",
+  "Autre",
+] as const;
