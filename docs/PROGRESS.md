@@ -29,8 +29,11 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 - [x] Quota IA quotidien (gratuit 10 / pro 60 / agence 200 par jour, 00:00 UTC) : migration 5 appliquée ; remboursement si la génération échoue et refus 429 à la limite vérifiés sur la vraie route ; `npm run test:security` : 29 contrôles OK.
 - [x] Paiement PayDunya RÉEL (sandbox) vérifié de bout en bout : facture créée par l'app, paiement avec compte fictif, retour /payment/return → vérification serveur-à-serveur (statut + montant + ref) → abonnement Agence 2 sièges activé. /payment/return rendu public (vérifie côté serveur). Reste à valider : webhook IPN (nécessite une URL publique).
 
+- [x] DÉPLOYÉ sur Vercel : https://markodience.vercel.app (production, paiements en SANDBOX). Vérifié : pages publiques 200, routes protégées → /login, API 401, webhook forgé rejeté, mock inaccessible, en-têtes de sécurité, 0 secret dans le JS client. Variables Vercel : 7 (Supabase x3, Anthropic, PayDunya x3) ; framework Next.js réglé par CLI. Comptes de test supprimés.
+- [~] /auth/callback (retour du lien de confirmation email) + emailRedirectTo : code prêt, à pousser (git push par l'utilisateur) → redéploiement auto Vercel.
+
 ## Étape en cours
-- Étape 10 — checklist de mise en production (prévenir l'utilisateur avant) : Confirm email, URL Supabase, variables Vercel, clés PayDunya, crédit Anthropic, retrait des *_MOCK, nettoyage des comptes de test.
+- Reste : Supabase Site URL = https://markodience.vercel.app + Redirect URL https://markodience.vercel.app/** ; push de /auth/callback ; test d'inscription réelle ; crédit Anthropic (2026-10-02) puis test génération réelle ; webhook IPN PayDunya (test réel sur le site en ligne) ; plus tard : clés PayDunya production, SMTP personnalisé.
 
 ## En attente côté utilisateur
 - GitHub : dépôt EssicOuroumav/Markodience passé en PRIVÉ ; le `git push` a été bloqué par le garde-fou de la session (6+ commits locaux non poussés). À pousser quand l'utilisateur l'autorise explicitement.

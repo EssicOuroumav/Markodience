@@ -60,7 +60,10 @@ export default function OnboardingFlow() {
     const { data, error: err } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { data: { full_name: fullName.trim(), phone: phone.trim() } },
+      options: {
+        data: { full_name: fullName.trim(), phone: phone.trim() },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
     setLoading(false);
     if (err) {
@@ -73,7 +76,7 @@ export default function OnboardingFlow() {
     }
     if (!data.session || !data.user) {
       setNotice(
-        "Compte créé. Confirmez votre email via le lien reçu, puis connectez-vous pour continuer.",
+        "Compte créé. Cliquez sur le lien de confirmation reçu par email : vous reviendrez ici pour créer votre profil de marque.",
       );
       return;
     }

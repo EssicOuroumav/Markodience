@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export default function LoginForm() {
+export default function LoginForm({ notice }: { notice?: string }) {
   const router = useRouter();
   const supabase = createClient();
   const [email, setEmail] = useState("");
@@ -32,6 +32,7 @@ export default function LoginForm() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-[440px] flex-col justify-center px-6 pb-12 pt-24">
       <h1 className="text-[28px]">Connexion</h1>
+      {notice && <p role="status" className="mt-4 rounded-btn bg-warning/15 px-4 py-3 text-[15px]">{notice}</p>}
       <div className="mt-8 space-y-5">
         <div>
           <label className="label" htmlFor="email">Email</label>
