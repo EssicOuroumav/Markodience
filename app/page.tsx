@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Check, ChevronDown, Languages, ShieldCheck, Smartphone, Wallet } from "lucide-react";
+import { ArrowRight, Check, Languages, ShieldCheck, Smartphone, Wallet } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Photo from "@/components/Photo";
 import ProductMockup, { ScoreChip, ValidatedChip } from "@/components/ProductMockup";
@@ -7,6 +7,8 @@ import { PersonaAspirant, PersonaConfirmed, PersonaTeam } from "@/components/peo
 import { PHOTOS } from "@/lib/photos";
 import Reveal from "@/components/Reveal";
 import { ILLUSTRATIONS, type IllustrationName } from "@/components/illustrations";
+import FaqSection from "@/components/FaqSection";
+import { faqJsonLd } from "@/lib/faq";
 import { PLANS } from "@/lib/plans";
 import { createClient } from "@/lib/supabase/server";
 
@@ -40,13 +42,6 @@ const STEPS = [
   { n: "3", title: "Pilotez et validez", text: "Suivez l’avancement semaine par semaine, faites valider vos contenus et envoyez vos rapports PDF." },
 ];
 
-const FAQ = [
-  { q: "Markodience publie-t-il à ma place sur les réseaux sociaux ?", a: "Non, jamais. Markodience est un outil de structuration stratégique : il ne se connecte pas à vos comptes et ne publie rien. Vous gardez la main sur vos réseaux." },
-  { q: "Comment puis-je payer ?", a: "Par mobile money (Orange Money, MTN, Moov, Wave…) ou par carte bancaire, en francs CFA. Les paiements sont traités par PayDunya." },
-  { q: "Puis-je gérer plusieurs marques ?", a: "Oui. Le palier Gratuit inclut 1 profil, le Pro jusqu’à 3, et le palier Agence jusqu’à 10 profils." },
-  { q: "Que contient le palier Gratuit ?", a: "L’identité de marque, les piliers de contenu et la tonalité, avec un nombre limité de générations par jour. Les autres onglets sont réservés au Pro et à l’Agence." },
-  { q: "Mes données sont-elles protégées ?", a: "Chaque compte ne voit que ses propres données, isolées au niveau de la base. Les connexions sont chiffrées et aucune clé secrète n’est exposée dans l’application." },
-];
 
 const PLAN_BULLETS: Record<"gratuit" | "pro" | "agence", string[]> = {
   gratuit: ["1 profil de marque", "Identité, piliers, tonalité", "Exports avec filigrane"],
@@ -75,6 +70,8 @@ export default async function Home() {
       </Navbar>
 
       <noscript><style>{".reveal{opacity:1!important;translate:0 0!important}"}</style></noscript>
+      {/* Données structurées (contenu statique de lib/faq.ts, « < » échappé) : jamais de contenu généré par l'IA ici. */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd()).replace(/</g, "\\u003c") }} />
       <main>
         {/* En-tête : grande photo en fond, texte en bas, maquette du produit à droite */}
         <section className="px-3 pb-6 pt-[68px] sm:px-5">
@@ -271,22 +268,13 @@ export default async function Home() {
 
         {/* FAQ */}
         <section id="faq" className="scroll-mt-16 bg-white py-24">
-          <div className="mx-auto max-w-3xl px-5 md:px-6">
-            <div className="text-center">
-              <p className="eyebrow">FAQ</p>
-              <h2 className="mt-3 text-[clamp(30px,4vw,44px)] leading-tight tracking-[-0.03em]">Questions fréquentes</h2>
-            </div>
-            <Reveal className="mt-12 divide-y divide-[var(--color-border-soft)] rounded-[24px] border border-[var(--color-border-soft)] bg-white shadow-card">
-              {FAQ.map((f) => (
-                <details key={f.q} className="group px-6 py-5">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[18px] font-medium [&::-webkit-details-marker]:hidden">
-                    {f.q}
-                    <ChevronDown size={20} className="shrink-0 text-ink-secondary transition group-open:rotate-180" />
-                  </summary>
-                  <p className="mt-3 text-[16px] leading-relaxed text-ink-secondary">{f.a}</p>
-                </details>
-              ))}
+          <div className="mx-auto max-w-6xl px-5 md:px-6">
+            <Reveal className="mx-auto max-w-2xl text-center">
+              <p className="eyebrow">Questions fréquentes</p>
+              <h2 className="mt-3 text-[clamp(30px,4vw,44px)] leading-tight tracking-[-0.03em]">Tout ce que vous voulez savoir avant de commencer</h2>
+              <p className="mt-4 text-[18px] text-ink-secondary">Fonctionnement, tarifs, paiement et protection de vos données : les réponses claires à vos questions.</p>
             </Reveal>
+            <Reveal delay={80}><FaqSection ctaHref={startHref} ctaLabel={signedIn ? "Mon espace" : "Créer mon espace"} /></Reveal>
           </div>
         </section>
 

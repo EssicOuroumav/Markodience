@@ -48,6 +48,8 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 - [x] Accueil : en-tête plein cadre avec la photo du propriétaire en fond (public/photos/hero-bg.jpg, 179 Ko, retournée horizontalement pour dégager les deux visages, dégradé sombre pour la lisibilité), texte en bas à gauche, maquette et pastilles à droite (masquées sur mobile) ; `lib/photos.ts` : hero = photo. Illustrations de community managers conservées dans la section « Pour qui » et en repli.
 - [x] (historique) Accueil : illustrations de community managers dessinées (`components/people.tsx` : héroïne, aspirante, confirmé, équipe) dans l'en-tête et la section « Pour qui ». Pour utiliser de vraies photos plus tard : déposer les fichiers dans public/photos/ puis renseigner `lib/photos.ts` (l'illustration sert de repli).
 
+- [x] FAQ de l'accueil refaite : 18 questions en 4 thèmes (Découvrir, Fonctionnement, Tarifs et paiement, Marques et données), `lib/faq.ts` (prix, quotas et limites lus dans `lib/plans.ts`), accordéon animé accessible (une réponse ouverte à la fois), données structurées schema.org FAQPage, 6 tests. À COMPLÉTER par le propriétaire : un moyen de contact (email ou WhatsApp) pour les remises ONG/associations et les devis publics.
+
 ## Étape en cours
 - Reste : Supabase Site URL = https://markodience.vercel.app + Redirect URL https://markodience.vercel.app/** ; push de /auth/callback ; test d'inscription réelle ; crédit Anthropic (2026-10-02) puis test génération réelle ; webhook IPN PayDunya (test réel sur le site en ligne) ; plus tard : clés PayDunya production, SMTP personnalisé.
 
