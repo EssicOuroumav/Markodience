@@ -22,10 +22,10 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 
 - [x] Étape 8 — Guide Lives : activation par profil (`lives_enabled`), guides par objectif (5 trames distinctes), génération trame / régénération d'une étape / scripts + banque de réponses rapides (copie 1 clic, ajout manuel, pas de doublons à la régénération), réorganisation par boutons ↑↓, équipe partagée par profil (manuel). Aucune connexion aux plateformes. Vérifié dans le navigateur (mock). 40 tests.
 
-- [~] Étape 9 — Paliers + paiement : code écrit (plans.ts, interface PaymentProvider + PayDunya + mock, /api/checkout, /api/payments/webhook, /payment/return, verrouillage UI + API, migration 4 RLS). EN ATTENTE : migration 4 à exécuter, puis tests réels.
+- [x] Étape 9 — Paliers + paiement : `lib/plans.ts` (source unique), PaymentProvider (PayDunya + mock dev), /api/checkout (montant recalculé serveur), webhook sans confiance au corps (vérification serveur-à-serveur + atomique + idempotent), retour /payment/return, cadenas + upsell, gating API + RLS restrictives (migration 4 appliquée et vérifiée : 18 cas), limite de profils, filigrane PDF selon plan. Vérifié dans le navigateur avec le mock (gratuit → paiement → Pro débloqué, annulation, faux webhooks rejetés). 47 tests. NON VÉRIFIÉ : échange réel avec PayDunya (clés sandbox manquantes).
 
 ## Étape en cours
-- Étape 9 — vérification (migration 4 appliquée ? test mock du parcours paiement, test RLS palier gratuit), puis étape 10 : audit sécurité global, tests e2e, déploiement Vercel.
+- Étape 10 — audit sécurité global, tests, déploiement Vercel.
 
 ## En attente côté utilisateur
 - GitHub : dépôt EssicOuroumav/Markodience passé en PRIVÉ ; le `git push` a été bloqué par le garde-fou de la session (6+ commits locaux non poussés). À pousser quand l'utilisateur l'autorise explicitement.

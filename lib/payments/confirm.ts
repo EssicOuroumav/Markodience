@@ -5,7 +5,7 @@ import { createAdminClient } from "./admin";
 
 export type ConfirmOutcome =
   | { ok: true; plan: PlanId; already: boolean }
-  | { ok: false; reason: "unknown_payment" | "not_paid" | "amount_mismatch" | "not_configured" | "error" };
+  | { ok: false; reason: "unknown_payment" | "not_paid" | "cancelled" | "amount_mismatch" | "not_configured" | "error" };
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -27,7 +27,7 @@ export async function confirmPayment(lookup: { token?: string; ref?: string }): 
 
     if (v.status === "cancelled" || v.status === "failed") {
       await admin.from("payments").update({ status: v.status }).eq("id", payment.id).eq("status", "pending");
-      return { ok: false, reason: "not_paid" };
+      return { ok: false, reason: "cancelled" };
     }
     if (v.status !== "completed") return { ok: false, reason: "not_paid" };
     if (v.amount !== payment.amount || (v.ref !== null && v.ref !== payment.id)) return { ok: false, reason: "amount_mismatch" };

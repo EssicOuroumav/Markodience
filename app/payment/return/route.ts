@@ -10,5 +10,6 @@ export async function GET(request: Request) {
 
   const out = await confirmPayment({ ref });
   if (out.ok) return to(`/dashboard/identity?upgraded=${out.plan}`);
-  return to(`/dashboard/upgrade?status=${out.reason === "not_paid" ? "pending" : "error"}`);
+  const status = out.reason === "not_paid" ? "pending" : out.reason === "cancelled" ? "cancelled" : "error";
+  return to(`/dashboard/upgrade?status=${status}`);
 }
