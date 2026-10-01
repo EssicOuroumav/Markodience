@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 
 export type Shape = "square" | "round" | "wide" | "tall";
-const SIZES = { sm: 36, md: 48, lg: 72 } as const;
+const SIZES = { xs: 28, sm: 36, md: 48, lg: 72 } as const;
 
 /** Détecte un logo rond : coins transparents, centre plein (sur une copie réduite de l'image). */
 function looksRound(img: HTMLImageElement): boolean {

@@ -1,9 +1,9 @@
 "use client";
 
-import { Ban, CalendarClock, ChevronDown, Image as ImageIcon, MessageCircle, ShieldCheck, BarChart3 } from "lucide-react";
+import { Ban, BarChart3, CalendarClock, ChevronDown, Image as ImageIcon, MessageCircle, ShieldCheck, Wand2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { RULE_SECTIONS, type RuleKey } from "@/lib/rules";
+import { RULE_HINTS, RULE_SECTIONS, RULE_TEMPLATES, type RuleKey } from "@/lib/rules";
 import MarkdownView from "./MarkdownView";
 import SaveIndicator, { type SaveState } from "./SaveIndicator";
 import PageHeader from "./PageHeader";
@@ -47,7 +47,7 @@ function Section({ brandId, k, label, initial, defaultOpen, onSave }: { brandId:
         <button type="button" aria-expanded={open} aria-controls={`rules-${k}`} onClick={() => setOpen((o) => !o)}
           className="flex w-full items-center gap-4 px-6 py-5 text-left text-[18px] font-semibold tracking-heading transition hover:bg-canvas/60">
           <span aria-hidden className={`flex h-11 w-11 items-center justify-center rounded-2xl ${open ? "bg-accent text-white" : "bg-accent-soft text-accent"} transition`}>{(() => { const I = ICONS[k]; return <I size={20} strokeWidth={1.8} />; })()}</span>
-          <span className="flex-1">{label}</span>
+          <span className="flex-1"><span className="block">{label}</span><span className="block text-[13px] font-normal tracking-normal text-ink-secondary">{RULE_HINTS[k]}</span></span>
           <ChevronDown size={20} aria-hidden className={`text-ink-secondary transition duration-300 ${open ? "rotate-180" : ""}`} />
         </button>
       </h2>
@@ -70,6 +70,11 @@ function Section({ brandId, k, label, initial, defaultOpen, onSave }: { brandId:
               {content.trim() ? <MarkdownView source={content} /> : <span className="text-ink-secondary">Aucune règle définie pour cette section — cliquez pour commencer à écrire</span>}
             </button>
           )}
+          {!editing && !content.trim() && (
+            <button type="button" className="btn-secondary mt-3" onClick={() => { const t = RULE_TEMPLATES[k]; setContent(t); persist(t); }}>
+              <Wand2 size={16} />Insérer un modèle à adapter
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -80,8 +85,7 @@ export default function RulesTab({ brandId, initial }: { brandId: string; initia
   const [save, setSave] = useState<SaveState>("idle");
   return (
     <section>
-      <PageHeader tab="rules"><SaveIndicator state={save} /></PageHeader>
-      <p className="mt-1 text-ink-secondary">Les règles de travail de ce profil de marque, section par section.</p>
+      <PageHeader tab="rules" description="Le règlement interne de la marque : comment on planifie, on crée, on répond, on rend compte et on protège les données. Un repère partagé pour toute l’équipe et le client."><SaveIndicator state={save} /></PageHeader>
       <div className="mt-6 space-y-3">
         {RULE_SECTIONS.map((s, i) => (
           <Section key={s.key} brandId={brandId} k={s.key} label={s.label} initial={initial[s.key] ?? ""} defaultOpen={i === 0} onSave={setSave} />

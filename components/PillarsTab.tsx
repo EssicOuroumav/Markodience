@@ -83,7 +83,7 @@ export default function PillarsTab({ brandId, initial, hasIdentity }: { brandId:
       {pillars.length === 0 ? (
         <div className="mt-6"><EmptyState illustration="pillars" title="Aucun pilier pour l’instant" text="Générez 3 à 5 piliers à partir de votre identité, ou ajoutez-les à la main avec le bouton « + »." /></div>
       ) : (
-        <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
           {pillars.map((p, i) => (
             <article key={p.id} className="card group relative flex flex-col overflow-hidden">
               <span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent to-[#5aa9ff] opacity-80" />

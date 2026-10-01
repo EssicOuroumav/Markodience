@@ -37,7 +37,7 @@ export default async function AdminHome() {
             {(["gratuit", "pro", "agence"] as const).map((p) => (
               <li key={p}>
                 <div className="flex justify-between text-[15px]"><span className="capitalize">{p}</span><span className="font-medium">{stats.byPlan[p]}</span></div>
-                <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-canvas"><div className="h-full rounded-full bg-accent" style={{ width: `${(stats.byPlan[p] / total) * 100}%` }} /></div>
+                <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-canvas"><div className="bar-in h-full rounded-full bg-gradient-to-r from-accent to-[#5aa9ff]" style={{ width: `${(stats.byPlan[p] / total) * 100}%` }} /></div>
               </li>
             ))}
           </ul>

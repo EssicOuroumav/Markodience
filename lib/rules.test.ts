@@ -18,3 +18,16 @@ describe("parseMarkdown", () => {
   });
   it("texte vide", () => expect(parseMarkdown("  \n ")).toEqual([]));
 });
+
+import { RULE_SECTIONS, RULE_TEMPLATES, RULE_HINTS } from "./rules";
+describe("modèles de règles", () => {
+  it("chaque section a un modèle et une aide", () => {
+    for (const { key } of RULE_SECTIONS) {
+      expect(parseMarkdown(RULE_TEMPLATES[key]).length).toBeGreaterThan(0);
+      expect(RULE_HINTS[key].length).toBeGreaterThan(10);
+    }
+  });
+  it("les modèles ne contiennent aucun HTML", () => {
+    for (const { key } of RULE_SECTIONS) expect(RULE_TEMPLATES[key]).not.toMatch(/<[a-z]/i);
+  });
+});

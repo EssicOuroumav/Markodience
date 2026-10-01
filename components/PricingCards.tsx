@@ -38,7 +38,7 @@ export default function PricingCards({ currentPlan }: { currentPlan: PlanId }) {
   const minSeats = PLANS.agence.minSeats ?? 2;
   return (
     <div>
-      <div className="grid items-stretch gap-6 md:grid-cols-3">
+      <div className="grid items-stretch gap-6 xl:grid-cols-3">
         {(["gratuit", "pro", "agence"] as const).map((id) => {
           const p = PLANS[id];
           const current = id === currentPlan;

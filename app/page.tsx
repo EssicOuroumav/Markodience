@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Check, ChevronDown, Languages, ShieldCheck, Smartphone, Wallet } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import ProductMockup from "@/components/ProductMockup";
+import Reveal from "@/components/Reveal";
 import { ILLUSTRATIONS, type IllustrationName } from "@/components/illustrations";
 import { PLANS } from "@/lib/plans";
 import { createClient } from "@/lib/supabase/server";
@@ -64,30 +65,33 @@ export default async function Home() {
         )}
       </Navbar>
 
+      <noscript><style>{".reveal{opacity:1!important;translate:0 0!important}"}</style></noscript>
       <main>
         {/* Hero */}
         <section className="mesh relative overflow-hidden">
+          <div aria-hidden className="orb pointer-events-none absolute -left-24 top-10 h-[420px] w-[420px] rounded-full bg-accent/15 blur-3xl" />
+          <div aria-hidden className="orb-slow pointer-events-none absolute -right-20 top-40 h-[380px] w-[380px] rounded-full bg-[#5aa9ff]/25 blur-3xl" />
           <div aria-hidden className="grid-dots pointer-events-none absolute inset-0 opacity-40 [mask-image:radial-gradient(60%_60%_at_50%_30%,black,transparent)]" />
           <div className="relative mx-auto grid max-w-6xl items-center gap-16 px-5 pb-28 pt-32 md:px-6 lg:grid-cols-[1.05fr_1fr] lg:pt-40">
             <div>
-              <span className="chip">Pensé pour les community managers d&apos;Afrique de l&apos;Ouest</span>
-              <h1 className="mt-6 text-[clamp(40px,6vw,68px)] font-semibold leading-[1.04] tracking-[-0.035em]">
-                La stratégie de vos marques, <span className="text-accent">claire et structurée.</span>
+              <span className="chip rise d1">Pensé pour les community managers d&apos;Afrique de l&apos;Ouest</span>
+              <h1 className="rise d2 mt-6 text-[clamp(40px,6vw,68px)] font-semibold leading-[1.04] tracking-[-0.035em]">
+                La stratégie de vos marques, <span className="text-shimmer">claire et structurée.</span>
               </h1>
-              <p className="mt-6 max-w-xl text-[19px] leading-relaxed text-ink-secondary">
+              <p className="rise d3 mt-6 max-w-xl text-[19px] leading-relaxed text-ink-secondary">
                 Identité, piliers de contenu, ligne éditoriale, audit et reporting : tout ce qu’il faut pour gérer une marque comme un pro, généré avec l’IA et pensé pour votre réalité.
               </p>
-              <div className="mt-9 flex flex-wrap items-center gap-4">
+              <div className="rise d4 mt-9 flex flex-wrap items-center gap-4">
                 <Link href={startHref} className="btn-primary">{signedIn ? "Accéder à mon espace" : "Créer mon espace gratuit"} <ArrowRight size={18} /></Link>
                 <a href="#fonctionnalites" className="btn-secondary !rounded-pill !px-6 !py-3 !text-[17px]">Découvrir</a>
               </div>
-              <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[14px] text-ink-secondary">
+              <ul className="rise d5 mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[14px] text-ink-secondary">
                 {["Gratuit pour démarrer", "Paiement mobile money", "Aucun accès à vos réseaux"].map((t) => (
                   <li key={t} className="flex items-center gap-1.5"><Check size={16} className="text-success" strokeWidth={3} />{t}</li>
                 ))}
               </ul>
             </div>
-            <ProductMockup />
+            <div className="pop-in d3"><ProductMockup /></div>
           </div>
         </section>
 
@@ -100,10 +104,10 @@ export default async function Home() {
               { Icon: Wallet, t: "Mobile money & carte", d: "Paiement en francs CFA, sans carte étrangère." },
               { Icon: ShieldCheck, t: "Vos réseaux restent à vous", d: "Aucune connexion, aucune publication automatique." },
             ].map(({ Icon, t, d }) => (
-              <li key={t} className="flex items-start gap-3">
+              <Reveal as="li" key={t} delay={0} className="flex items-start gap-3">
                 <span aria-hidden className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent"><Icon size={21} strokeWidth={1.8} /></span>
                 <span><span className="block text-[16px] font-semibold">{t}</span><span className="block text-[14px] text-ink-secondary">{d}</span></span>
-              </li>
+              </Reveal>
             ))}
           </ul>
         </section>
@@ -111,20 +115,20 @@ export default async function Home() {
         {/* Fonctionnalités */}
         <section id="fonctionnalites" className="scroll-mt-16 bg-canvas py-24">
           <div className="mx-auto max-w-6xl px-5 md:px-6">
-            <div className="mx-auto max-w-2xl text-center">
+            <Reveal className="mx-auto max-w-2xl text-center">
               <p className="eyebrow">Fonctionnalités</p>
               <h2 className="mt-3 text-[clamp(30px,4vw,44px)] leading-tight tracking-[-0.03em]">Tout ce qu’il faut pour piloter une marque</h2>
               <p className="mt-4 text-[18px] text-ink-secondary">Huit modules qui travaillent ensemble : ce que vous définissez dans l’identité nourrit les piliers, la tonalité, puis la ligne éditoriale.</p>
-            </div>
+            </Reveal>
             <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {FEATURES.map((f) => {
+              {FEATURES.map((f, i) => {
                 const Art = ILLUSTRATIONS[f.art];
                 return (
-                  <article key={f.title} className="card group flex flex-col !p-5">
+                  <Reveal as="article" key={f.title} delay={(i % 4) * 80} className="card group flex flex-col !p-5">
                     <div className="rounded-2xl bg-canvas p-3 transition duration-300 group-hover:bg-accent-soft"><Art className="mx-auto h-36 w-full" /></div>
                     <h3 className="mt-5 text-[19px]">{f.title}</h3>
                     <p className="mt-1.5 text-[15px] leading-relaxed text-ink-secondary">{f.text}</p>
-                  </article>
+                  </Reveal>
                 );
               })}
             </div>
@@ -134,18 +138,18 @@ export default async function Home() {
         {/* Méthode */}
         <section id="methode" className="scroll-mt-16 bg-white py-24">
           <div className="mx-auto max-w-6xl px-5 md:px-6">
-            <div className="mx-auto max-w-2xl text-center">
+            <Reveal className="mx-auto max-w-2xl text-center">
               <p className="eyebrow">Méthode</p>
               <h2 className="mt-3 text-[clamp(30px,4vw,44px)] leading-tight tracking-[-0.03em]">De zéro à une stratégie complète en 3 étapes</h2>
-            </div>
+            </Reveal>
             <ol className="relative mt-14 grid gap-10 md:grid-cols-3">
               <div aria-hidden className="absolute left-[16%] right-[16%] top-7 hidden border-t-2 border-dashed border-accent/25 md:block" />
-              {STEPS.map((s) => (
-                <li key={s.n} className="relative text-center">
+              {STEPS.map((s, i) => (
+                <Reveal as="li" key={s.n} delay={i * 120} className="relative text-center">
                   <span className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent text-[22px] font-semibold text-white shadow-glow">{s.n}</span>
                   <h3 className="mt-5 text-[21px]">{s.title}</h3>
                   <p className="mx-auto mt-2 max-w-xs text-[16px] text-ink-secondary">{s.text}</p>
-                </li>
+                </Reveal>
               ))}
             </ol>
           </div>
@@ -153,8 +157,8 @@ export default async function Home() {
 
         {/* Bandeau sombre */}
         <section className="relative overflow-hidden bg-night py-24 text-white">
-          <div aria-hidden className="absolute -right-40 -top-40 h-[480px] w-[480px] rounded-full bg-accent/25 blur-3xl" />
-          <div aria-hidden className="absolute -bottom-48 -left-32 h-[420px] w-[420px] rounded-full bg-accent/15 blur-3xl" />
+          <div aria-hidden className="orb absolute -right-40 -top-40 h-[480px] w-[480px] rounded-full bg-accent/25 blur-3xl" />
+          <div aria-hidden className="orb-slow absolute -bottom-48 -left-32 h-[420px] w-[420px] rounded-full bg-accent/15 blur-3xl" />
           <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-5 md:px-6 lg:grid-cols-2">
             <div>
               <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#7cb8ff]">Notre principe</p>
@@ -175,17 +179,17 @@ export default async function Home() {
         {/* Tarifs */}
         <section id="tarifs" className="scroll-mt-16 bg-canvas py-24">
           <div className="mx-auto max-w-6xl px-5 md:px-6">
-            <div className="mx-auto max-w-2xl text-center">
+            <Reveal className="mx-auto max-w-2xl text-center">
               <p className="eyebrow">Tarifs</p>
               <h2 className="mt-3 text-[clamp(30px,4vw,44px)] leading-tight tracking-[-0.03em]">Simple et en francs CFA</h2>
               <p className="mt-4 text-[18px] text-ink-secondary">Commencez gratuitement, passez au palier supérieur quand vous en avez besoin.</p>
-            </div>
+            </Reveal>
             <div className="mt-14 grid items-stretch gap-6 md:grid-cols-3">
-              {(["gratuit", "pro", "agence"] as const).map((id) => {
+              {(["gratuit", "pro", "agence"] as const).map((id, i) => {
                 const p = PLANS[id];
                 const featured = id === "pro";
                 return (
-                  <article key={id} className={`relative flex flex-col rounded-[28px] p-8 ${featured ? "bg-night text-white shadow-pop md:-my-4" : "card-flat"}`}>
+                  <Reveal as="article" key={id} delay={i * 110} className={`relative flex flex-col rounded-[28px] p-8 ${featured ? "bg-night text-white shadow-pop md:-my-4" : "card-flat"}`}>
                     {featured && <span className="absolute -top-3 left-8 rounded-pill bg-accent px-3 py-1 text-[12px] font-semibold text-white">Recommandé</span>}
                     <h3 className="text-[22px]">{p.label}</h3>
                     <p className="mt-4 text-[40px] font-semibold leading-none tracking-[-0.03em]">
@@ -200,7 +204,7 @@ export default async function Home() {
                     <Link href={signedIn ? "/dashboard/upgrade" : "/signup"} className={`mt-8 ${featured ? "btn-primary w-full" : "btn-secondary !rounded-pill w-full !py-3 !text-[16px]"}`}>
                       {signedIn ? (id === "gratuit" ? "Mon espace" : `Choisir ${p.label}`) : id === "gratuit" ? "Commencer gratuitement" : `Choisir ${p.label}`}
                     </Link>
-                  </article>
+                  </Reveal>
                 );
               })}
             </div>
@@ -215,7 +219,7 @@ export default async function Home() {
               <p className="eyebrow">FAQ</p>
               <h2 className="mt-3 text-[clamp(30px,4vw,44px)] leading-tight tracking-[-0.03em]">Questions fréquentes</h2>
             </div>
-            <div className="mt-12 divide-y divide-[var(--color-border-soft)] rounded-[24px] border border-[var(--color-border-soft)] bg-white shadow-card">
+            <Reveal className="mt-12 divide-y divide-[var(--color-border-soft)] rounded-[24px] border border-[var(--color-border-soft)] bg-white shadow-card">
               {FAQ.map((f) => (
                 <details key={f.q} className="group px-6 py-5">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[18px] font-medium [&::-webkit-details-marker]:hidden">
@@ -225,21 +229,21 @@ export default async function Home() {
                   <p className="mt-3 text-[16px] leading-relaxed text-ink-secondary">{f.a}</p>
                 </details>
               ))}
-            </div>
+            </Reveal>
           </div>
         </section>
 
         {/* Appel final */}
         <section className="px-5 pb-24 pt-4 md:px-6">
-          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[36px] bg-gradient-to-br from-accent to-accent-strong px-8 py-16 text-center text-white shadow-glow md:py-20">
-            <div aria-hidden className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-white/10 blur-2xl" />
-            <div aria-hidden className="absolute -bottom-24 -right-16 h-80 w-80 rounded-full bg-white/10 blur-2xl" />
+          <Reveal className="relative mx-auto max-w-6xl overflow-hidden rounded-[36px] bg-gradient-to-br from-accent to-accent-strong px-8 py-16 text-center text-white shadow-glow md:py-20">
+            <div aria-hidden className="orb absolute -left-20 -top-20 h-72 w-72 rounded-full bg-white/10 blur-2xl" />
+            <div aria-hidden className="orb-slow absolute -bottom-24 -right-16 h-80 w-80 rounded-full bg-white/10 blur-2xl" />
             <h2 className="relative mx-auto max-w-2xl text-[clamp(30px,4.4vw,48px)] leading-tight tracking-[-0.03em]">Donnez à vos marques la stratégie qu’elles méritent.</h2>
             <p className="relative mx-auto mt-4 max-w-xl text-[18px] text-white/80">Créez votre espace en deux minutes. Aucune carte bancaire n’est demandée pour démarrer.</p>
             <Link href={startHref} className="relative mt-8 inline-flex items-center gap-2 rounded-pill bg-white px-7 py-3.5 text-[17px] font-semibold text-accent transition hover:-translate-y-px hover:shadow-pop">
               {signedIn ? "Accéder à mon espace" : "Créer mon espace gratuit"} <ArrowRight size={18} />
             </Link>
-          </div>
+          </Reveal>
         </section>
       </main>
 

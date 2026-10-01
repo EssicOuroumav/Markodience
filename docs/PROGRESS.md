@@ -41,6 +41,8 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 - [x] Passe « premium » des onglets : page Vue d'ensemble (progression de la stratégie, indicateurs, prochaine étape), questionnaire d'identité en 4 étapes + chargement soigné + barre fixe, anneaux de score, piliers numérotés, tonalité teintée avec icônes, liseré de statut éditorial, onglets en pilules, accordéon des règles à icônes, frise chronologique des lives, formulaire KPI en carte, zone de dépôt d'audit.
 - [x] DÉCISION (utilisateur) : profils inclus sans frais supplémentaires ; limites Gratuit 1 / Pro 3 / Agence 10 ; propriétaire illimité. Code + migration 6 (`20261001000600_profile_limits.sql`) prêts. EN ATTENTE : migration 6 à exécuter dans le SQL Editor + git push.
 
+- [x] Animations (respectent « réduire les animations ») : apparition au défilement (`Reveal`), entrée en cascade des pages et des cartes (`template.tsx`), squelettes de chargement (`loading.tsx`), orbes dérivants, titre à dégradé animé, reflet des boutons, anneaux de score qui se remplissent, illustrations vivantes, pages de connexion animées. Bloc de la marque cliquable → /dashboard, plus élégant (liseré à la couleur de la marque), sélecteur de marque avec logos. Onglet Règles : aides par section + modèles à insérer.
+
 ## Étape en cours
 - Reste : Supabase Site URL = https://markodience.vercel.app + Redirect URL https://markodience.vercel.app/** ; push de /auth/callback ; test d'inscription réelle ; crédit Anthropic (2026-10-02) puis test génération réelle ; webhook IPN PayDunya (test réel sur le site en ligne) ; plus tard : clés PayDunya production, SMTP personnalisé.
 

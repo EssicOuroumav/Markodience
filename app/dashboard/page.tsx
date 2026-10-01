@@ -56,7 +56,7 @@ export default async function DashboardHome() {
 
       <section className="card-flat relative overflow-hidden !p-8">
         <div aria-hidden className="mesh absolute inset-0 opacity-70" />
-        <div className="relative grid items-center gap-8 md:grid-cols-[auto_1fr]">
+        <div className="relative grid items-center gap-8 lg:grid-cols-[auto_1fr]">
           <ScoreRing value={percent} size={132} stroke={12} label={`Stratégie complète à ${percent} %`} />
           <div>
             <h2 className="text-[26px] leading-snug tracking-[-0.02em]">{percent === 100 ? "Votre stratégie est complète." : `Votre stratégie est complète à ${percent} %.`}</h2>
@@ -67,7 +67,7 @@ export default async function DashboardHome() {
             </div>
           </div>
         </div>
-        <ul className="relative mt-8 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="relative mt-8 grid gap-2.5 lg:grid-cols-2 xl:grid-cols-3">
           {steps.map((s) => {
             const Icon = TAB_ICONS[s.slug];
             const locked = !hasFeature(plan, s.feature);
@@ -84,7 +84,7 @@ export default async function DashboardHome() {
         </ul>
       </section>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <Link href="/dashboard/audit" className="card group flex items-center gap-5">
           {typeof score === "number" ? <ScoreRing value={score} size={76} stroke={8} /> : <span className="flex h-[76px] w-[76px] items-center justify-center rounded-full bg-canvas text-ink-secondary"><ScanSearch size={28} strokeWidth={1.6} /></span>}
           <div className="min-w-0"><p className="caption">Dernier audit</p><p className="mt-0.5 text-[18px] font-semibold leading-snug">{typeof score === "number" ? `Score de ${Math.round(score)}/100` : "Aucun audit"}</p><p className="caption mt-1">{audit.data ? dateLabel(audit.data.created_at) : "Lancez votre premier audit"}</p></div>

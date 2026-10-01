@@ -73,7 +73,7 @@ export default function ToneTab({ brandId, initial, hasIdentity }: { brandId: st
     <section>
       <PageHeader tab="tone"><SaveIndicator state={save} /></PageHeader>
       {lists ? (
-        <div className="mt-6 grid gap-6 md:grid-cols-2">
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <ListColumn title="On dit / On fait" tone="do" items={lists.do_list ?? []} onChange={(v) => persist({ do_list: v })} />
           <ListColumn title="On évite / On ne fait pas" tone="dont" items={lists.dont_list ?? []} onChange={(v) => persist({ dont_list: v })} />
         </div>

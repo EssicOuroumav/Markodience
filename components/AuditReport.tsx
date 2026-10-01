@@ -31,7 +31,7 @@ export default function AuditReport({ data }: { data: unknown }) {
 
       <section aria-labelledby="strengths-h">
         <h2 id="strengths-h" className="section-title flex items-center gap-2.5"><CheckCircle2 size={22} className="text-success" />Points forts</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
           {r.strengths.map((s, i) => (
             <article key={i} className="card-flat border-l-4 !border-l-success/70 !p-6">
               <h3 className="text-[17px]">{s.title}</h3>
@@ -43,7 +43,7 @@ export default function AuditReport({ data }: { data: unknown }) {
 
       <section aria-labelledby="improvements-h">
         <h2 id="improvements-h" className="section-title flex items-center gap-2.5"><AlertTriangle size={22} className="text-warning" />Points d&apos;amélioration</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
           {r.improvements.map((s, i) => (
             <article key={i} className="card-flat !p-6">
               <span className={`inline-block rounded-pill px-3 py-1 text-[12px] font-medium ${PRIORITY[s.priority].cls}`}>{PRIORITY[s.priority].label}</span>

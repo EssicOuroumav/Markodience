@@ -224,7 +224,7 @@ export default function IdentityTab({
     <section className="rise">
       <PageHeader tab="identity"><SaveIndicator state={save} /></PageHeader>
       <p className="caption -mt-4 mb-2">Cliquez sur un texte pour le modifier : les changements sont enregistrés automatiquement.</p>
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+      <div className="mt-6 grid gap-6 xl:grid-cols-3">
         <article className="card-flat">
           <div className="flex items-center gap-3"><span aria-hidden className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-accent"><Target size={19} strokeWidth={1.8} /></span><h2 className="section-title">Positionnement</h2></div>
           <div className="mt-3">

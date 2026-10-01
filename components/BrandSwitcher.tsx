@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { Check } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import BrandLogo from "./BrandLogo";
 import { useRouter } from "next/navigation";
 import type { BrandProfile } from "@/types";
 
@@ -45,16 +47,12 @@ export default function BrandSwitcher({ profiles, activeId, canCreate }: { profi
         onClick={() => setOpen((v) => !v)}
         className="btn-secondary max-w-[200px] gap-2"
       >
-        <span
-          aria-hidden
-          className="h-3 w-3 shrink-0 rounded-full"
-          style={{ background: active.primary_color ?? "var(--color-accent)" }}
-        />
+        <BrandLogo src={active.logo_url} name={active.name} color={active.primary_color} size="xs" className="!border-0 !p-0 !shadow-none" />
         <span className="truncate">{active.name}</span>
         <span aria-hidden className="text-ink-secondary">▾</span>
       </button>
       {open && (
-        <div role="listbox" className="glass-float absolute right-0 mt-2 w-64 rounded-[18px] p-2 shadow-card-hover">
+        <div role="listbox" className="glass-float pop-in absolute right-0 mt-2 w-72 origin-top-right rounded-[20px] p-2 shadow-pop">
           {profiles.map((p) => (
             <button
               key={p.id}
@@ -64,8 +62,9 @@ export default function BrandSwitcher({ profiles, activeId, canCreate }: { profi
               onClick={() => choose(p.id)}
               className={`flex w-full items-center gap-2 rounded-btn px-3 py-2 text-left text-[15px] hover:bg-black/5 ${p.id === active.id ? "font-semibold" : ""}`}
             >
-              <span aria-hidden className="h-3 w-3 shrink-0 rounded-full" style={{ background: p.primary_color ?? "var(--color-accent)" }} />
-              <span className="truncate">{p.name}</span>
+              <BrandLogo src={p.logo_url} name={p.name} color={p.primary_color} size="xs" className="!border-0 !p-0 !shadow-none" />
+              <span className="min-w-0 flex-1"><span className="block truncate">{p.name}</span><span className="caption block truncate">{p.sector ?? "—"}</span></span>
+              {p.id === active.id && <Check size={16} className="shrink-0 text-accent" strokeWidth={3} />}
             </button>
           ))}
           <div className="my-1 border-t border-black/5" />

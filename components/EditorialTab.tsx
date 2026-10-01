@@ -264,7 +264,7 @@ export default function EditorialTab({
       {active && lineEntries.length > 0 && (
         <>
           <p className="caption mt-4">Glissez-déposez une semaine pour la réordonner. Cliquez sur un texte pour le modifier.</p>
-          <ol className="mt-4 grid gap-4 md:grid-cols-2">
+          <ol className="mt-4 grid gap-4 lg:grid-cols-2">
             {lineEntries.map((e) => {
               const st = STATUS_UI[e.status ?? "a_venir"];
               const v = e.validation_status ?? "non_requis";

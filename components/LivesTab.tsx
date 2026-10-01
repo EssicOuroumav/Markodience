@@ -294,7 +294,7 @@ function TeamSection({ members, onAdd, onRemove }: { members: Member[]; onAdd: (
       {members.length === 0 ? (
         <p className="mt-3 text-ink-secondary">Aucun membre pour l&apos;instant. Ajoutez le présentateur, le modérateur, la régie…</p>
       ) : (
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
           {members.map((m) => (
             <article key={m.id} className="card">
               <p className="text-[18px] font-semibold">{m.name}</p>

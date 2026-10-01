@@ -21,8 +21,10 @@ export function IlloCalendar({ className }: P) {
           return <rect key={`${r}${c}`} x={46 + c * 40} y={68 + r * 28} width="30" height="18" rx="6" className={hot ? "fill-accent" : mid ? "fill-accent/30" : "fill-canvas"} />;
         }),
       )}
-      <circle cx="204" cy="146" r="17" className="fill-success" />
-      <path d="m196 146 6 6 10-12" className="stroke-white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+      <g className="floaty">
+        <circle cx="204" cy="146" r="17" className="fill-success" />
+        <path d="m196 146 6 6 10-12" className="stroke-white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
     </svg>
   );
 }
@@ -56,8 +58,8 @@ export function IlloChat({ className }: P) {
       <rect x="120" y="98" width="58" height="6" rx="3" className="fill-canvas" />
       <rect x="120" y="112" width="42" height="6" rx="3" className="fill-canvas" />
       <path d="M176 126c-4-3-8-6-8-9a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 3-4 6-8 9Z" className="fill-danger" transform="translate(6 -2)" />
-      <circle cx="214" cy="40" r="14" className="fill-accent/15" />
-      <path d="m208 40 4 4 8-9" className="stroke-accent" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <g className="floaty-slow"><circle cx="214" cy="40" r="14" className="fill-accent/15" />
+      <path d="m208 40 4 4 8-9" className="stroke-accent" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></g>
     </svg>
   );
 }
@@ -81,7 +83,7 @@ export function IlloPillars({ className }: P) {
           <rect x={c.x + 8} y={146 - c.h + 44} width="14" height="4" rx="2" className="fill-white/50" />
         </g>
       ))}
-      <path d="m196 24 3 8 8 3-8 3-3 8-3-8-8-3 8-3 3-8Z" className="fill-warning" />
+      <path d="m196 24 3 8 8 3-8 3-3 8-3-8-8-3 8-3 3-8Z" className="twinkle fill-warning" />
     </svg>
   );
 }
@@ -98,7 +100,7 @@ export function IlloIdentity({ className }: P) {
       <rect x="104" y="76" width="72" height="6" rx="3" className="fill-canvas" />
       {["fill-accent", "fill-accent/60", "fill-night", "fill-warning", "fill-success"].map((c, i) => (<circle key={i} cx={52 + i * 30} cy="124" r="13" className={c} />))}
       <rect x="44" y="104" width="152" height="1.5" rx="1" className="fill-[#eeeef2]" />
-      <path d="m204 18 3 8 8 3-8 3-3 8-3-8-8-3 8-3 3-8Z" className="fill-accent" />
+      <path d="m204 18 3 8 8 3-8 3-3 8-3-8-8-3 8-3 3-8Z" className="twinkle fill-accent" />
     </svg>
   );
 }
@@ -112,10 +114,10 @@ export function IlloAudit({ className }: P) {
       {[58, 72, 86].map((y) => (<rect key={y} x="58" y={y} width={y === 72 ? 56 : 84} height="6" rx="3" className="fill-canvas" />))}
       <rect x="58" y="108" width="84" height="30" rx="10" className="fill-accent-soft" />
       <path d="M68 128l12-12 10 8 18-16" className="stroke-accent" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="170" cy="96" r="34" className="fill-white/70 stroke-accent" strokeWidth="9" />
+      <g className="floaty-slow"><circle cx="170" cy="96" r="34" className="fill-white/70 stroke-accent" strokeWidth="9" />
       <circle cx="170" cy="96" r="22" className="fill-accent-soft" />
       <text x="170" y="103" textAnchor="middle" className="fill-accent" style={{ font: "700 20px Inter, sans-serif" }}>86</text>
-      <path d="m194 120 22 24" className="stroke-night" strokeWidth="10" strokeLinecap="round" />
+      <path d="m194 120 22 24" className="stroke-night" strokeWidth="10" strokeLinecap="round" /></g>
     </svg>
   );
 }
@@ -143,10 +145,10 @@ export function IlloLive({ className }: P) {
       <ellipse cx="120" cy="164" rx="90" ry="8" className="fill-accent/10" />
       <rect x="26" y="22" width="188" height="118" rx="18" className="fill-night" />
       <rect x="26" y="22" width="188" height="118" rx="18" className="fill-accent/25" />
-      <circle cx="120" cy="80" r="26" className="fill-white/95" />
-      <path d="m112 66 24 14-24 14V66Z" className="fill-accent" />
+      <g className="floaty-slow"><circle cx="120" cy="80" r="26" className="fill-white/95" />
+      <path d="m112 66 24 14-24 14V66Z" className="fill-accent" /></g>
       <rect x="40" y="34" width="46" height="20" rx="10" className="fill-danger" />
-      <circle cx="53" cy="44" r="4" className="fill-white" />
+      <circle cx="53" cy="44" r="4" className="twinkle fill-white" />
       <rect x="62" y="41" width="18" height="6" rx="3" className="fill-white" />
       <rect x="40" y="122" width="100" height="5" rx="2.5" className="fill-white/60" />
       <rect x="40" y="122" width="58" height="5" rx="2.5" className="fill-accent" />
