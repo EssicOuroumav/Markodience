@@ -16,6 +16,7 @@ const config: Config = {
         accent: "rgb(var(--rgb-accent) / <alpha-value>)",
         "accent-strong": "rgb(var(--rgb-accent-strong) / <alpha-value>)",
         "accent-soft": "rgb(var(--rgb-accent-soft) / <alpha-value>)",
+        "accent-light": "rgb(var(--rgb-accent-light) / <alpha-value>)",
         line: "rgb(var(--rgb-line) / <alpha-value>)",
         night: "rgb(var(--rgb-night) / <alpha-value>)",
         success: "rgb(var(--rgb-success) / <alpha-value>)",
@@ -39,7 +40,7 @@ const config: Config = {
         "card-hover": "0 14px 40px rgba(16, 24, 40, 0.10)",
         card: "0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 20px rgba(16, 24, 40, 0.05)",
         pop: "0 20px 60px rgba(16, 24, 40, 0.14)",
-        glow: "0 10px 30px rgba(0, 113, 227, 0.28)",
+        glow: "0 10px 30px rgb(var(--rgb-accent) / 0.28)",
       },
       letterSpacing: {
         heading: "-0.02em",

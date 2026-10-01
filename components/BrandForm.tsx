@@ -9,7 +9,7 @@ import type { BrandStatus } from "@/types";
 
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 const LOGO_TYPES = ["image/png", "image/jpeg", "image/webp"];
-const SWATCHES = ["#0071E3", "#C2410C", "#0F766E", "#7C3AED", "#BE123C", "#1D1D1F"];
+const SWATCHES = ["#0071E3", "#059669", "#C2410C", "#7C3AED", "#BE123C", "#1D1D1F"];
 
 /** Création d'un profil de marque : utilisé à l'inscription et pour ajouter une marque depuis le tableau de bord. */
 export default function BrandForm({ userId, submitLabel, onCreated, onLimit }: { userId: string; submitLabel: string; onCreated: (brandId: string) => void; onLimit?: () => void }) {

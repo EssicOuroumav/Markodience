@@ -63,3 +63,15 @@ describe("PDF", () => {
     expect(occurrences).toBe(doc.getNumberOfPages());
   });
 });
+
+describe("PDF aux couleurs de la marque", () => {
+  const data = { ...EMPTY_KPI, reach: 100 };
+  it("accepte une couleur de marque et reste un PDF valide", () => {
+    const doc = buildKpiPdf({ brandName: "Marque", month: "2026-10-01", data, color: "#047857" });
+    expect(doc.output().startsWith("%PDF")).toBe(true);
+  });
+  it("une couleur invalide retombe sur la couleur par défaut", () => {
+    const doc = buildKpiPdf({ brandName: "Marque", month: "2026-10-01", data, color: "pas-une-couleur" });
+    expect(doc.getNumberOfPages()).toBe(1);
+  });
+});

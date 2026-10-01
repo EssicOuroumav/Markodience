@@ -86,7 +86,7 @@ export default function PillarsTab({ brandId, initial, hasIdentity }: { brandId:
         <div className="mt-6 grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
           {pillars.map((p, i) => (
             <article key={p.id} className="card group relative flex flex-col overflow-hidden">
-              <span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent to-[#5aa9ff] opacity-80" />
+              <span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent to-accent-light opacity-80" />
               <span aria-hidden className="num mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-accent-soft text-[14px] font-semibold text-accent">{String(i + 1).padStart(2, "0")}</span>
               <EditableText label="Nom du pilier" className="text-[20px] font-semibold" value={p.name ?? ""} onSave={(v) => update(p.id, { name: v })} />
               <EditableText multiline label="Description du pilier" className="mt-1 text-[15px]" value={p.description ?? ""} onSave={(v) => update(p.id, { description: v })} />

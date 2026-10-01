@@ -18,7 +18,7 @@ export default async function BrandsPage() {
           <p className="caption">Marques utilisées</p>
           <p className="num mt-0.5 text-[30px] font-semibold leading-none tracking-[-0.03em]">{used}<span className="text-[18px] font-medium text-ink-secondary"> / {max === null ? "illimité" : max}</span></p>
           {max !== null && (
-            <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-canvas"><div className="bar-in h-full rounded-full bg-gradient-to-r from-accent to-[#5aa9ff]" style={{ width: `${Math.min(100, (used / max) * 100)}%` }} /></div>
+            <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-canvas"><div className="bar-in h-full rounded-full bg-gradient-to-r from-accent to-accent-light" style={{ width: `${Math.min(100, (used / max) * 100)}%` }} /></div>
           )}
         </div>
         <p className="max-w-sm text-[14px] text-ink-secondary">{owner ? "En tant que propriétaire, vous n'avez aucune limite de marques." : `Palier ${PLANS[plan].label} : ${canAdd ? "vous pouvez encore ajouter des marques." : "limite atteinte."} ${canAdd ? "" : next}`}</p>

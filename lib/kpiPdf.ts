@@ -1,6 +1,7 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { dateLabel, formatNumber, monthLabel, type KpiData } from "./kpi";
+import { accentFrom } from "./theme";
 
 export type KpiPdfInput = {
   brandName: string;
@@ -8,9 +9,9 @@ export type KpiPdfInput = {
   data: KpiData;
   exportDate?: string; // YYYY-MM-DD
   watermark?: boolean; // palier Gratuit
+  color?: string | null; // couleur principale de la marque (en-tête et tableau)
 };
 
-const ACCENT: [number, number, number] = [0, 113, 227];
 const INK: [number, number, number] = [29, 29, 31];
 const MUTED: [number, number, number] = [110, 110, 115];
 const ROW_ALT: [number, number, number] = [245, 245, 247];
@@ -23,7 +24,8 @@ export function kpiFileName(brandName: string, month: string): string {
   return `KPI_${clean(brandName) || "Marque"}_${clean(mois)}${annee}.pdf`;
 }
 
-export function buildKpiPdf({ brandName, month, data, exportDate, watermark = false }: KpiPdfInput): jsPDF {
+export function buildKpiPdf({ brandName, month, data, exportDate, watermark = false, color }: KpiPdfInput): jsPDF {
+  const ACCENT = accentFrom(color).map(Math.round) as [number, number, number];
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();

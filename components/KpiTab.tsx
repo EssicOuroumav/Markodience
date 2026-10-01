@@ -8,7 +8,7 @@ import PageHeader from "./PageHeader";
 
 export type KpiReport = { id: string; month: string; data: unknown; submitted_at: string | null; deadline: string | null };
 
-type Props = { brandId: string; brandName: string; deadlineDay: number; initial: KpiReport[]; watermark: boolean };
+type Props = { brandId: string; brandName: string; brandColor?: string | null; deadlineDay: number; initial: KpiReport[]; watermark: boolean };
 
 const todayIso = () => {
   const d = new Date();
@@ -20,7 +20,7 @@ const toForm = (raw: unknown): KpiData => {
 };
 const num = (v: string) => (v === "" ? 0 : Math.max(0, Math.floor(Number(v)) || 0));
 
-export default function KpiTab({ brandId, brandName, deadlineDay: initialDay, initial, watermark }: Props) {
+export default function KpiTab({ brandId, brandName, brandColor, deadlineDay: initialDay, initial, watermark }: Props) {
   const supabase = createClient();
   const months = recentMonths(new Date());
   const [reports, setReports] = useState<KpiReport[]>(initial);
@@ -93,7 +93,7 @@ export default function KpiTab({ brandId, brandName, deadlineDay: initialDay, in
 
   async function exportPdf(m: string, raw: unknown) {
     const { buildKpiPdf, kpiFileName } = await import("@/lib/kpiPdf");
-    buildKpiPdf({ brandName, month: m, data: toForm(raw), watermark }).save(kpiFileName(brandName, m));
+    buildKpiPdf({ brandName, month: m, data: toForm(raw), watermark, color: brandColor }).save(kpiFileName(brandName, m));
   }
 
   const field = (id: string, label: string, value: number, onChange: (n: number) => void) => (

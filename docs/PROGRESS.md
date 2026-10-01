@@ -50,6 +50,8 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 
 - [x] FAQ de l'accueil refaite : 18 questions en 4 thèmes (Découvrir, Fonctionnement, Tarifs et paiement, Marques et données), `lib/faq.ts` (prix, quotas et limites lus dans `lib/plans.ts`), accordéon animé accessible (une réponse ouverte à la fois), données structurées schema.org FAQPage, 6 tests. À COMPLÉTER par le propriétaire : un moyen de contact (email ou WhatsApp) pour les remises ONG/associations et les devis publics.
 
+- [x] Thème par marque : `lib/theme.ts` dérive la palette d'accentuation (accent, strong, light, soft) de la couleur principale de la marque active, avec contraste ≥ 4,5:1 garanti avec le texte blanc ; appliquée en variables CSS sur le conteneur du tableau de bord (sidebar, onglet actif, boutons, barres, anneaux, illustrations, fond teinté) ; l'export PDF KPI prend aussi la couleur de la marque ; 10 tests. Le bleu Markodience reste sur l'accueil, l'authentification et l'espace admin. Vérifié visuellement (émeraude, violet).
+
 ## Étape en cours
 - Reste : Supabase Site URL = https://markodience.vercel.app + Redirect URL https://markodience.vercel.app/** ; push de /auth/callback ; test d'inscription réelle ; crédit Anthropic (2026-10-02) puis test génération réelle ; webhook IPN PayDunya (test réel sur le site en ligne) ; plus tard : clés PayDunya production, SMTP personnalisé.
 

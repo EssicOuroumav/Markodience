@@ -16,6 +16,7 @@ export default async function KpiPage() {
       key={active.id}
       brandId={active.id}
       brandName={active.name}
+      brandColor={active.primary_color}
       deadlineDay={brand?.kpi_deadline_day ?? 5}
       initial={(reports as KpiReport[]) ?? []}
       watermark={PLANS[plan].exportWatermark}

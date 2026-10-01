@@ -51,7 +51,7 @@ export default function Sidebar({ plan, owner, email, brand, progress, brandCoun
   }
 
   return (
-    <aside aria-label="Navigation du profil de marque" className="border-b border-[var(--color-border-soft)] bg-gradient-to-b from-white via-white to-canvas md:fixed md:bottom-0 md:left-0 md:top-14 md:flex md:w-[284px] md:flex-col md:border-b-0 md:border-r">
+    <aside aria-label="Navigation du profil de marque" className="border-b border-[var(--color-border-soft)] bg-gradient-to-b from-white via-white to-accent-soft/70 md:fixed md:bottom-0 md:left-0 md:top-14 md:flex md:w-[284px] md:flex-col md:border-b-0 md:border-r">
       {/* Carte de la marque : cliquable, ramène à la vue d'ensemble */}
       <Link href="/dashboard" aria-label={`${brand.name} : retour à la vue d'ensemble`} className="group relative hidden overflow-hidden border-b hairline p-5 pb-4 outline-offset-[-2px] md:block">
         <span aria-hidden className="absolute inset-x-0 top-0 h-1" style={{ background: `linear-gradient(90deg, ${brand.primary_color ?? "var(--color-accent)"}, transparent)` }} />
@@ -74,7 +74,7 @@ export default function Sidebar({ plan, owner, email, brand, progress, brandCoun
         <div className="relative mt-4">
           <div className="flex items-center justify-between text-[12px]"><span className="font-medium text-ink-secondary">Stratégie complète</span><span className="num font-semibold text-ink">{progress.percent} %</span></div>
           <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-black/[0.06]" role="progressbar" aria-valuenow={progress.percent} aria-valuemin={0} aria-valuemax={100} aria-label="Progression de la stratégie">
-            <div className="bar-in h-full rounded-full bg-gradient-to-r from-accent to-[#5aa9ff]" style={{ width: `${progress.percent}%` }} />
+            <div className="bar-in h-full rounded-full bg-gradient-to-r from-accent to-accent-light" style={{ width: `${progress.percent}%` }} />
           </div>
         </div>
       </Link>
