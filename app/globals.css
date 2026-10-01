@@ -229,6 +229,15 @@ h1, h2, h3 {
   animation: gradient-x 6s linear infinite;
 }
 
+.text-shimmer-light {
+  background: linear-gradient(90deg, #8cc4ff 0%, #ffffff 40%, #8cc4ff 80%, #5aa9ff 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-x 7s linear infinite;
+}
+
 /* Délais d'entrée en cascade (éléments frères) */
 .d1 { animation-delay: 0.05s; } .d2 { animation-delay: 0.12s; } .d3 { animation-delay: 0.2s; }
 .d4 { animation-delay: 0.28s; } .d5 { animation-delay: 0.36s; } .d6 { animation-delay: 0.44s; }
@@ -260,10 +269,11 @@ h1, h2, h3 {
 .btn-primary:hover:not(:disabled)::after { animation: sweep 0.9s ease; }
 
 @media (prefers-reduced-motion: reduce) {
-  .rise, .fade-in, .pop-in, .floaty, .floaty-slow, .orb, .orb-slow, .twinkle, .bar-in, .text-shimmer, .shimmer,
+  .rise, .fade-in, .pop-in, .floaty, .floaty-slow, .orb, .orb-slow, .twinkle, .bar-in, .text-shimmer, .text-shimmer-light, .shimmer,
   .page-enter, .page-enter :is(.card, .card-flat), .btn-primary::after { animation: none !important; }
   .reveal { opacity: 1; translate: 0 0; transition: none; }
   svg circle { animation: none !important; }
   .text-shimmer { background: none; color: var(--color-accent); -webkit-background-clip: initial; background-clip: initial; }
+  .text-shimmer-light { animation: none; background: none; color: #8cc4ff; -webkit-background-clip: initial; background-clip: initial; }
   html { scroll-behavior: auto; }
 }

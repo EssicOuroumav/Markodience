@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, Check, ChevronDown, Languages, ShieldCheck, Smartphone, Wallet } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import HeroVisual from "@/components/HeroVisual";
 import Photo from "@/components/Photo";
+import ProductMockup, { ScoreChip, ValidatedChip } from "@/components/ProductMockup";
 import { PersonaAspirant, PersonaConfirmed, PersonaTeam } from "@/components/people";
 import { PHOTOS } from "@/lib/photos";
 import Reveal from "@/components/Reveal";
@@ -76,31 +76,47 @@ export default async function Home() {
 
       <noscript><style>{".reveal{opacity:1!important;translate:0 0!important}"}</style></noscript>
       <main>
-        {/* Hero */}
-        <section className="mesh relative overflow-hidden">
-          <div aria-hidden className="orb pointer-events-none absolute -left-24 top-10 h-[420px] w-[420px] rounded-full bg-accent/15 blur-3xl" />
-          <div aria-hidden className="orb-slow pointer-events-none absolute -right-20 top-40 h-[380px] w-[380px] rounded-full bg-[#5aa9ff]/25 blur-3xl" />
-          <div aria-hidden className="grid-dots pointer-events-none absolute inset-0 opacity-40 [mask-image:radial-gradient(60%_60%_at_50%_30%,black,transparent)]" />
-          <div className="relative mx-auto grid max-w-6xl items-center gap-16 px-5 pb-28 pt-32 md:px-6 lg:grid-cols-[1.05fr_1fr] lg:pt-40">
-            <div>
-              <span className="chip rise d1">Pensé pour les community managers d&apos;Afrique de l&apos;Ouest</span>
-              <h1 className="rise d2 mt-6 text-[clamp(40px,6vw,68px)] font-semibold leading-[1.04] tracking-[-0.035em]">
-                La stratégie de vos marques, <span className="text-shimmer">claire et structurée.</span>
-              </h1>
-              <p className="rise d3 mt-6 max-w-xl text-[19px] leading-relaxed text-ink-secondary">
-                Identité, piliers de contenu, ligne éditoriale, audit et reporting : tout ce qu’il faut pour gérer une marque comme un pro, généré avec l’IA et pensé pour votre réalité.
-              </p>
-              <div className="rise d4 mt-9 flex flex-wrap items-center gap-4">
-                <Link href={startHref} className="btn-primary">{signedIn ? "Accéder à mon espace" : "Créer mon espace gratuit"} <ArrowRight size={18} /></Link>
-                <a href="#fonctionnalites" className="btn-secondary !rounded-pill !px-6 !py-3 !text-[17px]">Découvrir</a>
+        {/* En-tête : grande photo en fond, texte en bas, maquette du produit à droite */}
+        <section className="px-3 pb-6 pt-[68px] sm:px-5">
+          <div className="relative isolate mx-auto flex min-h-[700px] max-w-[1440px] items-end overflow-hidden rounded-[32px] bg-night text-white sm:min-h-[780px] lg:min-h-[830px] lg:rounded-[44px]">
+            {PHOTOS.hero ? (
+              <Photo src={PHOTOS.hero} alt="" priority sizes="100vw" objectPosition="40% 0%" className="absolute inset-0 -z-20 -scale-x-100" fallback={<div className="mesh absolute inset-0" />} />
+            ) : (
+              <>
+                <div aria-hidden className="orb absolute -left-24 top-10 -z-20 h-[420px] w-[420px] rounded-full bg-accent/30 blur-3xl" />
+                <div aria-hidden className="orb-slow absolute -right-20 top-40 -z-20 h-[380px] w-[380px] rounded-full bg-[#5aa9ff]/30 blur-3xl" />
+              </>
+            )}
+            {/* Dégradés : lisibilité du texte en bas, visages dégagés en haut */}
+            <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(to_top,rgba(11,18,32,0.97)_0%,rgba(11,18,32,0.86)_30%,rgba(11,18,32,0.34)_58%,rgba(11,18,32,0.06)_100%)]" />
+            <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(11,18,32,0.55)_0%,transparent_60%)]" />
+
+            <div className="grid w-full items-end gap-10 px-6 pb-9 pt-40 sm:px-12 sm:pb-12 lg:grid-cols-[1.25fr_0.75fr] lg:px-16 lg:pb-12">
+              <div>
+                <span className="rise d1 inline-flex items-center gap-1.5 rounded-pill border border-white/20 bg-white/10 px-3.5 py-1.5 text-[13px] font-medium text-white backdrop-blur">Pensé pour les community managers d&apos;Afrique de l&apos;Ouest</span>
+                <h1 className="rise d2 mt-4 max-w-4xl text-[clamp(36px,5vw,62px)] font-semibold leading-[1.05] tracking-[-0.035em]">
+                  La stratégie de vos marques, <span className="text-shimmer-light">claire et structurée.</span>
+                </h1>
+                <p className="rise d3 mt-4 max-w-2xl text-[17px] leading-relaxed text-white/75 sm:text-[18px]">
+                  Identité, piliers, ligne éditoriale, audit et reporting : gérez une marque comme un pro, avec l’IA.
+                </p>
+                <div className="rise d4 mt-6 flex flex-wrap items-center gap-4">
+                  <Link href={startHref} className="btn-primary">{signedIn ? "Accéder à mon espace" : "Créer mon espace gratuit"} <ArrowRight size={18} /></Link>
+                  <a href="#fonctionnalites" className="inline-flex items-center justify-center rounded-pill border border-white/30 bg-white/10 px-6 py-3 text-[17px] font-medium text-white backdrop-blur transition hover:bg-white/20">Découvrir</a>
+                </div>
+                <ul className="rise d5 mt-5 flex flex-wrap gap-x-6 gap-y-1.5 text-[14px] text-white/70">
+                  {["Gratuit pour démarrer", "Paiement mobile money", "Aucun accès à vos réseaux"].map((t) => (
+                    <li key={t} className="flex items-center gap-1.5"><Check size={16} className="text-success" strokeWidth={3} />{t}</li>
+                  ))}
+                </ul>
               </div>
-              <ul className="rise d5 mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[14px] text-ink-secondary">
-                {["Gratuit pour démarrer", "Paiement mobile money", "Aucun accès à vos réseaux"].map((t) => (
-                  <li key={t} className="flex items-center gap-1.5"><Check size={16} className="text-success" strokeWidth={3} />{t}</li>
-                ))}
-              </ul>
+
+              <div className="pop-in d4 relative hidden lg:block">
+                <ScoreChip className="absolute -top-16 right-4 z-10" />
+                <ProductMockup compact />
+                <ValidatedChip className="absolute -bottom-5 -left-6 z-10" />
+              </div>
             </div>
-            <div className="pop-in d3"><HeroVisual /></div>
           </div>
         </section>
 

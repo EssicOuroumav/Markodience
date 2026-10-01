@@ -11,7 +11,7 @@ const WEEKS = [
 /** Maquette du produit en HTML/CSS : fenêtre de navigateur avec la ligne éditoriale et deux pastilles flottantes. */
 export default function ProductMockup({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={`relative mx-auto w-full ${compact ? "max-w-[480px]" : "max-w-[600px]"}`}>
+    <div className={`relative mx-auto w-full text-ink ${compact ? "max-w-[480px]" : "max-w-[600px]"}`}>
       <div aria-hidden className="absolute -inset-6 -z-10 rounded-[40px] bg-gradient-to-br from-accent/20 via-accent/5 to-transparent blur-2xl" />
       <div className="overflow-hidden rounded-[22px] border border-[var(--color-border-soft)] bg-white shadow-pop" role="img" aria-label="Aperçu de la ligne éditoriale dans Markodience">
         <div className="flex items-center gap-1.5 border-b border-[var(--color-border-soft)] bg-canvas px-4 py-3">
