@@ -48,6 +48,8 @@ export default function ProductMockup({ compact = false }: { compact?: boolean }
         </div>
       </div>
 
+      {!compact && (
+        <>
       <div className="floaty absolute -right-3 -top-6 flex items-center gap-3 rounded-2xl border border-[var(--color-border-soft)] bg-white p-3 shadow-pop sm:-right-8">
         <span className="relative flex h-12 w-12 items-center justify-center">
           <svg viewBox="0 0 36 36" className="h-12 w-12 -rotate-90"><circle cx="18" cy="18" r="15" fill="none" className="stroke-accent-soft" strokeWidth="4" /><circle cx="18" cy="18" r="15" fill="none" className="stroke-accent" strokeWidth="4" strokeLinecap="round" strokeDasharray="81 94" /></svg>
@@ -59,6 +61,29 @@ export default function ProductMockup({ compact = false }: { compact?: boolean }
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-success text-white"><Check size={16} strokeWidth={3} /></span>
         <span><span className="block text-[13px] font-semibold">Semaine 2 validée</span><span className="block text-[11px] text-ink-secondary">par la responsable</span></span>
       </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+export function ScoreChip({ className = "" }: { className?: string }) {
+  return (
+    <div className={`floaty flex items-center gap-3 rounded-2xl border border-[var(--color-border-soft)] bg-white p-3 shadow-pop ${className}`}>
+      <span className="relative flex h-12 w-12 items-center justify-center">
+        <svg viewBox="0 0 36 36" className="h-12 w-12 -rotate-90"><circle cx="18" cy="18" r="15" fill="none" className="stroke-accent-soft" strokeWidth="4" /><circle cx="18" cy="18" r="15" fill="none" className="stroke-accent" strokeWidth="4" strokeLinecap="round" strokeDasharray="81 94" /></svg>
+        <span className="absolute text-[13px] font-semibold">86</span>
+      </span>
+      <span><span className="block text-[13px] font-semibold">Score d&apos;audit</span><span className="block text-[11px] text-ink-secondary">2 priorités à traiter</span></span>
+    </div>
+  );
+}
+
+export function ValidatedChip({ className = "" }: { className?: string }) {
+  return (
+    <div className={`floaty-slow flex items-center gap-2.5 rounded-2xl border border-[var(--color-border-soft)] bg-white px-4 py-3 shadow-pop ${className}`}>
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-success text-white"><Check size={16} strokeWidth={3} /></span>
+      <span><span className="block text-[13px] font-semibold">Semaine 2 validée</span><span className="block text-[11px] text-ink-secondary">par la responsable</span></span>
     </div>
   );
 }
