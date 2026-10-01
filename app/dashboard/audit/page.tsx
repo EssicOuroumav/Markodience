@@ -1,8 +1,11 @@
 import AuditTab, { type AuditRow } from "@/components/AuditTab";
 import { getDashboardContext } from "@/lib/brand";
+import { lockedView } from "@/lib/gate";
 
 export default async function AuditPage() {
-  const { supabase, active } = await getDashboardContext();
+  const { supabase, active, plan } = await getDashboardContext();
+  const locked = lockedView(plan, "audit");
+  if (locked) return locked;
   const { data } = await supabase
     .from("audits")
     .select("id, created_at, report_data")

@@ -8,7 +8,7 @@ export function setActiveBrandCookie(id: string) {
   document.cookie = `active_brand=${id}; path=/; max-age=31536000; samesite=lax`;
 }
 
-export default function BrandSwitcher({ profiles, activeId }: { profiles: BrandProfile[]; activeId: string }) {
+export default function BrandSwitcher({ profiles, activeId, canCreate }: { profiles: BrandProfile[]; activeId: string; canCreate: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -68,9 +68,16 @@ export default function BrandSwitcher({ profiles, activeId }: { profiles: BrandP
             </button>
           ))}
           <div className="my-1 border-t border-black/5" />
-          <a href="/signup" className="block rounded-btn px-3 py-2 text-[15px] text-accent hover:bg-black/5">
-            + Nouveau profil de marque
-          </a>
+          {canCreate ? (
+            <a href="/signup" className="block rounded-btn px-3 py-2 text-[15px] text-accent hover:bg-black/5">
+              + Nouveau profil de marque
+            </a>
+          ) : (
+            <a href="/dashboard/upgrade?reason=profiles" className="block rounded-btn px-3 py-2 text-[15px] hover:bg-black/5">
+              <span className="text-ink-secondary">Limite de profils atteinte.</span>{" "}
+              <span className="text-accent">Passer au palier supérieur</span>
+            </a>
+          )}
         </div>
       )}
     </div>

@@ -1,17 +1,19 @@
 import Navbar from "@/components/Navbar";
 import BrandSwitcher from "@/components/BrandSwitcher";
 import Sidebar from "@/components/Sidebar";
+import UpgradeToast from "@/components/UpgradeToast";
 import { getDashboardContext } from "@/lib/brand";
+import { canCreateProfile } from "@/lib/plans";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { profiles, active } = await getDashboardContext();
+  const { profiles, active, plan } = await getDashboardContext();
   return (
     <>
       <Navbar>
-        <BrandSwitcher profiles={profiles} activeId={active.id} />
+        <BrandSwitcher profiles={profiles} activeId={active.id} canCreate={canCreateProfile(plan, profiles.length)} />
       </Navbar>
       <div className="pt-14">
-        <Sidebar />
+        <Sidebar plan={plan} />
         <main className="mx-auto max-w-5xl px-6 pb-16 pt-8 md:ml-64">
           <header className="mb-8 flex items-center gap-4">
             {active.logo_url ? (
@@ -27,6 +29,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               <p className="caption">{active.sector ?? "Secteur non renseigné"}</p>
             </div>
           </header>
+          <UpgradeToast />
           {children}
         </main>
       </div>

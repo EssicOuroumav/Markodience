@@ -1,5 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
+import { hasFeature, isPlanId, type Feature } from "@/lib/plans";
 import { createClient } from "@/lib/supabase/server";
 import { AiError, AI_MESSAGES, generateJson } from "@/lib/ai/anthropic";
 import { mockAudit, mockLiveScripts, mockLiveStructure, mockEditorial, mockIdentity, mockPillars, mockTone } from "@/lib/ai/mock";
@@ -32,6 +33,14 @@ export async function POST(request: Request) {
   const parsed = generateRequest.safeParse(body);
   if (!parsed.success) return fail(400, "Données invalides. Vérifiez les champs du formulaire.", "bad_request");
   const req = parsed.data;
+
+  const feature = requiredFeature(req.type);
+  if (feature) {
+    const { data: planRaw } = await supabase.rpc("my_plan");
+    if (!hasFeature(isPlanId(planRaw) ? planRaw : "gratuit", feature)) {
+      return fail(403, "Cette fonctionnalité est réservée aux paliers payants.", "plan_required");
+    }
+  }
 
   try {
     if (req.type === "editorial_line" || req.type === "editorial_week") {
@@ -109,6 +118,13 @@ export async function POST(request: Request) {
 }
 
 type Supa = ReturnType<typeof createClient>;
+
+function requiredFeature(type: string): Feature | null {
+  if (type === "audit") return "audit";
+  if (type.startsWith("editorial")) return "editorial";
+  if (type.startsWith("live_")) return "lives";
+  return null;
+}
 
 /** Charge ligne + marque + piliers + tonalité (RLS : uniquement si la ligne appartient à l'utilisateur). */
 async function loadEditorialContext(supabase: Supa, lineId: string) {

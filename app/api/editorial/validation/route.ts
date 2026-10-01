@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { hasFeature, isPlanId } from "@/lib/plans";
 
 const body = z.object({ entry_id: z.string().uuid(), action: z.enum(["request", "validate"]) });
 
@@ -10,6 +11,11 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ ok: false, error: "Connexion requise." }, { status: 401 });
+
+  const { data: planRaw } = await supabase.rpc("my_plan");
+  if (!hasFeature(isPlanId(planRaw) ? planRaw : "gratuit", "editorial")) {
+    return NextResponse.json({ ok: false, error: "Réservé aux paliers payants." }, { status: 403 });
+  }
 
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ ok: false, error: "Requête invalide." }, { status: 400 });

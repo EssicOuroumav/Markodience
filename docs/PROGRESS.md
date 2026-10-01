@@ -22,12 +22,14 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 
 - [x] Étape 8 — Guide Lives : activation par profil (`lives_enabled`), guides par objectif (5 trames distinctes), génération trame / régénération d'une étape / scripts + banque de réponses rapides (copie 1 clic, ajout manuel, pas de doublons à la régénération), réorganisation par boutons ↑↓, équipe partagée par profil (manuel). Aucune connexion aux plateformes. Vérifié dans le navigateur (mock). 40 tests.
 
+- [~] Étape 9 — Paliers + paiement : code écrit (plans.ts, interface PaymentProvider + PayDunya + mock, /api/checkout, /api/payments/webhook, /payment/return, verrouillage UI + API, migration 4 RLS). EN ATTENTE : migration 4 à exécuter, puis tests réels.
+
 ## Étape en cours
-- Étape 9 — Paliers + CinetPay (prompt 8). Bloquants : clé service_role correcte + identifiants CinetPay (sinon : mocks) + choix du fournisseur.
+- Étape 9 — vérification (migration 4 appliquée ? test mock du parcours paiement, test RLS palier gratuit), puis étape 10 : audit sécurité global, tests e2e, déploiement Vercel.
 
 ## En attente côté utilisateur
 - GitHub : dépôt EssicOuroumav/Markodience passé en PRIVÉ ; le `git push` a été bloqué par le garde-fou de la session (6+ commits locaux non poussés). À pousser quand l'utilisateur l'autorise explicitement.
-- SUPABASE_SERVICE_ROLE_KEY dans .env.local contient actuellement la clé anon (identique). À remplacer par la vraie clé service_role (nécessaire dès l'étape 9, webhook). Nettoyage des comptes de test (t1/t2/ui.test…@example.com) à faire avec cette clé.
+- SUPABASE_SERVICE_ROLE_KEY : OK (service_role vérifiée). Nettoyage des comptes de test (t1/t2/ui.test…@example.com) à faire avec cette clé.
 - ANTHROPIC_API_KEY : clé présente et valide, crédit à ajouter (5 $ prévus le 2026-10-02). Pour tester sans crédit : ajouter `AI_MOCK=1` dans .env.local (JAMAIS en production).
 - CinetPay : identifiants sandbox.
 
@@ -36,3 +38,5 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 - Table `audits` ajoutée au schéma initial (absente du prompt 1).
 - Paiement derrière une interface `PaymentProvider` (CinetPay en V1).
 - Next 14.2.35 : `npm audit` signale des vulnérabilités corrigées seulement en Next 15+ — à traiter lors de l'audit final.
+
+- Fournisseur de paiement : PayDunya (pas CinetPay). Variables PAYDUNYA_* à remplir (clés sandbox).

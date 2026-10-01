@@ -129,7 +129,11 @@ export default function OnboardingFlow() {
     }).select("id").single();
     setLoading(false);
     if (insErr) {
-      setError("Le profil n'a pas pu être créé : " + insErr.message);
+      setError(
+        insErr.code === "42501"
+          ? "Vous avez atteint la limite de profils de votre palier. Passez au palier supérieur pour en créer d'autres."
+          : "Le profil n'a pas pu être créé : " + insErr.message,
+      );
       return;
     }
     if (created) setActiveBrandCookie(created.id);

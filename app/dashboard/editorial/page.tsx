@@ -1,8 +1,11 @@
 import EditorialTab, { type Entry, type Line } from "@/components/EditorialTab";
 import { getDashboardContext } from "@/lib/brand";
+import { lockedView } from "@/lib/gate";
 
 export default async function EditorialPage() {
-  const { supabase, active } = await getDashboardContext();
+  const { supabase, active, plan } = await getDashboardContext();
+  const locked = lockedView(plan, "editorial");
+  if (locked) return locked;
   const [{ data: lines }, { count: pillarCount }] = await Promise.all([
     supabase.from("editorial_lines").select("id, channel, period_start, period_end").eq("brand_profile_id", active.id).order("period_start", { ascending: true }),
     supabase.from("content_pillars").select("id", { count: "exact", head: true }).eq("brand_profile_id", active.id),
