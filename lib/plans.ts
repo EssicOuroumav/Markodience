@@ -15,7 +15,7 @@ type PlanDef = {
   price?: number; // XOF / mois
   pricePerSeat?: number; // XOF / siège / mois
   minSeats?: number;
-  maxProfiles: number | null; // null = illimité
+  maxProfiles: number | null; // null = illimité (aucun palier aujourd'hui ; le propriétaire contourne la limite)
   features: readonly Feature[];
   exportWatermark: boolean;
   aiDailyLimit: number; // générations IA par jour et par utilisateur (00:00 UTC)
@@ -45,7 +45,7 @@ export const PLANS: Record<PlanId, PlanDef> = {
     label: "Agence",
     pricePerSeat: 18000,
     minSeats: 2,
-    maxProfiles: null,
+    maxProfiles: 10,
     features: [...PRO_FEATURES, "white_label", "multi_export"],
     exportWatermark: false,
     aiDailyLimit: 200,

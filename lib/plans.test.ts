@@ -22,7 +22,8 @@ describe("paliers", () => {
     expect(canCreateProfile("gratuit", 1)).toBe(false);
     expect(canCreateProfile("pro", 2)).toBe(true);
     expect(canCreateProfile("pro", 3)).toBe(false);
-    expect(canCreateProfile("agence", 500)).toBe(true);
+    expect(canCreateProfile("agence", 9)).toBe(true);
+    expect(canCreateProfile("agence", 10)).toBe(false);
   });
   it("prix : le montant est toujours calculé, jamais fourni", () => {
     expect(priceFor("pro")).toBe(12000);
@@ -55,10 +56,13 @@ describe("quota IA", () => {
 
 describe("cohérence avec la migration RLS", () => {
   const sql = readFileSync("supabase/migrations/20261001000400_plan_gating.sql", "utf8");
+  const limits = readFileSync("supabase/migrations/20261001000600_profile_limits.sql", "utf8");
   it("limites de profils identiques à plans.ts", () => {
-    expect(sql).toContain(`when 'gratuit' then ${PLANS.gratuit.maxProfiles}`);
-    expect(sql).toContain(`when 'pro' then ${PLANS.pro.maxProfiles}`);
+    expect(limits).toContain(`when 'gratuit' then ${PLANS.gratuit.maxProfiles}`);
+    expect(limits).toContain(`when 'pro' then ${PLANS.pro.maxProfiles}`);
+    expect(limits).toContain(`when 'agence' then ${PLANS.agence.maxProfiles}`);
   });
+  it("le propriétaire contourne la limite", () => expect(limits).toContain("'admin'"));
   it("les tables payantes sont verrouillées pour le palier gratuit", () => {
     expect(PAID_FEATURES.sort()).toEqual(["audit", "editorial", "kpi", "lives", "rules"]);
     for (const t of ["audits", "editorial_lines", "editorial_entries", "kpi_reports", "operational_rules", "live_guides", "live_team_members", "live_scripts"]) {

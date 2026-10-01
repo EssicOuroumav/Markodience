@@ -33,7 +33,7 @@ const STEPS = [
 const FAQ = [
   { q: "Markodience publie-t-il à ma place sur les réseaux sociaux ?", a: "Non, jamais. Markodience est un outil de structuration stratégique : il ne se connecte pas à vos comptes et ne publie rien. Vous gardez la main sur vos réseaux." },
   { q: "Comment puis-je payer ?", a: "Par mobile money (Orange Money, MTN, Moov, Wave…) ou par carte bancaire, en francs CFA. Les paiements sont traités par PayDunya." },
-  { q: "Puis-je gérer plusieurs marques ?", a: "Oui. Le palier Gratuit inclut 1 profil, le Pro jusqu’à 3, et le palier Agence autorise un nombre illimité de profils." },
+  { q: "Puis-je gérer plusieurs marques ?", a: "Oui. Le palier Gratuit inclut 1 profil, le Pro jusqu’à 3, et le palier Agence jusqu’à 10 profils." },
   { q: "Que contient le palier Gratuit ?", a: "L’identité de marque, les piliers de contenu et la tonalité, avec un nombre limité de générations par jour. Les autres onglets sont réservés au Pro et à l’Agence." },
   { q: "Mes données sont-elles protégées ?", a: "Chaque compte ne voit que ses propres données, isolées au niveau de la base. Les connexions sont chiffrées et aucune clé secrète n’est exposée dans l’application." },
 ];
@@ -41,7 +41,7 @@ const FAQ = [
 const PLAN_BULLETS: Record<"gratuit" | "pro" | "agence", string[]> = {
   gratuit: ["1 profil de marque", "Identité, piliers, tonalité", "Exports avec filigrane"],
   pro: ["Jusqu’à 3 profils de marque", "Audit, ligne éditoriale, KPIs, règles, Guide Lives", "Workflow de validation", "Exports sans filigrane"],
-  agence: ["Profils illimités", "Tout le palier Pro", "Marque blanche et export multi-clients", "Facturé par siège, 2 minimum"],
+  agence: ["Jusqu’à 10 profils de marque", "Tout le palier Pro", "Marque blanche et export multi-clients", "Facturé par siège, 2 minimum"],
 };
 
 export default async function Home() {
