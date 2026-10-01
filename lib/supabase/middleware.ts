@@ -1,7 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/", "/signup", "/login", "/api/payments/webhook"];
+// /payment/return : le retour du prestataire peut arriver sans cookie de session ; la route vérifie le paiement côté serveur.
+const PUBLIC_PATHS = ["/", "/signup", "/login", "/api/payments/webhook", "/payment/return"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
