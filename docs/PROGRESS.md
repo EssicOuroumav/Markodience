@@ -18,8 +18,10 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 
 - [x] Étape 6 — KPIs & Reporting : formulaire mensuel (upsert par mois, `submitted_at` conservé à la mise à jour), échéance réglable (`kpi_deadline_day`), bannières à soumettre / en retard / envoyé, historique à temps/en retard, lecture seule des archives, export PDF jsPDF + autotable (`lib/kpiPdf.ts`, paramètre `watermark` prêt pour l'étape 9). Vérifié dans le navigateur (soumission, bannières, lecture seule, PDF téléchargé, persistance de l'échéance). 33 tests.
 
+- [x] Étape 7 — Règles opérationnelles : accordéon 6 sections (première ouverte), textarea + aperçu mini-markdown rendu en composants React (`lib/rules.ts`, HTML saisi = texte brut), sauvegarde auto au blur (upsert), état vide explicite. Vérifié dans le navigateur. 37 tests.
+
 ## Étape en cours
-- Étape 7 — Règles opérationnelles (prompt 6).
+- Étape 8 — Guide Lives (prompt 7).
 
 ## En attente côté utilisateur
 - GitHub : dépôt EssicOuroumav/Markodience passé en PRIVÉ ; le `git push` a été bloqué par le garde-fou de la session (6+ commits locaux non poussés). À pousser quand l'utilisateur l'autorise explicitement.

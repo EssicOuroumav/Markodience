@@ -5,7 +5,7 @@ export const TABS = [
   { slug: "tone", label: "Tonalité & voix", ready: true },
   { slug: "editorial", label: "Ligne éditoriale", ready: true },
   { slug: "kpi", label: "KPIs & Reporting", ready: true },
-  { slug: "rules", label: "Règles opérationnelles", ready: false },
+  { slug: "rules", label: "Règles opérationnelles", ready: true },
 ] as const;
 
 export type TabSlug = (typeof TABS)[number]["slug"];
