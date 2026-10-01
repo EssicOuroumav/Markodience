@@ -14,3 +14,10 @@ out/
 # Logs & Système
 *.log
 .DS_Store
+
+# Cache TypeScript
+*.tsbuildinfo
+
+# Réglages locaux de l'assistant
+.claude/settings.local.json
+.vercel
