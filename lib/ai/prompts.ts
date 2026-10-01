@@ -1,3 +1,4 @@
+import { OBJECTIVE_LABELS, OBJECTIVE_STRUCTURE, type LiveStep, type Objective } from "../lives";
 import type { Questionnaire } from "./schemas";
 
 export const SYSTEM_PROMPT = `Tu es un directeur de stratégie de marque pour des community managers d'Afrique de l'Ouest francophone (Côte d'Ivoire, Sénégal, etc.).
@@ -122,4 +123,55 @@ Structure JSON exacte :
   "improvements": [{ "title": string, "description": string, "priority": "faible" | "modere" | "eleve" }] (2 à 6)
 }
 Réponds uniquement par le JSON, en texte brut (jamais de HTML).`;
+}
+
+export type LiveContext = {
+  objective: Objective;
+  brand: BrandContext;
+  pillars: { name: string | null; description: string | null }[];
+  tone: { do_list: unknown; dont_list: unknown } | null;
+};
+
+const liveCtx = (c: LiveContext) =>
+  JSON.stringify({ marque: c.brand.name, secteur: c.brand.sector, piliers: c.pillars, tonalite: c.tone }, null, 2);
+
+export function liveStructurePrompt(c: LiveContext): string {
+  return `Génère la trame d'un live dont l'objectif est « ${OBJECTIVE_LABELS[c.objective]} ».
+<contexte>
+${liveCtx(c)}
+</contexte>
+
+La trame doit suivre les grandes phases propres à cet objectif, dans cet ordre : ${OBJECTIVE_STRUCTURE[c.objective].join(" → ")}.
+Tu peux découper une phase en plusieurs étapes, mais la logique reste celle de l'objectif (ne réutilise pas une trame générique).
+Durée totale réaliste (20 à 60 minutes). "time_range" au format "0-5 min".
+
+Structure JSON exacte :
+{ "steps": [{ "time_range": string, "title": string, "description": string }] } (4 à 7 étapes)
+Réponds uniquement par le JSON.`;
+}
+
+export function liveStepPrompt(c: LiveContext, step: LiveStep, index: number, others: string[]): string {
+  return `Régénère UNE seule étape (numéro ${index + 1}) d'un live dont l'objectif est « ${OBJECTIVE_LABELS[c.objective]} ».
+<contexte>
+${liveCtx(c)}
+</contexte>
+Étape actuelle (à remplacer par une meilleure version, même rôle dans la trame, même plage horaire) : ${JSON.stringify(step)}.
+Autres étapes du live (à ne pas dupliquer) : ${JSON.stringify(others)}.
+
+Structure JSON exacte : { "steps": [{ "time_range": "${step.time_range}", "title": string, "description": string }] }
+Une seule étape. Réponds uniquement par le JSON.`;
+}
+
+export function liveScriptsPrompt(c: LiveContext): string {
+  return `Génère des scripts opérationnels pour l'équipe qui anime et modère un live dont l'objectif est « ${OBJECTIVE_LABELS[c.objective]} ».
+<contexte>
+${liveCtx(c)}
+</contexte>
+
+- "scripts" : 4 à 6 scripts-types adaptés à CET objectif, couvrant les situations courantes (ex. premier message entrant, redirection vers un autre membre, relance, clôture), logique différente selon l'objectif.
+- "quick_replies" : 3 à 5 réponses rapides courtes, réutilisables telles quelles pendant le live (prix, disponibilité, stock, informations pratiques, modalités de paiement par mobile money). Pas de prix inventés : utilise des champs entre crochets comme [prix].
+
+Structure JSON exacte :
+{ "scripts": [{ "situation": string, "content": string }], "quick_replies": [{ "situation": string, "content": string }] }
+Réponds uniquement par le JSON.`;
 }

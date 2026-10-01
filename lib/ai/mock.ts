@@ -1,4 +1,4 @@
-import type { AuditOutput, EditorialOutput, IdentityOutput, PillarsOutput, ToneOutput } from "./schemas";
+import type { LiveScriptsOutput, LiveStructureOutput, AuditOutput, EditorialOutput, IdentityOutput, PillarsOutput, ToneOutput } from "./schemas";
 
 // Réponses de développement (AI_MOCK=1) : permettent de tester sans crédit API.
 export const mockIdentity = (): IdentityOutput => ({
@@ -49,5 +49,26 @@ export const mockAudit = (): AuditOutput => ({
     { title: "Appels à l'action absents", description: "Peu de publications invitent à commander ou écrire en message privé.", priority: "eleve" },
     { title: "Régularité de publication", description: "Les créneaux de publication varient fortement d'une semaine à l'autre.", priority: "modere" },
     { title: "Hashtags", description: "Utiliser un petit jeu de hashtags de marque stable.", priority: "faible" },
+  ],
+});
+
+export const mockLiveStructure = (): LiveStructureOutput => ({
+  steps: [
+    { time_range: "0-5 min", title: "Ouverture", description: "Accueillir l'audience et annoncer le programme du live." },
+    { time_range: "5-20 min", title: "Cœur du live", description: "Présenter le contenu principal avec des exemples concrets." },
+    { time_range: "20-30 min", title: "Questions", description: "Répondre aux questions posées en commentaires." },
+    { time_range: "30-35 min", title: "Clôture", description: "Résumer, remercier et inviter à l'action." },
+  ],
+});
+export const mockLiveScripts = (): LiveScriptsOutput => ({
+  scripts: [
+    { situation: "Premier message entrant", content: "Bonjour et bienvenue ! Comment puis-je vous aider ?" },
+    { situation: "Redirection vers un autre membre", content: "Je transmets votre demande à [prénom], qui vous répond tout de suite." },
+    { situation: "Relance", content: "Toujours intéressé(e) ? Il reste quelques minutes pour en profiter." },
+    { situation: "Clôture", content: "Merci d'avoir suivi le live ! Écrivez-nous en message privé pour la suite." },
+  ],
+  quick_replies: [
+    { situation: "Prix", content: "Le prix est de [prix] FCFA, livraison incluse." },
+    { situation: "Disponibilité", content: "Oui, disponible ! Dites-moi votre ville pour la livraison." },
   ],
 });

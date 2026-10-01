@@ -50,6 +50,16 @@ export const auditOutput = z.object({
 });
 export type AuditOutput = z.infer<typeof auditOutput>;
 
+export const liveStep = z.object({ time_range: z.string(), title: z.string().min(1), description: z.string() });
+export const liveStructureOutput = z.object({ steps: z.array(liveStep).min(3).max(8) });
+export const liveStepOutput = z.object({ steps: z.array(liveStep).length(1) });
+export const liveScriptsOutput = z.object({
+  scripts: z.array(z.object({ situation: z.string().min(1), content: z.string().min(1) })).min(1).max(8),
+  quick_replies: z.array(z.object({ situation: z.string().min(1), content: z.string().min(1) })).max(8),
+});
+export type LiveStructureOutput = z.infer<typeof liveStructureOutput>;
+export type LiveScriptsOutput = z.infer<typeof liveScriptsOutput>;
+
 export type IdentityOutput = z.infer<typeof identityOutput>;
 export type PillarsOutput = z.infer<typeof pillarsOutput>;
 export type ToneOutput = z.infer<typeof toneOutput>;
@@ -84,6 +94,9 @@ export const generateRequest = z.discriminatedUnion("type", [
     audit_id: z.string().uuid(),
     files: z.array(z.string().max(300)).min(1).max(5),
   }),
+  z.object({ type: z.literal("live_structure"), live_guide_id: z.string().uuid() }),
+  z.object({ type: z.literal("live_step"), live_guide_id: z.string().uuid(), step_index: z.number().int().min(0).max(20) }),
+  z.object({ type: z.literal("live_scripts"), live_guide_id: z.string().uuid() }),
   z.object({ type: z.literal("editorial_line"), editorial_line_id: z.string().uuid() }),
   z.object({ type: z.literal("editorial_week"), entry_id: z.string().uuid() }),
 ]);

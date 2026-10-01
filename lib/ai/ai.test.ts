@@ -26,3 +26,22 @@ describe("schémas", () => {
     expect(generateRequest.safeParse({ type: "hack", brand_profile_id: "x" }).success).toBe(false);
   });
 });
+
+import { liveScriptsOutput, liveStructureOutput } from "./schemas";
+import { mockLiveScripts, mockLiveStructure } from "./mock";
+import { OBJECTIVES, OBJECTIVE_STRUCTURE, moveItem } from "../lives";
+
+describe("lives", () => {
+  it("valide les mocks", () => {
+    expect(() => liveStructureOutput.parse(mockLiveStructure())).not.toThrow();
+    expect(() => liveScriptsOutput.parse(mockLiveScripts())).not.toThrow();
+  });
+  it("chaque objectif a sa propre trame", () => {
+    const sets = OBJECTIVES.map((o) => OBJECTIVE_STRUCTURE[o].join("|"));
+    expect(new Set(sets).size).toBe(OBJECTIVES.length);
+  });
+  it("moveItem", () => {
+    expect(moveItem([1, 2, 3], 0, 2)).toEqual([2, 3, 1]);
+    expect(moveItem([1, 2, 3], 0, -1)).toEqual([1, 2, 3]);
+  });
+});

@@ -2,10 +2,12 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { AiError, AI_MESSAGES, generateJson } from "@/lib/ai/anthropic";
-import { mockAudit, mockEditorial, mockIdentity, mockPillars, mockTone } from "@/lib/ai/mock";
-import { auditPrompt, editorialLinePrompt, editorialWeekPrompt, identityPrompt, pillarsPrompt, tonePrompt, type BrandContext, type EditorialContext } from "@/lib/ai/prompts";
+import { mockAudit, mockLiveScripts, mockLiveStructure, mockEditorial, mockIdentity, mockPillars, mockTone } from "@/lib/ai/mock";
+import { liveScriptsPrompt, liveStepPrompt, liveStructurePrompt, type LiveContext, auditPrompt, editorialLinePrompt, editorialWeekPrompt, identityPrompt, pillarsPrompt, tonePrompt, type BrandContext, type EditorialContext } from "@/lib/ai/prompts";
+import type { LiveStep } from "@/lib/lives";
+import { OBJECTIVES, type Objective } from "@/lib/lives";
 import { pillarRotation, weeksForPeriod, type PeriodMonths } from "@/lib/editorial";
-import { auditOutput, editorialOutput, generateRequest, identityOutput, pillarsOutput, toneOutput } from "@/lib/ai/schemas";
+import { liveScriptsOutput, liveStepOutput, liveStructureOutput, auditOutput, editorialOutput, generateRequest, identityOutput, pillarsOutput, toneOutput } from "@/lib/ai/schemas";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -34,6 +36,9 @@ export async function POST(request: Request) {
   try {
     if (req.type === "editorial_line" || req.type === "editorial_week") {
       return await handleEditorial(supabase, req);
+    }
+    if (req.type === "live_structure" || req.type === "live_step" || req.type === "live_scripts") {
+      return await handleLives(supabase, req);
     }
   } catch (err) {
     if (err instanceof AiError) return fail(err.code === "not_configured" ? 503 : 502, err.message, err.code);
@@ -263,4 +268,66 @@ async function handleAudit(
   });
   if (error) return fail(500, "Le rapport n'a pas pu être enregistré.", "db");
   return NextResponse.json({ ok: true, data: { id: req.audit_id, report: result } });
+}
+
+async function loadLiveContext(supabase: Supa, guideId: string) {
+  const { data: guide } = await supabase
+    .from("live_guides")
+    .select("id, brand_profile_id, objective, structure_data")
+    .eq("id", guideId)
+    .maybeSingle();
+  if (!guide || !OBJECTIVES.includes(guide.objective as Objective)) return null;
+  const [{ data: brand }, { data: pillars }, { data: tone }] = await Promise.all([
+    supabase.from("brand_profiles").select("name, sector").eq("id", guide.brand_profile_id).maybeSingle(),
+    supabase.from("content_pillars").select("name, description").eq("brand_profile_id", guide.brand_profile_id),
+    supabase.from("tone_voice").select("do_list, dont_list").eq("brand_profile_id", guide.brand_profile_id).maybeSingle(),
+  ]);
+  if (!brand) return null;
+  const ctx: LiveContext = { objective: guide.objective as Objective, brand: { name: brand.name, sector: brand.sector }, pillars: pillars ?? [], tone: tone ?? null };
+  return { guide, ctx };
+}
+
+async function handleLives(
+  supabase: Supa,
+  req: { type: "live_structure"; live_guide_id: string } | { type: "live_step"; live_guide_id: string; step_index: number } | { type: "live_scripts"; live_guide_id: string },
+) {
+  const loaded = await loadLiveContext(supabase, req.live_guide_id);
+  if (!loaded) return fail(404, "Guide de live introuvable.", "not_found");
+  const { guide, ctx } = loaded;
+
+  if (req.type === "live_structure") {
+    const result = await generateJson(liveStructurePrompt(ctx), liveStructureOutput, mockLiveStructure);
+    const { error } = await supabase.from("live_guides").update({ structure_data: { steps: result.steps } }).eq("id", guide.id);
+    if (error) return fail(500, "La trame n'a pas pu être enregistrée.", "db");
+    return NextResponse.json({ ok: true, data: { steps: result.steps } });
+  }
+
+  if (req.type === "live_step") {
+    const steps = ((guide.structure_data as { steps?: LiveStep[] } | null)?.steps ?? []) as LiveStep[];
+    const current = steps[req.step_index];
+    if (!current) return fail(404, "Étape introuvable.", "not_found");
+    const result = await generateJson(
+      liveStepPrompt(ctx, current, req.step_index, steps.filter((_, i) => i !== req.step_index).map((s) => s.title)),
+      liveStepOutput,
+      () => ({ steps: [{ ...current, title: `${current.title} (nouvelle version)` }] }),
+    );
+    const next = steps.map((s, i) => (i === req.step_index ? { ...result.steps[0], time_range: s.time_range } : s));
+    const { error } = await supabase.from("live_guides").update({ structure_data: { steps: next } }).eq("id", guide.id);
+    if (error) return fail(500, "L'étape n'a pas pu être mise à jour.", "db");
+    return NextResponse.json({ ok: true, data: { steps: next } });
+  }
+
+  // live_scripts : remplace les scripts générés (les réponses rapides ajoutées à la main sont conservées)
+  const result = await generateJson(liveScriptsPrompt(ctx), liveScriptsOutput, mockLiveScripts);
+  const { error: delErr } = await supabase.from("live_scripts").delete().eq("live_guide_id", guide.id).eq("is_quick_reply", false);
+  if (delErr) return fail(500, "Les anciens scripts n'ont pas pu être remplacés.", "db");
+  // Les réponses rapides existantes (générées ou ajoutées à la main) sont conservées : pas de doublons.
+  const { count: quickCount } = await supabase.from("live_scripts").select("id", { count: "exact", head: true }).eq("live_guide_id", guide.id).eq("is_quick_reply", true);
+  const rows = [
+    ...result.scripts.map((x) => ({ live_guide_id: guide.id, situation: x.situation, content: x.content, is_quick_reply: false })),
+    ...(quickCount ? [] : result.quick_replies).map((x) => ({ live_guide_id: guide.id, situation: x.situation, content: x.content, is_quick_reply: true })),
+  ];
+  const { error } = await supabase.from("live_scripts").insert(rows);
+  if (error) return fail(500, "Les scripts n'ont pas pu être enregistrés.", "db");
+  return NextResponse.json({ ok: true });
 }
