@@ -27,6 +27,18 @@ export const toneOutput = z.object({
   dont_list: z.array(z.string()).min(1),
 });
 
+export const editorialEntry = z.object({
+  week_number: z.number().int(),
+  theme: z.string().min(1),
+  content_type: z.string(),
+  format: z.string(),
+  frequency: z.string(),
+  suggested_time: z.string(),
+});
+export const editorialOutput = z.object({ entries: z.array(editorialEntry).min(1) });
+export type EditorialOutput = z.infer<typeof editorialOutput>;
+export type EditorialEntryOutput = z.infer<typeof editorialEntry>;
+
 export type IdentityOutput = z.infer<typeof identityOutput>;
 export type PillarsOutput = z.infer<typeof pillarsOutput>;
 export type ToneOutput = z.infer<typeof toneOutput>;
@@ -55,5 +67,7 @@ export const generateRequest = z.discriminatedUnion("type", [
   z.object({ type: z.literal("identity"), brand_profile_id: z.string().uuid(), questionnaire: questionnaireSchema }),
   z.object({ type: z.literal("pillars"), brand_profile_id: z.string().uuid() }),
   z.object({ type: z.literal("tone"), brand_profile_id: z.string().uuid() }),
+  z.object({ type: z.literal("editorial_line"), editorial_line_id: z.string().uuid() }),
+  z.object({ type: z.literal("editorial_week"), entry_id: z.string().uuid() }),
 ]);
 export type GenerateRequest = z.infer<typeof generateRequest>;

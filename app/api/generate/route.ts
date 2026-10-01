@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { AiError, AI_MESSAGES, generateJson } from "@/lib/ai/anthropic";
-import { mockIdentity, mockPillars, mockTone } from "@/lib/ai/mock";
-import { identityPrompt, pillarsPrompt, tonePrompt, type BrandContext } from "@/lib/ai/prompts";
-import { generateRequest, identityOutput, pillarsOutput, toneOutput } from "@/lib/ai/schemas";
+import { mockEditorial, mockIdentity, mockPillars, mockTone } from "@/lib/ai/mock";
+import { editorialLinePrompt, editorialWeekPrompt, identityPrompt, pillarsPrompt, tonePrompt, type BrandContext, type EditorialContext } from "@/lib/ai/prompts";
+import { pillarRotation, weeksForPeriod, type PeriodMonths } from "@/lib/editorial";
+import { editorialOutput, generateRequest, identityOutput, pillarsOutput, toneOutput } from "@/lib/ai/schemas";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -28,6 +29,15 @@ export async function POST(request: Request) {
   const parsed = generateRequest.safeParse(body);
   if (!parsed.success) return fail(400, "Données invalides. Vérifiez les champs du formulaire.", "bad_request");
   const req = parsed.data;
+
+  try {
+    if (req.type === "editorial_line" || req.type === "editorial_week") {
+      return await handleEditorial(supabase, req);
+    }
+  } catch (err) {
+    if (err instanceof AiError) return fail(err.code === "not_configured" ? 503 : 502, err.message, err.code);
+    return fail(500, AI_MESSAGES.unknown, "unknown");
+  }
 
   // RLS : ne renvoie le profil que s'il appartient à l'utilisateur connecté.
   const { data: brand } = await supabase
@@ -88,4 +98,111 @@ export async function POST(request: Request) {
     if (err instanceof AiError) return fail(err.code === "not_configured" ? 503 : 502, err.message, err.code);
     return fail(500, AI_MESSAGES.unknown, "unknown");
   }
+}
+
+type Supa = ReturnType<typeof createClient>;
+
+/** Charge ligne + marque + piliers + tonalité (RLS : uniquement si la ligne appartient à l'utilisateur). */
+async function loadEditorialContext(supabase: Supa, lineId: string) {
+  const { data: line } = await supabase
+    .from("editorial_lines")
+    .select("id, channel, period_start, period_end, brand_profile_id")
+    .eq("id", lineId)
+    .maybeSingle();
+  if (!line) return null;
+  const [{ data: brand }, { data: pillars }, { data: tone }] = await Promise.all([
+    supabase.from("brand_profiles").select("name, sector").eq("id", line.brand_profile_id).maybeSingle(),
+    supabase.from("content_pillars").select("name, description").eq("brand_profile_id", line.brand_profile_id),
+    supabase.from("tone_voice").select("do_list, dont_list").eq("brand_profile_id", line.brand_profile_id).maybeSingle(),
+  ]);
+  if (!brand) return null;
+  const ctx: EditorialContext = {
+    channel: line.channel ?? "",
+    brand: { name: brand.name, sector: brand.sector },
+    pillars: pillars ?? [],
+    tone: tone ?? null,
+  };
+  const months: PeriodMonths = line.period_start && line.period_end && daysBetween(line.period_start, line.period_end) > 45 ? 3 : 1;
+  return { line, ctx, weeks: weeksForPeriod(months) };
+}
+
+function daysBetween(a: string, b: string) {
+  return (Date.parse(b) - Date.parse(a)) / 86_400_000;
+}
+
+async function handleEditorial(
+  supabase: Supa,
+  req: { type: "editorial_line"; editorial_line_id: string } | { type: "editorial_week"; entry_id: string },
+) {
+  let lineId: string;
+  let entry: { id: string; week_number: number | null; theme: string | null } | null = null;
+  if (req.type === "editorial_week") {
+    const { data } = await supabase
+      .from("editorial_entries")
+      .select("id, week_number, theme, editorial_line_id")
+      .eq("id", req.entry_id)
+      .maybeSingle();
+    if (!data) return fail(404, "Entrée introuvable.", "not_found");
+    entry = data;
+    lineId = data.editorial_line_id;
+  } else {
+    lineId = req.editorial_line_id;
+  }
+
+  const loaded = await loadEditorialContext(supabase, lineId);
+  if (!loaded) return fail(404, "Ligne éditoriale introuvable.", "not_found");
+  const { ctx, weeks } = loaded;
+  const names = ctx.pillars.map((p) => p.name).filter((n): n is string => !!n);
+  if (names.length === 0) return fail(409, "Générez d'abord vos piliers de contenu.", "pillars_missing");
+
+  if (req.type === "editorial_line") {
+    const { count } = await supabase.from("editorial_entries").select("id", { count: "exact", head: true }).eq("editorial_line_id", lineId);
+    if (count && count > 0) return fail(409, "Cette ligne éditoriale contient déjà des semaines.", "already_generated");
+    const rotation = pillarRotation(names, weeks);
+    const result = await generateJson(editorialLinePrompt(ctx, rotation), editorialOutput, () => mockEditorial(weeks));
+    const rows = result.entries.slice(0, weeks).map((e, i) => ({
+      editorial_line_id: lineId,
+      week_number: i + 1,
+      position: i,
+      theme: e.theme,
+      content_type: e.content_type,
+      format: e.format,
+      frequency: e.frequency,
+      suggested_time: e.suggested_time,
+      status: "a_venir",
+      validation_status: "non_requis",
+    }));
+    const { error } = await supabase.from("editorial_entries").insert(rows);
+    if (error) return fail(500, "La ligne éditoriale n'a pas pu être enregistrée.", "db");
+    return NextResponse.json({ ok: true });
+  }
+
+  // editorial_week : une seule semaine, sans toucher aux autres
+  const weekNumber = entry!.week_number ?? 1;
+  const rotation = pillarRotation(names, Math.max(weeks, weekNumber))[weekNumber - 1] ?? { week_number: weekNumber, primary: names[0], secondary: null };
+  const { data: others } = await supabase.from("editorial_entries").select("theme").eq("editorial_line_id", lineId).neq("id", entry!.id);
+  const result = await generateJson(
+    editorialWeekPrompt(ctx, rotation, (others ?? []).map((o) => o.theme ?? "")),
+    editorialOutput,
+    () => ({ entries: [{ ...mockEditorial(1).entries[0], week_number: weekNumber, theme: `Nouveau thème semaine ${weekNumber} (${Date.now() % 1000})` }] }),
+  );
+  const e = result.entries[0];
+  const { error } = await supabase
+    .from("editorial_entries")
+    .update({
+      theme: e.theme,
+      content_type: e.content_type,
+      format: e.format,
+      frequency: e.frequency,
+      suggested_time: e.suggested_time,
+      status: "a_venir",
+      validation_status: "non_requis",
+      validated_by: null,
+      validated_at: null,
+      validation_requested_by: null,
+      validation_requested_at: null,
+    })
+    .eq("id", entry!.id);
+  if (error) return fail(500, "La semaine n'a pas pu être mise à jour.", "db");
+  return NextResponse.json({ ok: true });
 }

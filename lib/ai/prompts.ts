@@ -54,3 +54,49 @@ Structure JSON exacte :
 { "do_list": string[] (4 à 7 comportements/expressions à privilégier), "dont_list": string[] (4 à 7 à éviter) }
 Réponds uniquement par le JSON.`;
 }
+
+export type EditorialContext = {
+  channel: string;
+  brand: BrandContext;
+  pillars: { name: string | null; description: string | null }[];
+  tone: { do_list: unknown; dont_list: unknown } | null;
+};
+
+export function editorialLinePrompt(
+  ctx: EditorialContext,
+  rotation: { week_number: number; primary: string; secondary: string | null }[],
+): string {
+  return `Génère la trame éditoriale hebdomadaire pour le canal « ${ctx.channel} » sur ${rotation.length} semaines.
+<contexte>
+${JSON.stringify({ marque: ctx.brand.name, secteur: ctx.brand.sector, piliers: ctx.pillars, tonalite: ctx.tone }, null, 2)}
+</contexte>
+
+Pilier(s) imposé(s) par semaine (rotation à respecter strictement, un thème dérivé du pilier principal, éventuellement croisé avec le secondaire) :
+${rotation.map((r) => `- Semaine ${r.week_number} : ${r.primary}${r.secondary ? " + " + r.secondary : ""}`).join("\n")}
+
+Règles :
+- Adapte le format au canal (ex. TikTok : vidéo courte ; Facebook : texte/image, live possible ; YouTube : format long ; Instagram : carrousel/reel).
+- Thèmes concrets, variés, jamais deux semaines identiques.
+- "frequency" : ex. "3 posts par semaine". "suggested_time" : ex. "18h30".
+
+Structure JSON exacte :
+{ "entries": [{ "week_number": number, "theme": string, "content_type": string, "format": string, "frequency": string, "suggested_time": string }] }
+Une entrée par semaine, de 1 à ${rotation.length}. Réponds uniquement par le JSON.`;
+}
+
+export function editorialWeekPrompt(
+  ctx: EditorialContext,
+  week: { week_number: number; primary: string; secondary: string | null },
+  otherThemes: string[],
+): string {
+  return `Régénère UNE seule semaine de la ligne éditoriale du canal « ${ctx.channel} ».
+<contexte>
+${JSON.stringify({ marque: ctx.brand.name, secteur: ctx.brand.sector, piliers: ctx.pillars, tonalite: ctx.tone }, null, 2)}
+</contexte>
+Semaine ${week.week_number} : pilier ${week.primary}${week.secondary ? " + " + week.secondary : ""}.
+Thèmes déjà utilisés les autres semaines (à ne pas répéter) : ${JSON.stringify(otherThemes)}.
+
+Structure JSON exacte :
+{ "entries": [{ "week_number": ${week.week_number}, "theme": string, "content_type": string, "format": string, "frequency": string, "suggested_time": string }] }
+Une seule entrée. Réponds uniquement par le JSON.`;
+}

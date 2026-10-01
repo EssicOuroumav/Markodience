@@ -1,4 +1,4 @@
-import type { IdentityOutput, PillarsOutput, ToneOutput } from "./schemas";
+import type { EditorialOutput, IdentityOutput, PillarsOutput, ToneOutput } from "./schemas";
 
 // Réponses de développement (AI_MOCK=1) : permettent de tester sans crédit API.
 export const mockIdentity = (): IdentityOutput => ({
@@ -25,4 +25,15 @@ export const mockPillars = (): PillarsOutput => ({
 export const mockTone = (): ToneOutput => ({
   do_list: ["Tutoyer avec respect", "Phrases courtes", "Exemples concrets locaux", "Ton chaleureux"],
   dont_list: ["Jargon technique", "Promesses exagérées", "Majuscules criardes", "Sujets polémiques"],
+});
+
+export const mockEditorial = (weeks: number): EditorialOutput => ({
+  entries: Array.from({ length: weeks }, (_, i) => ({
+    week_number: i + 1,
+    theme: `Thème de la semaine ${i + 1}`,
+    content_type: ["Éducatif", "Preuve sociale", "Coulisses"][i % 3],
+    format: ["Carrousel", "Vidéo courte", "Photo + texte", "Live"][i % 4],
+    frequency: "3 publications par semaine",
+    suggested_time: "18h30",
+  })),
 });
