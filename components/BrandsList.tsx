@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Check, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, Check, Pencil, Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { BrandProfile } from "@/types";
 import BrandLogo, { type Shape } from "./BrandLogo";
@@ -70,6 +70,7 @@ export default function BrandsList({ profiles, activeId, canAdd, limitText }: Pr
                 ) : (
                   <button type="button" className="btn-primary flex-1 !py-2.5 !text-[15px]" onClick={() => open(p.id)}>Ouvrir cette marque <ArrowRight size={16} /></button>
                 )}
+                <Link href={`/dashboard/brands/${p.id}`} className="btn-ghost !px-3 text-ink-secondary hover:text-ink" title="Modifier cette marque" aria-label={`Modifier ${p.name}`}><Pencil size={17} /></Link>
                 <button type="button" className="btn-ghost !px-3 text-ink-secondary hover:text-danger disabled:cursor-not-allowed disabled:opacity-40" disabled={profiles.length <= 1} title={profiles.length <= 1 ? "Au moins une marque est requise" : "Supprimer cette marque"} aria-label={`Supprimer ${p.name}`} onClick={() => remove(p)}>
                   <Trash2 size={17} />
                 </button>

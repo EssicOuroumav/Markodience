@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "test:security": "node --env-file=.env.local scripts/rls-smoke.mjs"
+    "test:security": "node --env-file=.env.local scripts/rls-smoke.mjs",
+    "check:launch": "node scripts/launch-check.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",

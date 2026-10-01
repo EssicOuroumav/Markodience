@@ -68,3 +68,15 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 - Stack : Next 16.3.8 (migré depuis 14 pour les correctifs de sécurité, décision utilisateur).
 
 - Fournisseur de paiement : PayDunya (pas CinetPay). Variables PAYDUNYA_* à remplir (clés sandbox).
+
+## Lot « avant ouverture » (2026-10-01)
+Fait et vérifié (build de production, compte jetable supprimé ensuite) :
+- Mot de passe oublié + réinitialisation (/forgot-password, /reset-password), redirections sûres (`safeNext`).
+- Mon compte (/dashboard/account) : nom, téléphone, mot de passe, export JSON des données, suppression du compte (phrase SUPPRIMER + mot de passe, purge des fichiers).
+- Modification d'une marque (nom, secteur, logo, couleur) : le thème suit la couleur.
+- Pages légales (CGU, confidentialité, mentions légales) + pied de page ; consentement enregistré à l'inscription.
+- SEO : favicon/icônes Markodience, image de partage, sitemap, robots, métadonnées.
+- Historique des paiements, bandeau d'expiration d'abonnement (≤ 7 jours / expiré).
+- Promesses Agence non construites marquées « (bientôt) » ; script `npm run check:launch`.
+Tests : 81 unitaires, 30 contrôles de sécurité, lint et typecheck propres.
+À faire par le propriétaire : compléter lib/legal.ts, faire relire les textes légaux, domaine, SMTP, PayDunya live.

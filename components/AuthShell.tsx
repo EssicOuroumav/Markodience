@@ -9,7 +9,7 @@ export default function AuthShell({ children }: { children: React.ReactNode }) {
     <div className="grid min-h-screen bg-white lg:grid-cols-[1fr_1.05fr]">
       <main className="flex flex-col px-6 py-8 sm:px-12">
         <Link href="/" className="flex items-center gap-2 self-start text-ink">
-          <Image src="/logo.png" alt="" width={30} height={30} priority />
+          <Image src="/logo-mark.png" alt="" width={30} height={30} priority />
           <span className="text-[18px] font-semibold tracking-heading">Markodience</span>
         </Link>
         <div className="rise d1 mx-auto flex w-full max-w-[440px] flex-1 flex-col justify-center py-10">{children}</div>

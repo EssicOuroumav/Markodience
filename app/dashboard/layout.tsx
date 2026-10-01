@@ -1,14 +1,17 @@
 import Navbar from "@/components/Navbar";
 import BrandSwitcher from "@/components/BrandSwitcher";
 import Sidebar from "@/components/Sidebar";
+import SubscriptionBanner from "@/components/SubscriptionBanner";
 import UpgradeToast from "@/components/UpgradeToast";
 import { getDashboardContext } from "@/lib/brand";
 import { PLANS, canCreateProfile } from "@/lib/plans";
 import { getBrandProgress } from "@/lib/progress";
 import { brandTheme } from "@/lib/theme";
 
+export const metadata = { title: "Mon espace", robots: { index: false, follow: false } };
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { profiles, active, plan, owner, user } = await getDashboardContext();
+  const { profiles, active, plan, owner, user, periodEnd } = await getDashboardContext();
   const progress = await getBrandProgress();
   return (
     <div className="relative min-h-screen bg-canvas" style={brandTheme(active.primary_color) as React.CSSProperties}>
@@ -19,6 +22,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <div className="pt-14">
         <Sidebar plan={plan} owner={owner} email={user.email ?? ""} brand={active} progress={{ percent: progress.percent, done: progress.done }} brandCount={profiles.length} brandMax={owner ? null : PLANS[plan].maxProfiles} />
         <main className="mx-auto max-w-5xl px-5 pb-20 pt-8 md:ml-[284px] md:px-10 md:pt-10">
+          <SubscriptionBanner plan={plan} periodEnd={periodEnd} owner={owner} />
           <UpgradeToast />
           {children}
         </main>

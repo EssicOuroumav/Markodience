@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { Check, ChevronRight, CreditCard, Crown, Home, Layers, Lock, LogOut, ShieldCheck } from "lucide-react";
+import { Check, ChevronRight, CreditCard, Crown, Home, Layers, Lock, LogOut, ShieldCheck, UserCog } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { hasFeature, PLANS, type PlanId } from "@/lib/plans";
 import { TABS, type TabSlug } from "@/lib/tabs";
@@ -102,6 +102,7 @@ export default function Sidebar({ plan, owner, email, brand, progress, brandCoun
           <span className="num shrink-0 rounded-pill bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent">{brandCount}{brandMax === null ? "" : `/${brandMax}`}</span>
         </NavItem>
         <NavItem href="/dashboard/upgrade" active={pathname === "/dashboard/upgrade"} Icon={CreditCard} label="Mon palier" />
+        <NavItem href="/dashboard/account" active={pathname === "/dashboard/account"} Icon={UserCog} label="Mon compte" />
         {owner && <NavItem href="/admin" active={pathname.startsWith("/admin")} Icon={ShieldCheck} label="Espace admin" />}
         <button type="button" onClick={logout} className="group flex shrink-0 items-center gap-3 whitespace-nowrap rounded-2xl px-2 py-1.5 text-[15px] font-medium text-ink/75 md:hidden">
           <span aria-hidden className="flex h-8 w-8 items-center justify-center rounded-[11px] bg-black/[0.04]"><LogOut size={18} strokeWidth={1.8} /></span>Déconnexion

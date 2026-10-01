@@ -1,14 +1,21 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Markodience",
-  description:
-    "Structurez la stratégie de marque de vos clients : identité, piliers, ligne éditoriale, audit et reporting.",
+  metadataBase: new URL(SITE_URL),
+  title: { default: `${SITE_NAME} : ${SITE_TAGLINE}`, template: `%s · ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  alternates: { canonical: "/" },
+  openGraph: { type: "website", locale: "fr_FR", siteName: SITE_NAME, title: `${SITE_NAME} : ${SITE_TAGLINE}`, description: SITE_DESCRIPTION, url: "/" },
+  twitter: { card: "summary_large_image", title: `${SITE_NAME} : ${SITE_TAGLINE}`, description: SITE_DESCRIPTION },
 };
+
+export const viewport: Viewport = { themeColor: "#0b1220", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({
   children,

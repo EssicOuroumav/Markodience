@@ -41,6 +41,7 @@ export default function LoginForm({ notice }: { notice?: string }) {
         <div>
           <label className="label" htmlFor="password">Mot de passe</label>
           <input id="password" type="password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" onKeyDown={(e) => e.key === "Enter" && handleLogin()} />
+          <a href="/forgot-password" className="mt-2 inline-block text-[14px] text-accent hover:underline">Mot de passe oublié ?</a>
         </div>
       </div>
       {error && <p role="alert" className="mt-4 text-[15px] text-danger">{error}</p>}

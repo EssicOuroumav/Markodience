@@ -6,6 +6,7 @@ import ProductMockup, { ScoreChip, ValidatedChip } from "@/components/ProductMoc
 import { PersonaAspirant, PersonaConfirmed, PersonaTeam } from "@/components/people";
 import { PHOTOS } from "@/lib/photos";
 import Reveal from "@/components/Reveal";
+import SiteFooter from "@/components/SiteFooter";
 import { ILLUSTRATIONS, type IllustrationName } from "@/components/illustrations";
 import FaqSection from "@/components/FaqSection";
 import { faqJsonLd } from "@/lib/faq";
@@ -46,10 +47,11 @@ const STEPS = [
 const PLAN_BULLETS: Record<"gratuit" | "pro" | "agence", string[]> = {
   gratuit: ["1 profil de marque", "Identité, piliers, tonalité", "Exports avec filigrane"],
   pro: ["Jusqu’à 3 profils de marque", "Audit, ligne éditoriale, KPIs, règles, Guide Lives", "Workflow de validation", "Exports sans filigrane"],
-  agence: ["Jusqu’à 10 profils de marque", "Tout le palier Pro", "Marque blanche et export multi-clients", "Facturé par siège, 2 minimum"],
+  agence: ["Jusqu’à 10 profils de marque", "Tout le palier Pro", "Marque blanche et export multi-clients (bientôt)", "Facturé par siège, 2 minimum"],
 };
 
-export default async function Home() {
+export default async function Home(props: { searchParams: Promise<{ compte?: string }> }) {
+  const { compte } = await props.searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -72,6 +74,9 @@ export default async function Home() {
       <noscript><style>{".reveal{opacity:1!important;translate:0 0!important}"}</style></noscript>
       {/* Données structurées (contenu statique de lib/faq.ts, « < » échappé) : jamais de contenu généré par l'IA ici. */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd()).replace(/</g, "\\u003c") }} />
+      {compte === "supprime" && (
+        <p role="status" className="fixed inset-x-0 top-[60px] z-40 mx-auto w-fit max-w-[92vw] rounded-pill bg-night px-5 py-2.5 text-center text-[14px] text-white shadow-pop">Votre compte et toutes vos données ont été supprimés. À bientôt.</p>
+      )}
       <main>
         {/* En-tête : grande photo en fond, texte en bas, maquette du produit à droite */}
         <section className="px-3 pb-6 pt-[68px] sm:px-5">
@@ -292,16 +297,7 @@ export default async function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-[var(--color-border-soft)] bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-10 text-[14px] text-ink-secondary md:flex-row md:px-6">
-          <p><span className="font-semibold text-ink">Markodience</span> · La plateforme des community managers</p>
-          <nav aria-label="Pied de page" className="flex gap-6">
-            {LINKS.map((l) => (<a key={l.href} href={l.href} className="transition hover:text-ink">{l.label}</a>))}
-            <Link href={signedIn ? "/dashboard" : "/login"} className="transition hover:text-ink">{signedIn ? "Mon espace" : "Connexion"}</Link>
-          </nav>
-          <p>© 2026 Markodience</p>
-        </div>
-      </footer>
+      <SiteFooter signedIn={signedIn} />
     </>
   );
 }

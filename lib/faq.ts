@@ -70,7 +70,7 @@ export const FAQ: FaqCategory[] = [
       },
       {
         q: "Que contient chaque palier ?",
-        a: `Le palier ${g.label} donne accès à l’identité de marque, aux piliers de contenu et à la tonalité, pour ${g.maxProfiles} profil. Le palier ${p.label} ajoute l’audit, la ligne éditoriale, les KPIs, les règles opérationnelles et le Guide Lives, pour ${p.maxProfiles} profils, avec des exports sans filigrane. Le palier ${a.label} reprend tout cela pour ${a.maxProfiles} profils, avec la marque blanche et l’export multi-clients.`,
+        a: `Le palier ${g.label} donne accès à l’identité de marque, aux piliers de contenu et à la tonalité, pour ${g.maxProfiles} profil. Le palier ${p.label} ajoute l’audit, la ligne éditoriale, les KPIs, les règles opérationnelles et le Guide Lives, pour ${p.maxProfiles} profils, avec des exports sans filigrane. Le palier ${a.label} reprend tout cela pour ${a.maxProfiles} profils, avec, à venir, la marque blanche et l’export multi-clients.`,
       },
       {
         q: "Comment puis-je payer ?",

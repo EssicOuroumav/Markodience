@@ -5,26 +5,27 @@ import { ImagePlus, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { SECTORS } from "@/lib/sectors";
 import { setActiveBrandCookie } from "@/components/BrandSwitcher";
-import type { BrandStatus } from "@/types";
+import type { BrandProfile, BrandStatus } from "@/types";
 
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 const LOGO_TYPES = ["image/png", "image/jpeg", "image/webp"];
 const SWATCHES = ["#0071E3", "#059669", "#C2410C", "#7C3AED", "#BE123C", "#1D1D1F"];
 
 /** Création d'un profil de marque : utilisé à l'inscription et pour ajouter une marque depuis le tableau de bord. */
-export default function BrandForm({ userId, submitLabel, onCreated, onLimit }: { userId: string; submitLabel: string; onCreated: (brandId: string) => void; onLimit?: () => void }) {
+export default function BrandForm({ userId, submitLabel, onCreated, onLimit, brand }: { userId: string; submitLabel: string; onCreated: (brandId: string) => void; onLimit?: () => void; brand?: BrandProfile }) {
   const supabase = createClient();
-  const [status, setStatus] = useState<BrandStatus>("freelance");
-  const [name, setName] = useState("");
-  const [sector, setSector] = useState("");
-  const [color, setColor] = useState("#0071E3");
+  const [status, setStatus] = useState<BrandStatus>(brand?.status ?? "freelance");
+  const [name, setName] = useState(brand?.name ?? "");
+  const [sector, setSector] = useState(brand?.sector ?? "");
+  const [color, setColor] = useState(brand?.primary_color ?? "#0071E3");
   const [logo, setLogo] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(brand?.logo_url ?? null);
+  const [keepExisting, setKeepExisting] = useState(!!brand?.logo_url);
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
+  useEffect(() => () => { if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview); }, [preview]);
 
   function pickLogo(file: File | undefined) {
     setError(null);
@@ -32,6 +33,7 @@ export default function BrandForm({ userId, submitLabel, onCreated, onLimit }: {
     if (!LOGO_TYPES.includes(file.type)) return setError("Le logo doit être une image PNG, JPG ou WebP.");
     if (file.size > MAX_LOGO_BYTES) return setError("Le logo ne doit pas dépasser 2 Mo.");
     setLogo(file);
+    setKeepExisting(false);
     setPreview(URL.createObjectURL(file));
   }
 
@@ -40,7 +42,7 @@ export default function BrandForm({ userId, submitLabel, onCreated, onLimit }: {
     if (!name.trim()) return setError("Donnez un nom à votre marque.");
     setLoading(true);
 
-    let logoUrl: string | null = null;
+    let logoUrl: string | null = brand && keepExisting ? brand.logo_url : null;
     if (logo) {
       const ext = logo.type === "image/png" ? "png" : logo.type === "image/webp" ? "webp" : "jpg";
       const path = `${userId}/${crypto.randomUUID()}.${ext}`;
@@ -52,9 +54,25 @@ export default function BrandForm({ userId, submitLabel, onCreated, onLimit }: {
       logoUrl = supabase.storage.from("logos").getPublicUrl(path).data.publicUrl;
     }
 
+    const fields = { name: name.trim(), sector: sector || null, logo_url: logoUrl, primary_color: color, status };
+
+    if (brand) {
+      const { error: updErr } = await supabase.from("brand_profiles").update(fields).eq("id", brand.id);
+      setLoading(false);
+      if (updErr) return setError("La marque n'a pas pu être modifiée : " + updErr.message);
+      // Ancien logo remplacé ou retiré : on supprime le fichier devenu inutile (meilleur effort).
+      if (brand.logo_url && brand.logo_url !== logoUrl) {
+        const marker = "/logos/";
+        const old = brand.logo_url.split(marker)[1];
+        if (old && old.startsWith(`${userId}/`)) await supabase.storage.from("logos").remove([old]).catch(() => undefined);
+      }
+      onCreated(brand.id);
+      return;
+    }
+
     const { data: created, error: insErr } = await supabase
       .from("brand_profiles")
-      .insert({ user_id: userId, name: name.trim(), sector: sector || null, logo_url: logoUrl, primary_color: color, status })
+      .insert({ user_id: userId, ...fields })
       .select("id")
       .single();
     setLoading(false);
@@ -98,8 +116,8 @@ export default function BrandForm({ userId, submitLabel, onCreated, onLimit }: {
           <div className="flex items-center gap-4 rounded-2xl border border-black/10 bg-white p-3 shadow-card">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={preview} alt="Aperçu du logo" className="h-16 max-w-[140px] rounded-xl border border-black/5 bg-white object-contain p-1" />
-            <div className="min-w-0 flex-1"><p className="truncate text-[15px] font-medium">{logo?.name}</p><p className="caption">Le site s&apos;adapte à la forme de votre logo.</p></div>
-            <button type="button" className="btn-secondary !px-3" aria-label="Retirer le logo" onClick={() => { setLogo(null); setPreview(null); }}><X size={16} /></button>
+            <div className="min-w-0 flex-1"><p className="truncate text-[15px] font-medium">{logo?.name ?? "Logo actuel"}</p><p className="caption">Le site s&apos;adapte à la forme de votre logo.</p></div>
+            <button type="button" className="btn-secondary !px-3" aria-label="Retirer le logo" onClick={() => { setLogo(null); setPreview(null); setKeepExisting(false); }}><X size={16} /></button>
           </div>
         ) : (
           <label
