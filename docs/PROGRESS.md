@@ -45,7 +45,7 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 
 - [x] Ajout de marques : page « Mes marques » (compteur utilisé/limite, une carte par marque, ouverture en un clic, suppression avec saisie du nom, carte « Ajouter une marque » ou « Limite atteinte »), page de création `/dashboard/brands/new` (formulaire partagé `BrandForm`), liens dans le sélecteur et la barre latérale. Vérifié (création, suppression, marque active).
 - [x] Barre latérale refondue : tuiles d'icônes, coches de progression par onglet, progression de la stratégie dans la carte de la marque, sections « Votre marque » / « Gestion », compteur de marques, pastille « Pro » sur les onglets verrouillés. `getDashboardContext` et `getBrandProgress` mis en cache par requête.
-- [~] Photos de l'accueil : emplacements prêts (`components/Photo.tsx`, `HeroVisual`, section « Pour qui ») avec visuel de remplacement ; fichiers attendus : public/photos/cm-1.jpg (hero), cm-2.jpg, cm-3.jpg, cm-4.jpg. EN ATTENTE du choix du propriétaire (ses propres photos, ou téléchargement Unsplash validé).
+- [x] Accueil : illustrations de community managers dessinées (`components/people.tsx` : héroïne, aspirante, confirmé, équipe) dans l'en-tête et la section « Pour qui ». Pour utiliser de vraies photos plus tard : déposer les fichiers dans public/photos/ puis renseigner `lib/photos.ts` (l'illustration sert de repli).
 
 ## Étape en cours
 - Reste : Supabase Site URL = https://markodience.vercel.app + Redirect URL https://markodience.vercel.app/** ; push de /auth/callback ; test d'inscription réelle ; crédit Anthropic (2026-10-02) puis test génération réelle ; webhook IPN PayDunya (test réel sur le site en ligne) ; plus tard : clés PayDunya production, SMTP personnalisé.

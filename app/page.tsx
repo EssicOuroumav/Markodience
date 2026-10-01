@@ -3,6 +3,8 @@ import { ArrowRight, Check, ChevronDown, Languages, ShieldCheck, Smartphone, Wal
 import Navbar from "@/components/Navbar";
 import HeroVisual from "@/components/HeroVisual";
 import Photo from "@/components/Photo";
+import { PersonaAspirant, PersonaConfirmed, PersonaTeam } from "@/components/people";
+import { PHOTOS } from "@/lib/photos";
 import Reveal from "@/components/Reveal";
 import { ILLUSTRATIONS, type IllustrationName } from "@/components/illustrations";
 import { PLANS } from "@/lib/plans";
@@ -27,9 +29,9 @@ const FEATURES: { art: IllustrationName; title: string; text: string }[] = [
 ];
 
 const PERSONAS = [
-  { photo: "/photos/cm-2.jpg", alt: "Une aspirante community manager apprend à structurer sa première marque", title: "Aspirants et entrepreneurs solo", text: "Vous gérez votre première marque, la vôtre ou celle d’un premier client, et vous voulez être guidé.", points: ["Questions simples, stratégie générée", "Aucune expertise préalable requise", "Démarrage gratuit"] },
-  { photo: "/photos/cm-3.jpg", alt: "Un community manager confirmé suit plusieurs clients depuis son téléphone", title: "Community managers confirmés", text: "Vous jonglez entre plusieurs clients et vous voulez gagner du temps tout en restant irréprochable.", points: ["Plusieurs marques depuis un seul compte", "Calendrier et validation par semaine", "Rapports PDF professionnels"] },
-  { photo: "/photos/cm-4.jpg", alt: "Une équipe d’agence travaille ensemble sur la stratégie d’une marque", title: "Agences et équipes", text: "Vous coordonnez une équipe et plusieurs clients, avec des règles de travail partagées.", points: ["Jusqu’à 10 marques", "Règles opérationnelles communes", "Guide Lives pour les équipes"] },
+  { key: "aspirant", art: PersonaAspirant, alt: "Une aspirante community manager apprend à structurer sa première marque", title: "Aspirants et entrepreneurs solo", text: "Vous gérez votre première marque, la vôtre ou celle d’un premier client, et vous voulez être guidé.", points: ["Questions simples, stratégie générée", "Aucune expertise préalable requise", "Démarrage gratuit"] },
+  { key: "confirmed", art: PersonaConfirmed, alt: "Un community manager confirmé suit plusieurs clients depuis son téléphone", title: "Community managers confirmés", text: "Vous jonglez entre plusieurs clients et vous voulez gagner du temps tout en restant irréprochable.", points: ["Plusieurs marques depuis un seul compte", "Calendrier et validation par semaine", "Rapports PDF professionnels"] },
+  { key: "team", art: PersonaTeam, alt: "Une équipe d’agence travaille ensemble sur la stratégie d’une marque", title: "Agences et équipes", text: "Vous coordonnez une équipe et plusieurs clients, avec des règles de travail partagées.", points: ["Jusqu’à 10 marques", "Règles opérationnelles communes", "Guide Lives pour les équipes"] },
 ] as const;
 
 const STEPS = [
@@ -131,7 +133,13 @@ export default async function Home() {
             <div className="mt-14 grid gap-6 md:grid-cols-3">
               {PERSONAS.map((p, i) => (
                 <Reveal as="article" key={p.title} delay={i * 110} className="card group overflow-hidden !p-0">
-                  <Photo src={p.photo} alt={p.alt} className="aspect-[4/3] transition duration-700 group-hover:scale-[1.03]" sizes="(min-width: 768px) 30vw, 90vw" />
+                  <div className="aspect-[4/3] overflow-hidden">
+                    {PHOTOS[p.key] ? (
+                      <Photo src={PHOTOS[p.key] as string} alt={p.alt} className="h-full w-full transition duration-700 group-hover:scale-[1.03]" sizes="(min-width: 768px) 30vw, 90vw" fallback={<p.art className="h-full w-full" />} />
+                    ) : (
+                      <p.art className="h-full w-full transition duration-700 group-hover:scale-[1.03]" />
+                    )}
+                  </div>
                   <div className="p-7">
                     <h3 className="text-[21px]">{p.title}</h3>
                     <p className="mt-2 text-[16px] text-ink-secondary">{p.text}</p>
