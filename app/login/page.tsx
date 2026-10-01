@@ -7,7 +7,7 @@ export default async function LoginPage(props: { searchParams: Promise<{ error?:
     <>
       <Navbar />
       <LoginForm
-        notice={error === "confirmation" ? "Le lien de confirmation est invalide ou expiré. Connectez-vous : si votre email n'est pas confirmé, recréez votre compte." : undefined}
+        notice={error === "confirmation" ? "Ce lien de confirmation a déjà été utilisé ou a expiré. Si vous avez déjà cliqué dessus, votre email est confirmé : connectez-vous simplement avec votre email et votre mot de passe." : undefined}
       />
     </>
   );
