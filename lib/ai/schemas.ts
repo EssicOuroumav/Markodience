@@ -39,6 +39,17 @@ export const editorialOutput = z.object({ entries: z.array(editorialEntry).min(1
 export type EditorialOutput = z.infer<typeof editorialOutput>;
 export type EditorialEntryOutput = z.infer<typeof editorialEntry>;
 
+export const PRIORITIES = ["faible", "modere", "eleve"] as const;
+export const auditOutput = z.object({
+  score: z.number().min(0).max(100),
+  summary: z.string().min(1),
+  strengths: z.array(z.object({ title: z.string(), description: z.string() })),
+  improvements: z.array(
+    z.object({ title: z.string(), description: z.string(), priority: z.enum(PRIORITIES) }),
+  ),
+});
+export type AuditOutput = z.infer<typeof auditOutput>;
+
 export type IdentityOutput = z.infer<typeof identityOutput>;
 export type PillarsOutput = z.infer<typeof pillarsOutput>;
 export type ToneOutput = z.infer<typeof toneOutput>;
@@ -67,6 +78,12 @@ export const generateRequest = z.discriminatedUnion("type", [
   z.object({ type: z.literal("identity"), brand_profile_id: z.string().uuid(), questionnaire: questionnaireSchema }),
   z.object({ type: z.literal("pillars"), brand_profile_id: z.string().uuid() }),
   z.object({ type: z.literal("tone"), brand_profile_id: z.string().uuid() }),
+  z.object({
+    type: z.literal("audit"),
+    brand_profile_id: z.string().uuid(),
+    audit_id: z.string().uuid(),
+    files: z.array(z.string().max(300)).min(1).max(5),
+  }),
   z.object({ type: z.literal("editorial_line"), editorial_line_id: z.string().uuid() }),
   z.object({ type: z.literal("editorial_week"), entry_id: z.string().uuid() }),
 ]);

@@ -1,4 +1,4 @@
-import type { EditorialOutput, IdentityOutput, PillarsOutput, ToneOutput } from "./schemas";
+import type { AuditOutput, EditorialOutput, IdentityOutput, PillarsOutput, ToneOutput } from "./schemas";
 
 // Réponses de développement (AI_MOCK=1) : permettent de tester sans crédit API.
 export const mockIdentity = (): IdentityOutput => ({
@@ -36,4 +36,18 @@ export const mockEditorial = (weeks: number): EditorialOutput => ({
     frequency: "3 publications par semaine",
     suggested_time: "18h30",
   })),
+});
+
+export const mockAudit = (): AuditOutput => ({
+  score: 72,
+  summary: "Une présence cohérente avec le positionnement, mais des visuels et des appels à l'action à renforcer.",
+  strengths: [
+    { title: "Ton chaleureux", description: "La voix de la marque est reconnaissable et proche de la cible." },
+    { title: "Visuels lisibles", description: "Les couleurs de la charte sont respectées sur la majorité des supports." },
+  ],
+  improvements: [
+    { title: "Appels à l'action absents", description: "Peu de publications invitent à commander ou écrire en message privé.", priority: "eleve" },
+    { title: "Régularité de publication", description: "Les créneaux de publication varient fortement d'une semaine à l'autre.", priority: "modere" },
+    { title: "Hashtags", description: "Utiliser un petit jeu de hashtags de marque stable.", priority: "faible" },
+  ],
 });

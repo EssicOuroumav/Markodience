@@ -41,7 +41,7 @@ function classify(err: unknown): AiError {
 
 /** Appelle Claude, valide la sortie avec zod, réessaie une fois si elle est malformée. */
 export async function generateJson<T>(
-  userPrompt: string,
+  userPrompt: string | Anthropic.ContentBlockParam[],
   schema: ZodType<T>,
   mock: () => T,
 ): Promise<T> {

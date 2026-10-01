@@ -1,10 +1,11 @@
+import type Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { AiError, AI_MESSAGES, generateJson } from "@/lib/ai/anthropic";
-import { mockEditorial, mockIdentity, mockPillars, mockTone } from "@/lib/ai/mock";
-import { editorialLinePrompt, editorialWeekPrompt, identityPrompt, pillarsPrompt, tonePrompt, type BrandContext, type EditorialContext } from "@/lib/ai/prompts";
+import { mockAudit, mockEditorial, mockIdentity, mockPillars, mockTone } from "@/lib/ai/mock";
+import { auditPrompt, editorialLinePrompt, editorialWeekPrompt, identityPrompt, pillarsPrompt, tonePrompt, type BrandContext, type EditorialContext } from "@/lib/ai/prompts";
 import { pillarRotation, weeksForPeriod, type PeriodMonths } from "@/lib/editorial";
-import { editorialOutput, generateRequest, identityOutput, pillarsOutput, toneOutput } from "@/lib/ai/schemas";
+import { auditOutput, editorialOutput, generateRequest, identityOutput, pillarsOutput, toneOutput } from "@/lib/ai/schemas";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -64,6 +65,8 @@ export async function POST(request: Request) {
       if (error) return fail(500, "L'identité n'a pas pu être enregistrée.", "db");
       return NextResponse.json({ ok: true, data: result });
     }
+
+    if (req.type === "audit") return await handleAudit(supabase, brand, req);
 
     // pillars / tone : contexte = identité existante
     const { data: identity } = await supabase
@@ -205,4 +208,59 @@ async function handleEditorial(
     .eq("id", entry!.id);
   if (error) return fail(500, "La semaine n'a pas pu être mise à jour.", "db");
   return NextResponse.json({ ok: true });
+}
+
+const MEDIA: Record<string, { kind: "image" | "document"; type: string }> = {
+  png: { kind: "image", type: "image/png" },
+  jpg: { kind: "image", type: "image/jpeg" },
+  jpeg: { kind: "image", type: "image/jpeg" },
+  pdf: { kind: "document", type: "application/pdf" },
+};
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+
+async function handleAudit(
+  supabase: Supa,
+  brand: { id: string; name: string; sector: string | null },
+  req: { audit_id: string; files: string[] },
+) {
+  const prefix = `${brand.id}/${req.audit_id}/`;
+  const blocks: Anthropic.ContentBlockParam[] = [];
+
+  for (const path of req.files) {
+    // Les chemins doivent rester dans le dossier de cet audit (pas de ../).
+    if (!path.startsWith(prefix) || path.includes("..") || path.slice(prefix.length).includes("/")) {
+      return fail(400, "Fichier invalide.", "bad_request");
+    }
+    const ext = path.split(".").pop()?.toLowerCase() ?? "";
+    const media = MEDIA[ext];
+    if (!media) return fail(400, "Format non pris en charge (PNG, JPG ou PDF).", "bad_request");
+
+    const { data: blob, error } = await supabase.storage.from("audits").download(path);
+    if (error || !blob) return fail(404, "Un fichier de l'audit est introuvable. Redéposez-le.", "file_missing");
+    if (blob.size > MAX_FILE_BYTES) return fail(400, "Un fichier dépasse 10 Mo.", "bad_request");
+    const data = Buffer.from(await blob.arrayBuffer()).toString("base64");
+
+    if (media.kind === "image") {
+      blocks.push({ type: "image", source: { type: "base64", media_type: media.type as "image/png" | "image/jpeg", data } });
+    } else {
+      blocks.push({ type: "document", source: { type: "base64", media_type: "application/pdf", data } });
+    }
+  }
+
+  const [{ data: identity }, { data: pillars }, { data: tone }] = await Promise.all([
+    supabase.from("brand_identity").select("positioning, target_segments, visual_palette, marketing_objectives").eq("brand_profile_id", brand.id).maybeSingle(),
+    supabase.from("content_pillars").select("name, description").eq("brand_profile_id", brand.id),
+    supabase.from("tone_voice").select("do_list, dont_list").eq("brand_profile_id", brand.id).maybeSingle(),
+  ]);
+  blocks.push({ type: "text", text: auditPrompt({ name: brand.name, sector: brand.sector, identity, pillars, tone }) });
+
+  const result = await generateJson(blocks, auditOutput, mockAudit);
+  const { error } = await supabase.from("audits").insert({
+    id: req.audit_id,
+    brand_profile_id: brand.id,
+    source_files: req.files,
+    report_data: result,
+  });
+  if (error) return fail(500, "Le rapport n'a pas pu être enregistré.", "db");
+  return NextResponse.json({ ok: true, data: { id: req.audit_id, report: result } });
 }

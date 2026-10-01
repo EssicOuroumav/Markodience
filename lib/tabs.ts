@@ -1,6 +1,6 @@
 export const TABS = [
   { slug: "identity", label: "Identité de marque", ready: true },
-  { slug: "audit", label: "Audit", ready: false },
+  { slug: "audit", label: "Audit", ready: true },
   { slug: "pillars", label: "Piliers de contenu", ready: true },
   { slug: "tone", label: "Tonalité & voix", ready: true },
   { slug: "editorial", label: "Ligne éditoriale", ready: true },
