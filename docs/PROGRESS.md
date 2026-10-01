@@ -24,8 +24,10 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 
 - [x] Étape 9 — Paliers + paiement : `lib/plans.ts` (source unique), PaymentProvider (PayDunya + mock dev), /api/checkout (montant recalculé serveur), webhook sans confiance au corps (vérification serveur-à-serveur + atomique + idempotent), retour /payment/return, cadenas + upsell, gating API + RLS restrictives (migration 4 appliquée et vérifiée : 18 cas), limite de profils, filigrane PDF selon plan. Vérifié dans le navigateur avec le mock (gratuit → paiement → Pro débloqué, annulation, faux webhooks rejetés). 47 tests. NON VÉRIFIÉ : échange réel avec PayDunya (clés sandbox manquantes).
 
+- [~] Étape 10 — audit : en-têtes de sécurité (CSP, HSTS, X-Frame-Options…) vérifiés en build production sans violation ; `npm run test:security` (23 contrôles RLS/paliers, comptes jetables auto-supprimés) ; aucun secret dans le bundle client ni dans Git. EN SUSPENS : Next 14.2.35 vulnérable (corrigé seulement en Next 16) → décision utilisateur ; déploiement Vercel → confirmation utilisateur.
+
 ## Étape en cours
-- Étape 10 — audit sécurité global, tests, déploiement Vercel.
+- Étape 10 — décisions : mise à jour Next, déploiement Vercel, nettoyage des comptes de test.
 
 ## En attente côté utilisateur
 - GitHub : dépôt EssicOuroumav/Markodience passé en PRIVÉ ; le `git push` a été bloqué par le garde-fou de la session (6+ commits locaux non poussés). À pousser quand l'utilisateur l'autorise explicitement.
