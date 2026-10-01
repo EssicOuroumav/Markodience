@@ -37,6 +37,10 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 - [x] Refonte du design : jetons (canaux RGB → les teintes /10 fonctionnent enfin), cartes blanches sur fond canvas, icônes lucide, illustrations SVG maison (`components/illustrations.tsx`), accueil complet (hero + maquette, fonctionnalités, méthode, bandeau sombre, tarifs, FAQ, appel final), pages de connexion en écran partagé, sidebar (marque, palier, déconnexion), en-têtes de page, états vides illustrés, mobile vérifié. Aucune photo : uniquement des illustrations vectorielles (en attente des photos du propriétaire si souhaité).
 - [~] À pousser : tout ce lot (git push par l'utilisateur) → redéploiement auto Vercel.
 
+- [x] Correctif logo : le logo ramène à /dashboard (ou /admin) quand connecté ; l'accueil détecte la session (« Mon espace »).
+- [x] Passe « premium » des onglets : page Vue d'ensemble (progression de la stratégie, indicateurs, prochaine étape), questionnaire d'identité en 4 étapes + chargement soigné + barre fixe, anneaux de score, piliers numérotés, tonalité teintée avec icônes, liseré de statut éditorial, onglets en pilules, accordéon des règles à icônes, frise chronologique des lives, formulaire KPI en carte, zone de dépôt d'audit.
+- [ ] DÉCISION EN ATTENTE (utilisateur) : modèle des profils multiples (Pro 3, Agence 10 ; frais par profil supplémentaire = moitié du prix ?). Voir le message : options A/B/C, questions mensuel vs unique.
+
 ## Étape en cours
 - Reste : Supabase Site URL = https://markodience.vercel.app + Redirect URL https://markodience.vercel.app/** ; push de /auth/callback ; test d'inscription réelle ; crédit Anthropic (2026-10-02) puis test génération réelle ; webhook IPN PayDunya (test réel sur le site en ligne) ; plus tard : clés PayDunya production, SMTP personnalisé.
 

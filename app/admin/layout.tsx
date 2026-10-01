@@ -13,7 +13,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   await requireAdmin();
   return (
     <div className="min-h-screen bg-canvas">
-      <Navbar>
+      <Navbar homeHref="/admin">
         <span className="chip">Espace administrateur</span>
       </Navbar>
       <div className="mx-auto max-w-6xl px-5 pb-20 pt-24 md:px-6">

@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import ProductMockup from "@/components/ProductMockup";
 import { ILLUSTRATIONS, type IllustrationName } from "@/components/illustrations";
 import { PLANS } from "@/lib/plans";
+import { createClient } from "@/lib/supabase/server";
 
 const LINKS = [
   { href: "#fonctionnalites", label: "Fonctionnalités" },
@@ -43,12 +44,24 @@ const PLAN_BULLETS: Record<"gratuit" | "pro" | "agence", string[]> = {
   agence: ["Profils illimités", "Tout le palier Pro", "Marque blanche et export multi-clients", "Facturé par siège, 2 minimum"],
 };
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const signedIn = !!user;
+  const startHref = signedIn ? "/dashboard" : "/signup";
   return (
     <>
-      <Navbar links={LINKS}>
-        <Link href="/login" className="btn-ghost hidden sm:inline-flex">Se connecter</Link>
-        <Link href="/signup" className="btn-primary !px-5 !py-2 !text-[15px]">Commencer</Link>
+      <Navbar links={LINKS} homeHref={signedIn ? "/dashboard" : "/"}>
+        {signedIn ? (
+          <Link href="/dashboard" className="btn-primary !px-5 !py-2 !text-[15px]">Mon espace <ArrowRight size={16} /></Link>
+        ) : (
+          <>
+            <Link href="/login" className="btn-ghost hidden sm:inline-flex">Se connecter</Link>
+            <Link href="/signup" className="btn-primary !px-5 !py-2 !text-[15px]">Commencer</Link>
+          </>
+        )}
       </Navbar>
 
       <main>
@@ -65,7 +78,7 @@ export default function Home() {
                 Identité, piliers de contenu, ligne éditoriale, audit et reporting : tout ce qu’il faut pour gérer une marque comme un pro, généré avec l’IA et pensé pour votre réalité.
               </p>
               <div className="mt-9 flex flex-wrap items-center gap-4">
-                <Link href="/signup" className="btn-primary">Créer mon espace gratuit <ArrowRight size={18} /></Link>
+                <Link href={startHref} className="btn-primary">{signedIn ? "Accéder à mon espace" : "Créer mon espace gratuit"} <ArrowRight size={18} /></Link>
                 <a href="#fonctionnalites" className="btn-secondary !rounded-pill !px-6 !py-3 !text-[17px]">Découvrir</a>
               </div>
               <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[14px] text-ink-secondary">
@@ -184,8 +197,8 @@ export default function Home() {
                         <li key={b} className="flex items-start gap-2.5 text-[16px]"><Check size={18} strokeWidth={2.6} className={`mt-0.5 shrink-0 ${featured ? "text-[#7cb8ff]" : "text-accent"}`} />{b}</li>
                       ))}
                     </ul>
-                    <Link href="/signup" className={`mt-8 ${featured ? "btn-primary w-full" : "btn-secondary !rounded-pill w-full !py-3 !text-[16px]"}`}>
-                      {id === "gratuit" ? "Commencer gratuitement" : `Choisir ${p.label}`}
+                    <Link href={signedIn ? "/dashboard/upgrade" : "/signup"} className={`mt-8 ${featured ? "btn-primary w-full" : "btn-secondary !rounded-pill w-full !py-3 !text-[16px]"}`}>
+                      {signedIn ? (id === "gratuit" ? "Mon espace" : `Choisir ${p.label}`) : id === "gratuit" ? "Commencer gratuitement" : `Choisir ${p.label}`}
                     </Link>
                   </article>
                 );
@@ -223,8 +236,8 @@ export default function Home() {
             <div aria-hidden className="absolute -bottom-24 -right-16 h-80 w-80 rounded-full bg-white/10 blur-2xl" />
             <h2 className="relative mx-auto max-w-2xl text-[clamp(30px,4.4vw,48px)] leading-tight tracking-[-0.03em]">Donnez à vos marques la stratégie qu’elles méritent.</h2>
             <p className="relative mx-auto mt-4 max-w-xl text-[18px] text-white/80">Créez votre espace en deux minutes. Aucune carte bancaire n’est demandée pour démarrer.</p>
-            <Link href="/signup" className="relative mt-8 inline-flex items-center gap-2 rounded-pill bg-white px-7 py-3.5 text-[17px] font-semibold text-accent transition hover:-translate-y-px hover:shadow-pop">
-              Créer mon espace gratuit <ArrowRight size={18} />
+            <Link href={startHref} className="relative mt-8 inline-flex items-center gap-2 rounded-pill bg-white px-7 py-3.5 text-[17px] font-semibold text-accent transition hover:-translate-y-px hover:shadow-pop">
+              {signedIn ? "Accéder à mon espace" : "Créer mon espace gratuit"} <ArrowRight size={18} />
             </Link>
           </div>
         </section>
@@ -235,7 +248,7 @@ export default function Home() {
           <p><span className="font-semibold text-ink">Markodience</span> · La plateforme des community managers</p>
           <nav aria-label="Pied de page" className="flex gap-6">
             {LINKS.map((l) => (<a key={l.href} href={l.href} className="transition hover:text-ink">{l.label}</a>))}
-            <Link href="/login" className="transition hover:text-ink">Connexion</Link>
+            <Link href={signedIn ? "/dashboard" : "/login"} className="transition hover:text-ink">{signedIn ? "Mon espace" : "Connexion"}</Link>
           </nav>
           <p>© 2026 Markodience</p>
         </div>

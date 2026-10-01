@@ -171,10 +171,10 @@ export default function LivesTab({
         </PageHeader>
 
       {guides.length > 0 && (
-        <div role="tablist" aria-label="Guides de live" className="mt-4 flex gap-1 overflow-x-auto border-b border-line">
+        <div role="tablist" aria-label="Guides de live" className="mt-2 flex gap-2 overflow-x-auto pb-1">
           {guides.map((g) => (
             <button key={g.id} role="tab" type="button" aria-selected={g.id === activeId} onClick={() => setActiveId(g.id)}
-              className={`whitespace-nowrap border-b-2 px-4 py-2 text-[15px] ${g.id === activeId ? "border-accent font-semibold text-accent" : "border-transparent text-ink-secondary hover:text-ink"}`}>{OBJECTIVE_LABELS[g.objective]}</button>
+              className={`whitespace-nowrap rounded-pill px-5 py-2 text-[15px] font-medium transition ${g.id === activeId ? "bg-night text-white shadow-card" : "bg-white text-ink-secondary shadow-card hover:text-ink"}`}>{OBJECTIVE_LABELS[g.objective]}</button>
           ))}
         </div>
       )}
@@ -194,7 +194,7 @@ export default function LivesTab({
       {guide && (
         <>
           <div className="mt-8">
-            <h2 className="text-[22px]">Structure du live</h2>
+            <h2 className="section-title">Structure du live</h2>
             {steps.length === 0 ? (
               <div className="card mt-4">
                 <p className="text-ink-secondary">Aucune trame pour ce guide. Elle sera propre à l&apos;objectif « {OBJECTIVE_LABELS[guide.objective]} ».</p>
@@ -202,9 +202,10 @@ export default function LivesTab({
               </div>
             ) : (
               <>
-                <ol className="mt-4 space-y-3">
+                <ol className="relative mt-5 space-y-4 md:ml-3 md:border-l-2 md:border-dashed md:border-accent/25 md:pl-6">
                   {steps.map((s, i) => (
-                    <li key={i} className={`card flex gap-4 ${busy === `step${i}` ? "opacity-50" : ""}`}>
+                    <li key={i} className={`card relative flex gap-5 ${busy === `step${i}` ? "opacity-50" : ""}`}>
+                      <span aria-hidden className="num absolute -left-3 top-6 hidden h-6 w-6 items-center justify-center rounded-full bg-accent text-[12px] font-semibold text-white shadow-glow md:flex">{i + 1}</span>
                       <div className="w-24 shrink-0 pt-1"><EditableText label={`Horaire étape ${i + 1}`} className="text-[15px] font-semibold text-accent" value={s.time_range} onSave={(v) => saveSteps(steps.map((x, j) => (j === i ? { ...x, time_range: v } : x)))} /></div>
                       <div className="min-w-0 flex-1">
                         <EditableText label={`Titre étape ${i + 1}`} className="text-[18px] font-semibold" value={s.title} onSave={(v) => saveSteps(steps.map((x, j) => (j === i ? { ...x, title: v } : x)))} />
@@ -225,7 +226,7 @@ export default function LivesTab({
           </div>
 
           <div className="mt-12">
-            <h2 className="text-[22px]">Scripts opérationnels</h2>
+            <h2 className="section-title">Scripts opérationnels</h2>
             {operational.length === 0 && quick.length === 0 ? (
               <div className="card mt-4">
                 <p className="text-ink-secondary">Aucun script. Générez des scripts adaptés à cet objectif, ou ajoutez les vôtres.</p>
@@ -252,7 +253,7 @@ export default function LivesTab({
               </>
             )}
 
-            <h3 className="mt-10 text-[19px]">Banque de réponses rapides</h3>
+            <h3 className="section-title mt-12">Banque de réponses rapides</h3>
             <p className="caption">Réponses courtes à copier en un clic pendant un live (prix, disponibilité, stock, infos pratiques).</p>
             {quick.length === 0 ? (
               <p className="mt-3 text-ink-secondary">Aucune réponse rapide pour l&apos;instant.</p>
@@ -288,7 +289,7 @@ function TeamSection({ members, onAdd, onRemove }: { members: Member[]; onAdd: (
   const [err, setErr] = useState<string | null>(null);
   return (
     <div className="mt-12">
-      <h2 className="text-[22px]">Organisation de l&apos;équipe</h2>
+      <h2 className="section-title">Organisation de l&apos;équipe</h2>
       <p className="caption">Une seule équipe par profil de marque, partagée entre tous les guides. Saisie manuelle.</p>
       {members.length === 0 ? (
         <p className="mt-3 text-ink-secondary">Aucun membre pour l&apos;instant. Ajoutez le présentateur, le modérateur, la régie…</p>

@@ -1,5 +1,6 @@
 "use client";
 
+import { UploadCloud } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { callGenerate } from "@/lib/api";
@@ -102,11 +103,13 @@ export default function AuditTab({ brandId, initial }: { brandId: string; initia
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
-        className={`mt-6 flex cursor-pointer flex-col items-center justify-center rounded-card border border-dashed px-4 py-10 text-center transition ${dragging ? "border-accent bg-bg-secondary" : "border-line"}`}
+        className={`group mt-2 flex cursor-pointer flex-col items-center justify-center rounded-[28px] border-2 border-dashed bg-white px-6 py-12 text-center shadow-card transition duration-300 ${dragging ? "scale-[1.01] border-accent bg-accent-soft/60" : "border-black/12 hover:border-accent/50 hover:bg-accent-soft/30"}`}
       >
         <input type="file" multiple accept="image/png,image/jpeg,application/pdf" className="sr-only" onChange={(e) => { if (e.target.files) addFiles(e.target.files); e.target.value = ""; }} />
-        <span className="text-[17px]">Déposez vos fichiers ici ou cliquez pour choisir</span>
-        <span className="caption mt-1">PNG, JPG ou PDF · 10 Mo max par fichier · {MAX_FILES} fichiers max</span>
+        <span aria-hidden className="flex h-16 w-16 items-center justify-center rounded-3xl bg-accent-soft text-accent transition duration-300 group-hover:scale-105"><UploadCloud size={30} strokeWidth={1.6} /></span>
+        <span className="mt-5 text-[19px] font-semibold tracking-heading">Déposez vos captures ou PDF ici</span>
+        <span className="mt-1 text-[15px] text-ink-secondary">ou <span className="font-medium text-accent">parcourez vos fichiers</span></span>
+        <span className="caption mt-3">PNG, JPG ou PDF · 10 Mo max par fichier · {MAX_FILES} fichiers max</span>
       </label>
       {fileError && <p role="alert" className="mt-3 text-[15px] text-danger">{fileError}</p>}
 
@@ -138,13 +141,13 @@ export default function AuditTab({ brandId, initial }: { brandId: string; initia
 
       {current && (
         <div className="mt-10">
-          <h2 className="mb-4 text-[22px]">Résultat de l&apos;audit</h2>
+          <h2 className="section-title mb-5">Résultat de l&apos;audit</h2>
           <AuditReport data={current.report_data} />
         </div>
       )}
 
       <div className="mt-14">
-        <h2 className="text-[22px]">Historique des audits</h2>
+        <h2 className="section-title">Historique des audits</h2>
         {audits.length === 0 ? (
           <div className="mt-4"><EmptyState illustration="audit" title="Aucun audit pour l’instant" text="Déposez vos captures ou PDF ci-dessus et lancez votre premier audit : le score apparaîtra ici." /></div>
         ) : (

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Crown, CreditCard, Lock, LogOut, ShieldCheck } from "lucide-react";
+import { Crown, CreditCard, Home, Lock, LogOut, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { hasFeature, PLANS, type PlanId } from "@/lib/plans";
@@ -24,6 +24,14 @@ export default function Sidebar({ plan, owner, email, brand }: Props) {
   }
   const [shape, setShape] = useState<Shape | null>(null);
   const stacked = shape === "wide";
+  const home = (
+    <Link key="home" href="/dashboard" aria-current={pathname === "/dashboard" ? "page" : undefined}
+      className={`relative flex shrink-0 items-center gap-3 whitespace-nowrap rounded-xl px-3 py-2.5 text-[15px] font-medium transition ${pathname === "/dashboard" ? "bg-accent-soft text-accent" : "text-ink/80 hover:bg-black/[0.04] hover:text-ink"}`}>
+      {pathname === "/dashboard" && <span aria-hidden className="absolute -left-3 top-2 hidden h-7 w-1 rounded-r-full bg-accent md:block" />}
+      <Home size={19} strokeWidth={pathname === "/dashboard" ? 2.1 : 1.8} className="shrink-0" />
+      <span className="flex-1">Vue d’ensemble</span>
+    </Link>
+  );
   const items = TABS.map((t) => {
     const Icon = TAB_ICONS[t.slug];
     const href = `/dashboard/${t.slug}`;
@@ -51,6 +59,7 @@ export default function Sidebar({ plan, owner, email, brand }: Props) {
       </div>
 
       <nav aria-label="Onglets" className="flex gap-1 overflow-x-auto px-3 py-2 md:flex-1 md:flex-col md:overflow-y-auto md:px-3 md:py-4">
+        {home}
         {items}
         <Link href="/dashboard/upgrade" className="flex shrink-0 items-center gap-3 whitespace-nowrap rounded-xl px-3 py-2.5 text-[15px] font-medium text-ink/80 md:hidden">
           <CreditCard size={19} strokeWidth={1.8} className="shrink-0" /><span>Mon palier</span>

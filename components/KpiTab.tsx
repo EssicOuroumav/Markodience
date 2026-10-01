@@ -142,7 +142,9 @@ export default function KpiTab({ brandId, brandName, deadlineDay: initialDay, in
         </div>
       )}
 
-      <div className="mt-6 grid gap-5 sm:grid-cols-2">
+      <div className="card-flat mt-6 space-y-6 !p-8">
+      <h2 className="section-title">Indicateurs du mois</h2>
+      <div className="grid gap-5 sm:grid-cols-2">
         {field("reach", "Portée totale", shown.reach, (n) => set("reach", n))}
         {field("engagement", "Engagement total (likes + commentaires + partages)", shown.engagement, (n) => set("engagement", n))}
         {field("followers", "Nouveaux abonnés sur la période", shown.new_followers, (n) => set("new_followers", n))}
@@ -165,6 +167,7 @@ export default function KpiTab({ brandId, brandName, deadlineDay: initialDay, in
         <textarea id="notes" rows={3} className="input" disabled={readOnly} value={shown.notes} maxLength={2000} onChange={(e) => set("notes", e.target.value)} />
       </div>
 
+      </div>
       {error && <p role="alert" className="mt-4 text-[15px] text-danger">{error}</p>}
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -181,7 +184,7 @@ export default function KpiTab({ brandId, brandName, deadlineDay: initialDay, in
       </div>
 
       <div className="mt-12">
-        <h2 className="text-[22px]">Historique des rapports</h2>
+        <h2 className="section-title">Historique des rapports</h2>
         {reports.length === 0 ? (
           <p className="mt-3 text-ink-secondary">Aucun rapport soumis pour l&apos;instant.</p>
         ) : (

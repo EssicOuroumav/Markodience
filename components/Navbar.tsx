@@ -4,14 +4,16 @@ import Link from "next/link";
 type NavbarProps = {
   children?: React.ReactNode;
   links?: { href: string; label: string }[];
+  /** Destination du logo : /dashboard quand l'utilisateur est connecté. */
+  homeHref?: string;
 };
 
 /** Navbar glassmorphism clair, fixe en haut. Réutilisée partout (accueil, dashboard). */
-export default function Navbar({ children, links }: NavbarProps) {
+export default function Navbar({ children, links, homeHref = "/" }: NavbarProps) {
   return (
     <header className="glass fixed inset-x-0 top-0 z-50">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-6 px-5 md:px-6">
-        <Link href="/" className="flex items-center gap-2 text-ink">
+        <Link href={homeHref} className="flex items-center gap-2 text-ink">
           <Image src="/logo.png" alt="" width={28} height={28} priority />
           <span className="text-[17px] font-semibold tracking-heading">Markodience</span>
         </Link>

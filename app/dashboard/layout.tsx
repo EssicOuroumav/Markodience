@@ -9,7 +9,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { profiles, active, plan, owner, user } = await getDashboardContext();
   return (
     <div className="min-h-screen bg-canvas">
-      <Navbar>
+      <Navbar homeHref="/dashboard">
         <BrandSwitcher profiles={profiles} activeId={active.id} canCreate={owner || canCreateProfile(plan, profiles.length)} />
       </Navbar>
       <div className="pt-14">

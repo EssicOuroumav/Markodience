@@ -1,11 +1,14 @@
 "use client";
 
+import { Ban, CalendarClock, ChevronDown, Image as ImageIcon, MessageCircle, ShieldCheck, BarChart3 } from "lucide-react";
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { RULE_SECTIONS, type RuleKey } from "@/lib/rules";
 import MarkdownView from "./MarkdownView";
 import SaveIndicator, { type SaveState } from "./SaveIndicator";
 import PageHeader from "./PageHeader";
+
+const ICONS = { planning: CalendarClock, visual: ImageIcon, community: MessageCircle, reporting: BarChart3, privacy: ShieldCheck, taboo: Ban } as const;
 
 function Section({ brandId, k, label, initial, defaultOpen, onSave }: { brandId: string; k: RuleKey; label: string; initial: string; defaultOpen: boolean; onSave: (s: SaveState) => void }) {
   const supabase = createClient();
@@ -39,16 +42,17 @@ function Section({ brandId, k, label, initial, defaultOpen, onSave }: { brandId:
   }
 
   return (
-    <div className="rounded-card bg-bg-secondary">
+    <div className="card-flat !p-0 overflow-hidden">
       <h2>
         <button type="button" aria-expanded={open} aria-controls={`rules-${k}`} onClick={() => setOpen((o) => !o)}
-          className="flex w-full items-center justify-between rounded-card px-6 py-4 text-left text-[19px] font-semibold tracking-heading">
-          {label}
-          <span aria-hidden className={`text-ink-secondary transition ${open ? "rotate-180" : ""}`}>▾</span>
+          className="flex w-full items-center gap-4 px-6 py-5 text-left text-[18px] font-semibold tracking-heading transition hover:bg-canvas/60">
+          <span aria-hidden className={`flex h-11 w-11 items-center justify-center rounded-2xl ${open ? "bg-accent text-white" : "bg-accent-soft text-accent"} transition`}>{(() => { const I = ICONS[k]; return <I size={20} strokeWidth={1.8} />; })()}</span>
+          <span className="flex-1">{label}</span>
+          <ChevronDown size={20} aria-hidden className={`text-ink-secondary transition duration-300 ${open ? "rotate-180" : ""}`} />
         </button>
       </h2>
       {open && (
-        <div id={`rules-${k}`} className="px-6 pb-6">
+        <div id={`rules-${k}`} className="border-t hairline px-6 pb-6 pt-4">
           {editing ? (
             <>
               <div className="mb-2 flex gap-2" role="toolbar" aria-label="Mise en forme">

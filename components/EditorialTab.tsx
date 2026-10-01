@@ -204,10 +204,10 @@ export default function EditorialTab({
         </PageHeader>
 
       {lines.length > 0 && (
-        <div role="tablist" aria-label="Canaux" className="mt-4 flex gap-1 overflow-x-auto border-b border-line">
+        <div role="tablist" aria-label="Canaux" className="mt-2 flex gap-2 overflow-x-auto pb-1">
           {lines.map((l) => (
             <button key={l.id} role="tab" type="button" aria-selected={l.id === activeId} onClick={() => setActiveId(l.id)}
-              className={`whitespace-nowrap border-b-2 px-4 py-2 text-[15px] ${l.id === activeId ? "border-accent font-semibold text-accent" : "border-transparent text-ink-secondary hover:text-ink"}`}>
+              className={`whitespace-nowrap rounded-pill px-5 py-2 text-[15px] font-medium transition ${l.id === activeId ? "bg-night text-white shadow-card" : "bg-white text-ink-secondary shadow-card hover:text-ink"}`}>
               {l.channel}
             </button>
           ))}
@@ -270,7 +270,8 @@ export default function EditorialTab({
               const v = e.validation_status ?? "non_requis";
               return (
                 <li key={e.id} draggable onDragStart={() => (dragId.current = e.id)} onDragOver={(ev) => ev.preventDefault()} onDrop={() => dropOn(e.id)}
-                  className={`card cursor-grab active:cursor-grabbing ${busy === e.id ? "opacity-50" : ""}`} aria-label={`Semaine ${e.week_number}`}>
+                  className={`card relative cursor-grab overflow-hidden !pl-8 active:cursor-grabbing ${busy === e.id ? "opacity-50" : ""}`} aria-label={`Semaine ${e.week_number}`}>
+                  <span aria-hidden className={`absolute inset-y-0 left-0 w-1.5 ${e.status === "termine" ? "bg-success" : e.status === "en_cours" ? "bg-warning" : "bg-black/10"}`} />
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="caption whitespace-nowrap font-semibold uppercase tracking-wide">⠿ Semaine {e.week_number}</span>
                     <div className="flex flex-wrap items-center gap-2">

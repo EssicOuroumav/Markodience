@@ -1,5 +1,6 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -83,11 +84,13 @@ export default function PillarsTab({ brandId, initial, hasIdentity }: { brandId:
         <div className="mt-6"><EmptyState illustration="pillars" title="Aucun pilier pour l’instant" text="Générez 3 à 5 piliers à partir de votre identité, ou ajoutez-les à la main avec le bouton « + »." /></div>
       ) : (
         <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {pillars.map((p) => (
-            <article key={p.id} className="card flex flex-col">
+          {pillars.map((p, i) => (
+            <article key={p.id} className="card group relative flex flex-col overflow-hidden">
+              <span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent to-[#5aa9ff] opacity-80" />
+              <span aria-hidden className="num mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-accent-soft text-[14px] font-semibold text-accent">{String(i + 1).padStart(2, "0")}</span>
               <EditableText label="Nom du pilier" className="text-[20px] font-semibold" value={p.name ?? ""} onSave={(v) => update(p.id, { name: v })} />
               <EditableText multiline label="Description du pilier" className="mt-1 text-[15px]" value={p.description ?? ""} onSave={(v) => update(p.id, { description: v })} />
-              <h3 className="mt-4 text-[13px] uppercase tracking-wide text-ink-secondary">Exemples de formats</h3>
+              <h3 className="mt-5 border-t hairline pt-4 text-[12px] font-semibold uppercase tracking-[0.1em] text-ink-secondary">Exemples de formats</h3>
               <EditableText
                 multiline
                 label="Exemples de formats (un par ligne)"
@@ -96,7 +99,7 @@ export default function PillarsTab({ brandId, initial, hasIdentity }: { brandId:
                 value={(p.examples ?? []).join("\n")}
                 onSave={(v) => update(p.id, { examples: v.split("\n").map((x) => x.trim()).filter(Boolean) })}
               />
-              <button type="button" className="btn-secondary mt-4 self-start" onClick={() => remove(p.id)}>Supprimer</button>
+              <button type="button" className="btn-ghost mt-3 self-start !px-3 text-[14px] text-ink-secondary hover:text-danger" onClick={() => remove(p.id)}><Trash2 size={15} />Supprimer</button>
             </article>
           ))}
         </div>

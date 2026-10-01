@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -14,12 +15,12 @@ type Lists = { do_list: string[]; dont_list: string[] };
 
 function ListColumn({ title, items, tone, onChange }: { title: string; items: string[]; tone: "do" | "dont"; onChange: (next: string[]) => void }) {
   return (
-    <article className={`rounded-card p-6 ${tone === "do" ? "bg-success/10" : "bg-danger/10"}`}>
-      <h2 className="text-[20px]">{title}</h2>
+    <article className={`rounded-card border p-7 ${tone === "do" ? "border-success/25 bg-success/[0.08]" : "border-danger/20 bg-danger/[0.07]"}`}>
+      <div className="flex items-center gap-3"><span aria-hidden className={`flex h-10 w-10 items-center justify-center rounded-xl ${tone === "do" ? "bg-success text-white" : "bg-danger text-white"}`}>{tone === "do" ? <Check size={20} strokeWidth={3} /> : <X size={20} strokeWidth={3} />}</span><h2 className="section-title">{title}</h2></div>
       <ul className="mt-3 space-y-1">
         {items.map((it, i) => (
           <li key={i} className="flex items-start gap-1">
-            <span aria-hidden className="mt-1 px-1">•</span>
+            <span aria-hidden className={`mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full ${tone === "do" ? "bg-success" : "bg-danger"}`} />
             <div className="flex-1">
               <EditableText label={`${title} ${i + 1}`} value={it} onSave={(v) => onChange(v.trim() ? items.map((x, j) => (j === i ? v : x)) : items.filter((_, j) => j !== i))} />
             </div>
