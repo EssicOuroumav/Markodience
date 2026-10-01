@@ -16,8 +16,10 @@ Reprise après coupure : lire ce fichier, repartir de « Étape en cours ».
 
 - [x] Étape 5 — Audit : dépôt (≤5 fichiers, png/jpg/pdf, 10 Mo) vers bucket privé `audits`, analyse serveur (fichiers lus depuis le Storage, jamais en base64 côté client), rapport en composants React (0 `dangerouslySetInnerHTML`), historique. Chemins validés (dossier de l'audit uniquement). Middleware : /api/* non connecté → 401 JSON. Vérifié dans le navigateur (mock). 21 tests.
 
+- [x] Étape 6 — KPIs & Reporting : formulaire mensuel (upsert par mois, `submitted_at` conservé à la mise à jour), échéance réglable (`kpi_deadline_day`), bannières à soumettre / en retard / envoyé, historique à temps/en retard, lecture seule des archives, export PDF jsPDF + autotable (`lib/kpiPdf.ts`, paramètre `watermark` prêt pour l'étape 9). Vérifié dans le navigateur (soumission, bannières, lecture seule, PDF téléchargé, persistance de l'échéance). 33 tests.
+
 ## Étape en cours
-- Étape 6 — KPIs & Reporting (prompt 5).
+- Étape 7 — Règles opérationnelles (prompt 6).
 
 ## En attente côté utilisateur
 - GitHub : dépôt EssicOuroumav/Markodience passé en PRIVÉ ; le `git push` a été bloqué par le garde-fou de la session (6+ commits locaux non poussés). À pousser quand l'utilisateur l'autorise explicitement.

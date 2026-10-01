@@ -4,7 +4,7 @@ export const TABS = [
   { slug: "pillars", label: "Piliers de contenu", ready: true },
   { slug: "tone", label: "Tonalité & voix", ready: true },
   { slug: "editorial", label: "Ligne éditoriale", ready: true },
-  { slug: "kpi", label: "KPIs & Reporting", ready: false },
+  { slug: "kpi", label: "KPIs & Reporting", ready: true },
   { slug: "rules", label: "Règles opérationnelles", ready: false },
 ] as const;
 
