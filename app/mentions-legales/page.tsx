@@ -20,7 +20,7 @@ export default function MentionsLegales() {
       <Section n={2} title="Contact">
         <ul>
           <li><strong>E-mail :</strong> <LegalField value={LEGAL.contactEmail} /></li>
-          {LEGAL.contactPhone && <li><strong>Téléphone :</strong> {LEGAL.contactPhone}</li>}
+          <li><strong>Téléphone :</strong> <LegalField value={LEGAL.contactPhone} /></li>
         </ul>
       </Section>
       <Section n={3} title="Hébergement et prestataires techniques">
@@ -37,7 +37,7 @@ export default function MentionsLegales() {
         <p>Les contenus que vous créez dans le service (identité de marque, piliers, plannings, rapports, fichiers) vous appartiennent, dans les conditions prévues par les <a href="/cgu">conditions d&apos;utilisation</a>.</p>
       </Section>
       <Section n={5} title="Crédits">
-        <p>Icônes : bibliothèque Lucide (licence ISC). Police : Inter (licence SIL Open Font). Les illustrations de personnages sont des créations originales de l&apos;éditeur.</p>
+        <p>Icônes : bibliothèque Lucide (licence ISC). Police : Inter (licence SIL Open Font). Les illustrations de personnages sont des créations originales de l&apos;éditeur. La photographie de l&apos;en-tête de la page d&apos;accueil a été générée par intelligence artificielle (ChatGPT, OpenAI) à la demande de l&apos;éditeur ; les personnes représentées n&apos;existent pas.</p>
       </Section>
       <Section n={6} title="Signaler un contenu ou un abus">
         <p>Pour signaler un contenu illicite ou une atteinte à vos droits, écrivez à l&apos;adresse de contact ci-dessus en décrivant précisément le contenu concerné.</p>

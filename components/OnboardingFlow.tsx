@@ -48,7 +48,7 @@ export default function OnboardingFlow() {
       return;
     }
     if (!accepted) {
-      setError("Pour créer votre compte, acceptez les conditions d'utilisation et la politique de confidentialité.");
+      setError(`Pour créer votre compte, confirmez avoir au moins ${LEGAL.minAge} ans et acceptez les conditions d'utilisation et la politique de confidentialité.`);
       return;
     }
     setLoading(true);
@@ -106,7 +106,7 @@ export default function OnboardingFlow() {
           </div>
           <label className="mt-6 flex cursor-pointer items-start gap-3 text-[14px] leading-snug text-ink-secondary">
             <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded-md border-black/20 accent-[var(--color-accent)]" />
-            <span>J&apos;accepte les <a href="/cgu" target="_blank" rel="noopener" className="text-accent underline">conditions d&apos;utilisation</a> et la <a href="/confidentialite" target="_blank" rel="noopener" className="text-accent underline">politique de confidentialité</a>.</span>
+            <span>J&apos;ai au moins {LEGAL.minAge} ans et j&apos;accepte les <a href="/cgu" target="_blank" rel="noopener" className="text-accent underline">conditions d&apos;utilisation</a> et la <a href="/confidentialite" target="_blank" rel="noopener" className="text-accent underline">politique de confidentialité</a>.</span>
           </label>
           {error && <p role="alert" className="mt-4 text-[15px] text-danger">{error}</p>}
           {notice && <p role="status" className="mt-4 text-[15px] text-ink-secondary">{notice}</p>}

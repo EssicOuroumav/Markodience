@@ -57,7 +57,7 @@ export default function Confidentialite() {
         <p>Les échanges sont chiffrés (HTTPS). Chaque compte ne peut accéder qu&apos;à ses propres données, ce que la base de données applique elle-même. Les mots de passe sont chiffrés, les clés secrètes du service ne sont jamais exposées dans l&apos;application, et l&apos;accès aux fichiers d&apos;audit est privé.</p>
       </Section>
       <Section n={9} title="Mineurs">
-        <p>Le service s&apos;adresse à des personnes majeures. Il n&apos;est pas destiné aux mineurs.</p>
+        <p>Le service s&apos;adresse aux personnes âgées d&apos;au moins {LEGAL.minAge} ans. Il n&apos;est pas destiné aux enfants de moins de {LEGAL.minAge} ans, dont nous ne collectons pas sciemment les données.</p>
       </Section>
       <Section n={10} title="Évolution de cette politique">
         <p>Nous pouvons modifier cette politique pour refléter l&apos;évolution du service ou de la réglementation. La date de dernière mise à jour figure en haut de la page ; en cas de changement important, nous vous en informons dans l&apos;application.</p>

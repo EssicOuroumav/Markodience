@@ -13,7 +13,7 @@ const ko = (m, how) => { todo++; console.log(`  ✗ ${m}${how ? `\n      → ${h
 
 console.log("\nInformations légales (lib/legal.ts)");
 const legal = readFileSync("lib/legal.ts", "utf8");
-for (const [key, label] of [["editorName", "Nom ou raison sociale"], ["editorStatus", "Statut de l'éditeur"], ["address", "Adresse"], ["publicationDirector", "Directeur de la publication"], ["contactEmail", "E-mail de contact"]]) {
+for (const [key, label] of [["editorName", "Nom ou raison sociale"], ["editorStatus", "Statut de l'éditeur"], ["address", "Adresse"], ["publicationDirector", "Directeur de la publication"], ["contactEmail", "E-mail de contact"], ["contactPhone", "Téléphone de contact"]]) {
   new RegExp(`${key}: null`).test(legal) ? ko(`${label} non renseigné`, "à compléter dans lib/legal.ts") : ok(label);
 }
 

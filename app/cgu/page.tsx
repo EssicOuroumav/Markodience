@@ -12,7 +12,7 @@ export default function Cgu() {
   return (
     <LegalLayout title="Conditions générales d’utilisation et de vente" intro="Les règles qui encadrent l'utilisation de Markodience et l'achat d'un abonnement." updated={LEGAL.lastUpdated}>
       <Section n={1} title="Objet et acceptation">
-        <p>Les présentes conditions régissent l&apos;accès et l&apos;utilisation de la plateforme Markodience, éditée par <LegalField value={LEGAL.editorName} />. En créant un compte, vous déclarez les avoir lues et vous les acceptez.</p>
+        <p>Les présentes conditions régissent l&apos;accès et l&apos;utilisation de la plateforme Markodience, éditée par <LegalField value={LEGAL.editorName} />, <LegalField value={LEGAL.address} /> (téléphone : <LegalField value={LEGAL.contactPhone} />). En créant un compte, vous déclarez les avoir lues et vous les acceptez.</p>
       </Section>
       <Section n={2} title="Le service">
         <p>Markodience aide les community managers à structurer la stratégie de leurs marques : identité, piliers de contenu, tonalité, ligne éditoriale, audit, indicateurs, règles de travail et préparation de lives, avec l&apos;aide de l&apos;intelligence artificielle.</p>
@@ -20,7 +20,7 @@ export default function Cgu() {
       </Section>
       <Section n={3} title="Votre compte">
         <ul>
-          <li>Vous devez être majeur et fournir des informations exactes.</li>
+          <li>Vous devez avoir au moins {LEGAL.minAge} ans et fournir des informations exactes.</li>
           <li>Vous êtes responsable de la confidentialité de votre mot de passe et de toute activité réalisée depuis votre compte.</li>
           <li>Un compte est personnel. Prévenez-nous sans délai en cas d&apos;usage non autorisé.</li>
         </ul>
@@ -38,7 +38,7 @@ export default function Cgu() {
         <p><strong>Il n&apos;y a pas de renouvellement automatique</strong> : aucun prélèvement n&apos;est effectué sans votre action. À l&apos;échéance, votre compte repasse au palier Gratuit. Vos données sont conservées et restent consultables ; les onglets payants ne sont plus modifiables tant que vous ne renouvelez pas.</p>
       </Section>
       <Section n={6} title="Remboursement">
-        <p>Le service étant fourni immédiatement après le paiement, les sommes versées ne sont pas remboursables, sauf en cas d&apos;erreur de facturation, de double paiement ou lorsque la loi applicable l&apos;impose. Pour toute demande, contactez-nous à <LegalField value={LEGAL.contactEmail} />.</p>
+        <p>Le service étant fourni immédiatement après le paiement, les sommes versées ne sont pas remboursables, sauf en cas d&apos;erreur de facturation ou de double paiement, et sous réserve des droits que la loi applicable vous reconnaît en tant que consommateur, qui ne sont pas affectés par ces conditions. Pour toute demande, contactez-nous à <LegalField value={LEGAL.contactEmail} />.</p>
       </Section>
       <Section n={7} title="Contenus générés par l’intelligence artificielle">
         <ul>
