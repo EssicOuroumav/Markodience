@@ -35,6 +35,7 @@ export default function Confidentialite() {
           <li><strong>Vercel</strong> : hébergement de l&apos;application.</li>
           <li><strong>Anthropic</strong> : génération et analyse par intelligence artificielle. Le contexte de votre marque, vos réponses au questionnaire et les fichiers que vous soumettez à l&apos;audit lui sont transmis le temps du traitement.</li>
           <li><strong>PayDunya</strong> : traitement des paiements.</li>
+          <li><strong>Sentry</strong> : suivi des erreurs techniques, pour corriger les pannes. Seuls les détails de l&apos;erreur (page concernée, type de navigateur) sont transmis ; vos contenus, vos cookies et vos adresses e-mail sont retirés avant l&apos;envoi.</li>
         </ul>
         <p>Certains de ces prestataires sont situés hors de votre pays, notamment en Europe et aux États-Unis. Les transferts sont encadrés par les garanties contractuelles proposées par ces prestataires.</p>
       </Section>
