@@ -5,7 +5,7 @@
 export const LEGAL = {
   // Éditeur du site
   editorName: "Vamourou Cissé" as string | null, // nom ou raison sociale
-  editorStatus: "Entrepreneur individuel" as string | null, // à faire valider par un juriste : ce statut suppose en général un enregistrement
+  editorStatus: "Personne physique" as string | null, // à faire valider par un juriste
   registration: null as string | null, // n° RCCM / identifiant fiscal, si applicable (aucun à ce jour)
   address: "Rue les Carraïbes, Port-Bouët, Abidjan" as string | null,
   publicationDirector: "Vamourou Cissé" as string | null,
