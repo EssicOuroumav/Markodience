@@ -137,3 +137,11 @@ Règles : `.env.local` dans `.gitignore`, un `.env.example` sans valeur réelle,
 8. Intégrations externes
 9. Critères de réussite de la bêta (nombre d'utilisateurs, retours attendus)
 10. Calendrier et prérequis hors code
+
+## 12. Après la mise en ligne : exploitation
+
+- **Suivi d'erreurs** : Sentry est déjà branché (voir README). Créez le projet, mettez `NEXT_PUBLIC_SENTRY_DSN` dans Vercel en type « Config » (le DSN est public par conception), puis testez avec une erreur volontaire réservée au propriétaire, à supprimer ensuite. Les « source maps » (code lisible côté navigateur) demandent un jeton `SENTRY_AUTH_TOKEN` et `withSentryConfig` : à ajouter pendant la bêta.
+- **Disponibilité** : une sonde gratuite (UptimeRobot, Better Stack) avec alerte par e-mail.
+- **Incident** : constater (Sentry, journaux Vercel), limiter (rollback du déploiement dans Vercel), prévenir les utilisateurs, corriger et tester, puis noter la cause.
+- **Routine** : chaque jour Sentry et paiements en attente ; chaque semaine coûts IA et retours ; chaque mois `npm audit` et test de restauration d'une sauvegarde.
+- **Permissions des outils** : n'autorisez un service (Sentry, etc.) que sur les dépôts dont il a besoin.
