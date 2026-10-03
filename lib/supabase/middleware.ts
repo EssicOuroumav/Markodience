@@ -1,8 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// /payment/return : le retour du prestataire peut arriver sans cookie de session ; la route vérifie le paiement côté serveur.
-const PUBLIC_PATHS = ["/", "/signup", "/login", "/api/payments/webhook", "/payment/return", "/auth/callback", "/cgu", "/confidentialite", "/mentions-legales", "/forgot-password", "/robots.txt", "/sitemap.xml"];
+import { isApiPath, requiresSession } from "@/lib/paths";
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -29,12 +28,11 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isPublic = PUBLIC_PATHS.includes(path) || path.startsWith("/opengraph-image");
 
-  if (!user && !isPublic && path.startsWith("/api/")) {
+  if (!user && requiresSession(path) && isApiPath(path)) {
     return NextResponse.json({ ok: false, code: "unauthorized", error: "Connexion requise." }, { status: 401 });
   }
-  if (!user && !isPublic) {
+  if (!user && requiresSession(path)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

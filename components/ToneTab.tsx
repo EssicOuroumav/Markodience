@@ -24,7 +24,7 @@ function ListColumn({ title, items, tone, onChange }: { title: string; items: st
             <div className="flex-1">
               <EditableText label={`${title} ${i + 1}`} value={it} onSave={(v) => onChange(v.trim() ? items.map((x, j) => (j === i ? v : x)) : items.filter((_, j) => j !== i))} />
             </div>
-            <button type="button" aria-label={`Supprimer : ${it}`} className="rounded-btn px-2 text-ink-secondary hover:bg-black/5" onClick={() => onChange(items.filter((_, j) => j !== i))}>×</button>
+            <button type="button" aria-label={`Supprimer : ${it}`} className="rounded-btn px-2 text-ink-secondary hover:bg-black/5" onClick={() => onChange(items.filter((_, j) => j !== i))}><X size={15} aria-hidden /></button>
           </li>
         ))}
       </ul>

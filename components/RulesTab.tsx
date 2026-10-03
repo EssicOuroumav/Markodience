@@ -1,6 +1,6 @@
 "use client";
 
-import { Ban, BarChart3, CalendarClock, ChevronDown, Image as ImageIcon, MessageCircle, ShieldCheck, Wand2 } from "lucide-react";
+import { Ban, BarChart3, CalendarClock, ChevronDown, Image as ImageIcon, List, MessageCircle, ShieldCheck, Wand2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { RULE_HINTS, RULE_SECTIONS, RULE_TEMPLATES, type RuleKey } from "@/lib/rules";
@@ -58,7 +58,7 @@ function Section({ brandId, k, label, initial, defaultOpen, onSave }: { brandId:
               <div className="mb-2 flex gap-2" role="toolbar" aria-label="Mise en forme">
                 <button type="button" className="btn-secondary !px-3 !py-1.5 font-bold" aria-label="Gras" onMouseDown={(e) => e.preventDefault()} onClick={() => wrap("**")}>G</button>
                 <button type="button" className="btn-secondary !px-3 !py-1.5 italic" aria-label="Italique" onMouseDown={(e) => e.preventDefault()} onClick={() => wrap("*")}>I</button>
-                <button type="button" className="btn-secondary !px-3 !py-1.5" aria-label="Liste à puces" onMouseDown={(e) => e.preventDefault()} onClick={bullet}>• Liste</button>
+                <button type="button" className="btn-secondary !px-3 !py-1.5" aria-label="Liste à puces" onMouseDown={(e) => e.preventDefault()} onClick={bullet}><span className="inline-flex items-center gap-1.5"><List size={15} aria-hidden />Liste</span></button>
               </div>
               <textarea ref={ta} autoFocus rows={8} className="input" aria-label={label} value={content} onChange={(e) => setContent(e.target.value)}
                 onBlur={() => { setEditing(false); persist(content); }} />

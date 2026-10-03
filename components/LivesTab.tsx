@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Check, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { callGenerate } from "@/lib/api";
 import { OBJECTIVES, OBJECTIVE_LABELS, moveItem, type LiveStep, type Objective } from "@/lib/lives";
@@ -240,7 +241,7 @@ export default function LivesTab({
                       <EditableText label="Situation" className="font-semibold" value={s.situation ?? ""} onSave={(v) => patchScript(s.id, { situation: v })} />
                       <EditableText multiline label="Contenu du script" className="text-[15px]" value={s.content ?? ""} onSave={(v) => patchScript(s.id, { content: v })} />
                       <div className="mt-2 flex gap-2">
-                        <button type="button" className="btn-secondary !px-3 !py-1.5" onClick={() => copy(s)}>{copied === s.id ? "Copié ✓" : "Copier"}</button>
+                        <button type="button" className="btn-secondary !px-3 !py-1.5" onClick={() => copy(s)}>{copied === s.id ? <span className="inline-flex items-center gap-1"><Check size={15} strokeWidth={3} aria-hidden />Copié</span> : "Copier"}</button>
                         <button type="button" className="btn-secondary !px-3 !py-1.5" onClick={() => removeScript(s.id)}>Supprimer</button>
                       </div>
                     </article>
@@ -265,8 +266,8 @@ export default function LivesTab({
                       <EditableText label="Situation de la réponse rapide" className="font-semibold" value={s.situation ?? ""} onSave={(v) => patchScript(s.id, { situation: v })} />
                       <EditableText multiline label="Texte de la réponse rapide" className="text-[15px]" value={s.content ?? ""} onSave={(v) => patchScript(s.id, { content: v })} />
                     </div>
-                    <button type="button" className="btn-primary !px-5 !py-2 !text-[15px]" onClick={() => copy(s)}>{copied === s.id ? "Copié ✓" : "Copier"}</button>
-                    <button type="button" className="btn-secondary" aria-label="Supprimer la réponse rapide" onClick={() => removeScript(s.id)}>×</button>
+                    <button type="button" className="btn-primary !px-5 !py-2 !text-[15px]" onClick={() => copy(s)}>{copied === s.id ? <span className="inline-flex items-center gap-1"><Check size={15} strokeWidth={3} aria-hidden />Copié</span> : "Copier"}</button>
+                    <button type="button" className="btn-secondary" aria-label="Supprimer la réponse rapide" onClick={() => removeScript(s.id)}><X size={16} aria-hidden /></button>
                   </li>
                 ))}
               </ul>

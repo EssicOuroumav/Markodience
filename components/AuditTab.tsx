@@ -1,6 +1,6 @@
 "use client";
 
-import { UploadCloud } from "lucide-react";
+import { UploadCloud, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { callGenerate } from "@/lib/api";
@@ -127,7 +127,7 @@ export default function AuditTab({ brandId, initial }: { brandId: string; initia
               </div>
               <p className="caption mt-1 truncate" title={p.file.name}>{p.file.name}</p>
               <button type="button" aria-label={`Retirer ${p.file.name}`} onClick={() => removeFile(i)} disabled={loading}
-                className="absolute -right-2 -top-2 h-7 w-7 rounded-full border border-line bg-bg text-[16px] leading-none shadow-sm hover:bg-bg-secondary">×</button>
+                className="absolute -right-2 -top-2 h-7 w-7 rounded-full border border-line bg-bg flex items-center justify-center shadow-sm hover:bg-bg-secondary"><X size={14} aria-hidden /></button>
             </li>
           ))}
         </ul>

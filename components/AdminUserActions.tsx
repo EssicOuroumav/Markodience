@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Check } from "lucide-react";
 
 type Props = { userId: string; plan: string; banned: boolean; isSelf: boolean };
 
@@ -22,7 +23,7 @@ export default function AdminUserActions({ userId, plan, banned, isSelf }: Props
     const json = await res.json().catch(() => null);
     setBusy(false);
     if (!res.ok || !json?.ok) return setMsg(json?.error ?? "L'action a échoué.");
-    setMsg("Fait ✓");
+    setMsg("Fait");
     router.refresh();
   }
 
@@ -61,7 +62,7 @@ export default function AdminUserActions({ userId, plan, banned, isSelf }: Props
               </button>
             )}
           </div>
-          {msg && <p role="status" className="caption">{msg}</p>}
+          {msg && <p role="status" className="caption flex items-center gap-1">{msg === "Fait" && <Check size={14} strokeWidth={3} className="text-success" aria-hidden />}{msg}</p>}
         </div>
       )}
     </div>

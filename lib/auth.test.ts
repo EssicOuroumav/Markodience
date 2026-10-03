@@ -24,15 +24,33 @@ describe("validatePassword", () => {
   });
 });
 
-import { readFileSync } from "node:fs";
-describe("pages publiques du proxy", () => {
-  const src = readFileSync("lib/supabase/middleware.ts", "utf8");
+import { PRIVATE_PREFIXES, PUBLIC_PATHS, isPublicPath, requiresSession } from "./paths";
+
+describe("zones publiques et privées du proxy", () => {
   it("les pages légales, robots, plan du site et image de partage sont accessibles sans connexion", () => {
-    for (const p of ["/cgu", "/confidentialite", "/mentions-legales", "/forgot-password", "/robots.txt", "/sitemap.xml", "/opengraph-image"]) expect(src).toContain(p);
+    for (const p of ["/cgu", "/confidentialite", "/mentions-legales", "/forgot-password", "/robots.txt", "/sitemap.xml", "/opengraph-image", "/login", "/signup"]) {
+      expect(isPublicPath(p)).toBe(true);
+      expect(requiresSession(p)).toBe(false);
+    }
   });
-  it("le tableau de bord et l'admin ne sont jamais publics", () => {
-    const list = src.slice(src.indexOf("PUBLIC_PATHS = ["), src.indexOf("];"));
-    expect(list).not.toContain("/dashboard");
-    expect(list).not.toContain("/admin");
+  it("le tableau de bord, l'admin et la réinitialisation exigent une session", () => {
+    for (const p of ["/dashboard", "/dashboard/account", "/dashboard/brands/abc", "/admin", "/admin/users", "/reset-password", "/payment/mock"]) expect(requiresSession(p)).toBe(true);
+  });
+  it("jamais publics : tableau de bord et admin", () => {
+    expect(PUBLIC_PATHS.some((p) => p.startsWith("/dashboard") || p.startsWith("/admin"))).toBe(false);
+    expect(PRIVATE_PREFIXES).toEqual(expect.arrayContaining(["/dashboard", "/admin"]));
+  });
+  it("l'API exige une session, sauf le webhook de paiement", () => {
+    expect(requiresSession("/api/generate")).toBe(true);
+    expect(requiresSession("/api/admin/action")).toBe(true);
+    expect(requiresSession("/api/payments/webhook")).toBe(false);
+  });
+  it("le retour de paiement et le callback d'authentification restent publics", () => {
+    expect(requiresSession("/payment/return")).toBe(false);
+    expect(requiresSession("/auth/callback")).toBe(false);
+  });
+  it("une adresse inconnue n'est pas redirigée : elle reçoit la page 404", () => {
+    expect(requiresSession("/page-inconnue")).toBe(false);
+    expect(requiresSession("/dashboardx")).toBe(false);
   });
 });
