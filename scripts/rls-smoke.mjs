@@ -83,6 +83,46 @@ try {
   check("quota : lecture de son propre compteur", (await rest(b, "ai_usage?select=count")).json?.[0]?.count === 2);
   check("quota : isolation des compteurs", (await rest(a, "ai_usage?select=count")).json?.length === 0);
 
+  // Paiements : activation atomique (migration 20261001000700)
+  const addM = (iso, n) => { const [y, m, d] = iso.split("-").map(Number); const t = new Date(Date.UTC(y, m - 1 + n, 1)); const last = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 1, 0)).getUTCDate(); t.setUTCDate(Math.min(d, last)); return t.toISOString().slice(0, 10); };
+  const day = (n = 0) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+  const subOf = async (u) => (await admin(`/rest/v1/subscriptions?user_id=eq.${u.id}&select=plan,status,seats,current_period_start,current_period_end`)).json?.[0];
+  const newPay = async (u, plan = "pro", seats = 1) => {
+    const id = crypto.randomUUID();
+    const r = await admin("/rest/v1/payments", { method: "POST", body: { id, user_id: u.id, plan, seats, amount: 12000, provider: "test", provider_token: `smoke_${id}` } });
+    return r.status === 201 ? id : null;
+  };
+  const activate = (id) => admin("/rest/v1/rpc/activate_payment", { method: "POST", body: { p_payment: id } });
+  check("l'utilisateur ne peut pas appeler activate_payment", (await call("/rest/v1/rpc/activate_payment", { method: "POST", token: b.token, body: { p_payment: "00000000-0000-0000-0000-000000000000" } })).status === 403);
+  const unknown = await activate("00000000-0000-0000-0000-000000000000");
+  check("activate_payment (migration appliquée) : paiement inconnu = claimed false", unknown.json?.claimed === false, `${unknown.status} ${JSON.stringify(unknown.json)}`);
+  if (unknown.json?.claimed === false) {
+    const id1 = await newPay(b);
+    const races = await Promise.all([...Array(10)].map(() => activate(id1)));
+    const claimed = races.filter((r) => r.json?.claimed === true).length;
+    const sb1 = await subOf(b);
+    check("10 activations simultanées : une seule réussit", claimed === 1, `${claimed} réussies`);
+    check("abonnement Pro actif pour un mois à partir d'aujourd'hui", sb1?.plan === "pro" && sb1.status === "active" && sb1.current_period_end === addM(day(), 1), JSON.stringify(sb1));
+    const st1 = (await admin(`/rest/v1/payments?id=eq.${id1}&select=status,confirmed_at`)).json?.[0];
+    check("paiement terminé avec sa date de confirmation", st1?.status === "completed" && !!st1.confirmed_at, JSON.stringify(st1));
+    // renouvellement anticipé du même palier : les jours restants sont conservés
+    await admin(`/rest/v1/subscriptions?user_id=eq.${b.id}`, { method: "PATCH", body: { current_period_end: day(3) } });
+    await activate(await newPay(b));
+    check("renouvellement anticipé : le mois s'ajoute à l'échéance en cours", (await subOf(b))?.current_period_end === addM(day(3), 1), JSON.stringify(await subOf(b)));
+    // changement de palier : le mois démarre aujourd'hui
+    await activate(await newPay(b, "agence", 2));
+    const sb3 = await subOf(b);
+    check("changement de palier : agence, 2 sièges, un mois à partir d'aujourd'hui", sb3?.plan === "agence" && sb3.seats === 2 && sb3.current_period_end === addM(day(), 1), JSON.stringify(sb3));
+    // abonnement échu : le mois démarre aujourd'hui
+    await admin(`/rest/v1/subscriptions?user_id=eq.${b.id}`, { method: "PATCH", body: { current_period_end: "2020-01-01" } });
+    await activate(await newPay(b, "agence", 2));
+    check("abonnement échu : nouveau mois à partir d'aujourd'hui", (await subOf(b))?.current_period_end === addM(day(), 1), JSON.stringify(await subOf(b)));
+    // une seule facture en attente par utilisateur
+    const first = await admin("/rest/v1/payments", { method: "POST", body: { user_id: b.id, plan: "pro", amount: 12000, provider: "test", provider_token: `smoke_${Math.random()}` } });
+    const second = await admin("/rest/v1/payments", { method: "POST", body: { user_id: b.id, plan: "pro", amount: 12000, provider: "test", provider_token: `smoke_${Math.random()}` } });
+    check("une seule facture en attente par utilisateur", first.status === 201 && second.status === 409, `${first.status} / ${second.status}`);
+  }
+
   // Expiration
   await admin(`/rest/v1/subscriptions?user_id=eq.${a.id}`, { method: "PATCH", body: { current_period_end: "2020-01-01" } });
   check("pro expiré : retour au palier gratuit", (await call("/rest/v1/rpc/my_plan", { method: "POST", token: a.token, body: {} })).json === "gratuit");

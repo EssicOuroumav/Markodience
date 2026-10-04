@@ -26,11 +26,16 @@ export async function POST(request: Request) {
   // Le montant est recalculé ici : jamais fourni par le navigateur.
   const amount = priceFor(plan, seats);
   const admin = createAdminClient();
+  // Une seule facture en attente par utilisateur (index unique en base) : on abandonne les anciennes
+  // factures en attente (plus de 10 s) et un double clic simultané reçoit un message clair.
+  // Une ancienne facture payée malgré tout reste activable : le paiement est vérifié chez le prestataire.
+  await admin.from("payments").update({ status: "cancelled" }).eq("user_id", user.id).eq("status", "pending").lt("created_at", new Date(Date.now() - 10_000).toISOString());
   const { data: payment, error } = await admin
     .from("payments")
     .insert({ user_id: user.id, plan, seats, amount, provider: resolved.provider.name })
     .select("id")
     .single();
+  if (error?.code === "23505") return fail(409, "Un paiement est déjà en cours d'initialisation. Patientez quelques secondes puis réessayez.");
   if (error || !payment) return fail(500, "Le paiement n'a pas pu être initialisé.");
 
   const base = appUrl(request);

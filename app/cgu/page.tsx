@@ -34,7 +34,7 @@ export default function Cgu() {
         <p>Les prix sont exprimés en francs CFA (XOF). L&apos;éditeur peut les modifier ; le prix applicable est celui affiché au moment du paiement.</p>
       </Section>
       <Section n={5} title="Paiement et durée">
-        <p>Le paiement s&apos;effectue en ligne, par mobile money ou carte bancaire, via le prestataire PayDunya. Chaque paiement active le palier choisi pour <strong>un mois</strong>, dès la confirmation du paiement.</p>
+        <p>Le paiement s&apos;effectue en ligne, par mobile money ou carte bancaire, via le prestataire PayDunya. Chaque paiement active le palier choisi pour <strong>un mois</strong>, dès la confirmation du paiement. Si vous renouvelez le même palier avant son échéance, le nouveau mois s&apos;ajoute à la fin de la période en cours. Si vous changez de palier, le nouveau mois commence à la date du paiement.</p>
         <p><strong>Il n&apos;y a pas de renouvellement automatique</strong> : aucun prélèvement n&apos;est effectué sans votre action. À l&apos;échéance, votre compte repasse au palier Gratuit. Vos données sont conservées et restent consultables ; les onglets payants ne sont plus modifiables tant que vous ne renouvelez pas.</p>
       </Section>
       <Section n={6} title="Remboursement">

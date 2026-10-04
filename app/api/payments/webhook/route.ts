@@ -26,6 +26,7 @@ export async function POST(request: Request) {
 
   const out = await confirmPayment({ token });
   // 5xx uniquement pour les erreurs transitoires : le prestataire réessaiera.
-  if (!out.ok && (out.reason === "error" || out.reason === "not_configured")) return NextResponse.json({ ok: false }, { status: 500 });
-  return NextResponse.json({ ok: out.ok });
+  if (!out.ok && (out.reason === "error" || out.reason === "not_configured")) return new Response("ERROR", { status: 500 });
+  // PayDunya exige que l'URL de notification réponde exactement « ROK » (sinon le passage en production est refusé).
+  return new Response("ROK", { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
 }

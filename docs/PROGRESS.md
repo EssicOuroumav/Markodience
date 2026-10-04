@@ -80,3 +80,10 @@ Fait et vérifié (build de production, compte jetable supprimé ensuite) :
 - Promesses Agence non construites marquées « (bientôt) » ; script `npm run check:launch`.
 Tests : 81 unitaires, 30 contrôles de sécurité, lint et typecheck propres.
 À faire par le propriétaire : compléter lib/legal.ts, faire relire les textes légaux, domaine, SMTP, PayDunya live.
+
+## Correctifs paiement (2026-10-04)
+Test de course (simulateur, compte jetable) : confirmations simultanées et rejeu déjà sûrs ; deux défauts trouvés et corrigés :
+renouvellement anticipé qui faisait perdre les jours restants, et double clic créant deux factures. Ajouts : activation du paiement
+en une seule transaction SQL (`activate_payment`, migration 20261001000700), index unique « une facture en attente par utilisateur »,
+webhook qui répond `ROK` (exigé par PayDunya), incidents de paiement envoyés à Sentry, scripts `rls-smoke.mjs` (contrôles SQL) et
+`payments-race.mjs` (bout en bout). **Ordre de mise en ligne : appliquer la migration dans Supabase AVANT de pousser le code.**

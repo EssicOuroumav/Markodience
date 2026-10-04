@@ -21,3 +21,7 @@ out/
 # Réglages locaux de l'assistant
 .claude/settings.local.json
 .vercel
+
+# Fichiers générés par `next dev` (consignes pour assistants), inutiles ici
+/AGENTS.md
+/CLAUDE.md
