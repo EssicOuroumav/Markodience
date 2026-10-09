@@ -83,7 +83,7 @@ async function run(supabase: Supa, req: GenerateRequest): Promise<NextResponse> 
 
   try {
     if (req.type === "identity") {
-      const result = await generateJson(identityPrompt(req.questionnaire), identityOutput, mockIdentity);
+      const result = await generateJson(identityPrompt(req.questionnaire), identityOutput, mockIdentity, "heavy");
       const { error } = await supabase.from("brand_identity").upsert(
         {
           brand_profile_id: brand.id,
@@ -113,7 +113,7 @@ async function run(supabase: Supa, req: GenerateRequest): Promise<NextResponse> 
     const ctx: BrandContext = { name: brand.name, sector: brand.sector, identity };
 
     if (req.type === "pillars") {
-      const result = await generateJson(pillarsPrompt(ctx), pillarsOutput, mockPillars);
+      const result = await generateJson(pillarsPrompt(ctx), pillarsOutput, mockPillars, "heavy");
       const { error: delErr } = await supabase.from("content_pillars").delete().eq("brand_profile_id", brand.id);
       if (delErr) return fail(500, "Les anciens piliers n'ont pas pu être remplacés.", "db");
       const { error } = await supabase.from("content_pillars").insert(
@@ -123,7 +123,7 @@ async function run(supabase: Supa, req: GenerateRequest): Promise<NextResponse> 
       return NextResponse.json({ ok: true, data: result });
     }
 
-    const result = await generateJson(tonePrompt(ctx), toneOutput, mockTone);
+    const result = await generateJson(tonePrompt(ctx), toneOutput, mockTone, "light");
     const { error } = await supabase.from("tone_voice").upsert(
       { brand_profile_id: brand.id, do_list: result.do_list, dont_list: result.dont_list },
       { onConflict: "brand_profile_id" },
@@ -202,7 +202,7 @@ async function handleEditorial(
     const { count } = await supabase.from("editorial_entries").select("id", { count: "exact", head: true }).eq("editorial_line_id", lineId);
     if (count && count > 0) return fail(409, "Cette ligne éditoriale contient déjà des semaines.", "already_generated");
     const rotation = pillarRotation(names, weeks);
-    const result = await generateJson(editorialLinePrompt(ctx, rotation), editorialOutput, () => mockEditorial(weeks));
+    const result = await generateJson(editorialLinePrompt(ctx, rotation), editorialOutput, () => mockEditorial(weeks), "heavy");
     const rows = result.entries.slice(0, weeks).map((e, i) => ({
       editorial_line_id: lineId,
       week_number: i + 1,
@@ -228,6 +228,7 @@ async function handleEditorial(
     editorialWeekPrompt(ctx, rotation, (others ?? []).map((o) => o.theme ?? "")),
     editorialOutput,
     () => ({ entries: [{ ...mockEditorial(1).entries[0], week_number: weekNumber, theme: `Nouveau thème semaine ${weekNumber} (${Date.now() % 1000})` }] }),
+    "light",
   );
   const e = result.entries[0];
   const { error } = await supabase
@@ -294,7 +295,7 @@ async function handleAudit(
   ]);
   blocks.push({ type: "text", text: auditPrompt({ name: brand.name, sector: brand.sector, identity, pillars, tone }) });
 
-  const result = await generateJson(blocks, auditOutput, mockAudit);
+  const result = await generateJson(blocks, auditOutput, mockAudit, "heavy");
   const { error } = await supabase.from("audits").insert({
     id: req.audit_id,
     brand_profile_id: brand.id,
@@ -331,7 +332,7 @@ async function handleLives(
   const { guide, ctx } = loaded;
 
   if (req.type === "live_structure") {
-    const result = await generateJson(liveStructurePrompt(ctx), liveStructureOutput, mockLiveStructure);
+    const result = await generateJson(liveStructurePrompt(ctx), liveStructureOutput, mockLiveStructure, "light");
     const { error } = await supabase.from("live_guides").update({ structure_data: { steps: result.steps } }).eq("id", guide.id);
     if (error) return fail(500, "La trame n'a pas pu être enregistrée.", "db");
     return NextResponse.json({ ok: true, data: { steps: result.steps } });
@@ -345,6 +346,7 @@ async function handleLives(
       liveStepPrompt(ctx, current, req.step_index, steps.filter((_, i) => i !== req.step_index).map((s) => s.title)),
       liveStepOutput,
       () => ({ steps: [{ ...current, title: `${current.title} (nouvelle version)` }] }),
+      "light",
     );
     const next = steps.map((s, i) => (i === req.step_index ? { ...result.steps[0], time_range: s.time_range } : s));
     const { error } = await supabase.from("live_guides").update({ structure_data: { steps: next } }).eq("id", guide.id);
@@ -353,7 +355,7 @@ async function handleLives(
   }
 
   // live_scripts : remplace les scripts générés (les réponses rapides ajoutées à la main sont conservées)
-  const result = await generateJson(liveScriptsPrompt(ctx), liveScriptsOutput, mockLiveScripts);
+  const result = await generateJson(liveScriptsPrompt(ctx), liveScriptsOutput, mockLiveScripts, "light");
   const { error: delErr } = await supabase.from("live_scripts").delete().eq("live_guide_id", guide.id).eq("is_quick_reply", false);
   if (delErr) return fail(500, "Les anciens scripts n'ont pas pu être remplacés.", "db");
   // Les réponses rapides existantes (générées ou ajoutées à la main) sont conservées : pas de doublons.

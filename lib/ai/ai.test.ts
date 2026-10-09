@@ -45,3 +45,22 @@ describe("lives", () => {
     expect(moveItem([1, 2, 3], 0, -1)).toEqual([1, 2, 3]);
   });
 });
+
+import { DEFAULT_MODELS, modelFor } from "./anthropic";
+
+describe("routage des modèles", () => {
+  it("palier léger : Haiku ; palier lourd : Sonnet", () => {
+    expect(modelFor("light", {})).toBe("claude-haiku-4-5");
+    expect(modelFor("heavy", {})).toBe("claude-sonnet-5-5");
+    expect(DEFAULT_MODELS.light).not.toBe(DEFAULT_MODELS.heavy);
+  });
+  it("AI_MODEL force un modèle pour tout", () => {
+    expect(modelFor("light", { AI_MODEL: "claude-sonnet-5-5" })).toBe("claude-sonnet-5-5");
+    expect(modelFor("heavy", { AI_MODEL: "claude-haiku-4-5", AI_MODEL_HEAVY: "x" })).toBe("claude-haiku-4-5");
+  });
+  it("AI_MODEL_LIGHT / AI_MODEL_HEAVY changent un seul palier ; vide = valeur par défaut", () => {
+    expect(modelFor("light", { AI_MODEL_LIGHT: "claude-sonnet-5-5" })).toBe("claude-sonnet-5-5");
+    expect(modelFor("heavy", { AI_MODEL_LIGHT: "claude-sonnet-5-5" })).toBe("claude-sonnet-5-5");
+    expect(modelFor("light", { AI_MODEL: "  ", AI_MODEL_LIGHT: "" })).toBe("claude-haiku-4-5");
+  });
+});

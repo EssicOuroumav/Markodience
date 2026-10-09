@@ -3,7 +3,23 @@ import type { ZodType } from "zod";
 import { extractJson } from "./json";
 import { SYSTEM_PROMPT } from "./prompts";
 
-export const MODEL = "claude-sonnet-5-5";
+/**
+ * Routage par type de tâche (coût / qualité) :
+ *  - "light" : tonalité, lives, régénération d'une semaine → Haiku 4.5, ~2 fois moins cher ;
+ *  - "heavy" : identité et piliers (les fondations dont dépend tout le reste), ligne éditoriale complète, audit d'images → Sonnet 5.5.
+ * Test réel (marque fictive) : Haiku invente des offres absentes du brief, cite une année périmée et fixe des objectifs chiffrés
+ * irréalistes dans l'identité et les piliers ; Sonnet reste fidèle au brief. Haiku suffit pour la tonalité et les textes de live.
+ * Réglages d'environnement : AI_MODEL force un modèle pour tout ; sinon AI_MODEL_LIGHT / AI_MODEL_HEAVY changent un palier.
+ */
+export type ModelTier = "light" | "heavy";
+export const DEFAULT_MODELS: Record<ModelTier, string> = { light: "claude-haiku-4-5", heavy: "claude-sonnet-5-5" };
+
+export function modelFor(tier: ModelTier, env: Record<string, string | undefined> = process.env): string {
+  const forced = env.AI_MODEL?.trim();
+  if (forced) return forced;
+  const tierEnv = (tier === "light" ? env.AI_MODEL_LIGHT : env.AI_MODEL_HEAVY)?.trim();
+  return tierEnv || DEFAULT_MODELS[tier];
+}
 
 export type AiErrorCode =
   | "not_configured"
@@ -44,6 +60,7 @@ export async function generateJson<T>(
   userPrompt: string | Anthropic.ContentBlockParam[],
   schema: ZodType<T>,
   mock: () => T,
+  tier: ModelTier = "heavy",
 ): Promise<T> {
   if (process.env.AI_MOCK === "1") return schema.parse(mock());
 
@@ -54,7 +71,7 @@ export async function generateJson<T>(
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const res = await client.messages.create({
-        model: MODEL,
+        model: modelFor(tier),
         max_tokens: 4096,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userPrompt }],
