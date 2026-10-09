@@ -31,7 +31,7 @@ export default function ReminderSettings({ userId, initial }: { userId: string; 
         <div className="flex items-center gap-3"><span aria-hidden className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-accent"><BellRing size={19} strokeWidth={1.8} /></span><h2 className="section-title">Rappels par e-mail</h2></div>
         <SaveIndicator state={save} />
       </div>
-      <p className="mt-2 text-[15px] text-ink-secondary">Au plus un e-mail par jour, seulement quand quelque chose vous attend. Les rappels WhatsApp ne sont pas encore disponibles.</p>
+      <p className="mt-2 text-[15px] text-ink-secondary">Au plus un e-mail par jour, seulement quand quelque chose vous attend.</p>
       <label className="mt-4 flex items-center gap-3 text-[16px] font-medium">
         <input type="checkbox" className="h-5 w-5 accent-[var(--color-accent)]" checked={prefs.email_enabled} onChange={(e) => update({ email_enabled: e.target.checked })} />
         Recevoir les rappels par e-mail
