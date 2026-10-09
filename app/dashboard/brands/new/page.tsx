@@ -12,7 +12,7 @@ export default async function NewBrandPage() {
   return (
     <div className="mx-auto max-w-xl space-y-8">
       <Link href="/dashboard/brands" className="btn-ghost -ml-4"><ArrowLeft size={17} />Mes marques</Link>
-      <PageHeader icon={PlusCircle} title="Nouvelle marque" description="Ajoutez un client ou un projet. Chaque marque a sa propre stratégie, ses audits et ses rapports." />
+      <PageHeader icon={PlusCircle} title="Nouvelle marque" description="Ajoutez une marque, une organisation ou un projet. Chaque marque a sa propre stratégie, ses audits et ses rapports." />
       <div className="card-flat !p-8"><NewBrandForm userId={user.id} /></div>
     </div>
   );

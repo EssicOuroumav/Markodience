@@ -84,7 +84,7 @@ export default function BrandsList({ profiles, activeId, canAdd, limitText }: Pr
             <Link href="/dashboard/brands/new" className="group flex h-full min-h-[200px] flex-col items-center justify-center rounded-card border-2 border-dashed border-accent/35 bg-accent-soft/30 p-7 text-center transition duration-300 hover:border-accent hover:bg-accent-soft/60">
               <span aria-hidden className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-accent shadow-card transition duration-300 group-hover:scale-105"><Plus size={26} strokeWidth={2} /></span>
               <span className="mt-4 text-[18px] font-semibold">Ajouter une marque</span>
-              <span className="caption mt-1 max-w-[220px]">Un nouveau client, une nouvelle marque : sans changer de compte.</span>
+              <span className="caption mt-1 max-w-[220px]">Une nouvelle marque ou un nouveau projet : sans changer de compte.</span>
             </Link>
           ) : (
             <Link href="/dashboard/upgrade?reason=profiles" className="group flex h-full min-h-[200px] flex-col items-center justify-center rounded-card border-2 border-dashed border-black/15 bg-white p-7 text-center transition hover:border-accent/50">

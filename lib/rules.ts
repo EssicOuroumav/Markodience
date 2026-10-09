@@ -13,7 +13,7 @@ export const RULE_HINTS: Record<RuleKey, string> = {
   planning: "Rythme, horaires et circuit de validation des publications.",
   visual: "Charte, formats et exigences de qualité des visuels.",
   community: "Délais et ton des réponses, gestion des commentaires et des réclamations.",
-  reporting: "Quand, comment et avec quels indicateurs on rend compte au client.",
+  reporting: "Quand, comment et avec quels indicateurs on rend compte à la marque ou à l'organisation.",
   privacy: "Données personnelles, accords écrits, accès aux comptes.",
   taboo: "Sujets, mots et comparaisons à ne jamais utiliser pour cette marque.",
 };
@@ -23,8 +23,8 @@ export const RULE_TEMPLATES: Record<RuleKey, string> = {
   planning: "- Publier **3 fois par semaine** (lundi, mercredi, vendredi) à 18h30\n- Valider le calendrier de la semaine suivante chaque vendredi\n- Aucune publication sans validation du responsable",
   visual: "- Respecter le logo et la palette de la marque\n- Formats : 1080×1350 px pour les carrousels, 9:16 pour les vidéos courtes\n- Pas de visuel flou, ni de texte illisible sur mobile",
   community: "- Répondre aux commentaires et messages **sous 2 heures** en journée\n- Ton chaleureux et respectueux, même face à une critique\n- Transmettre toute réclamation sensible au responsable",
-  reporting: "- Rapport KPI mensuel remis **avant le 5** du mois suivant\n- Indicateurs : portée, engagement, nouveaux abonnés, publications\n- Un point de suivi de 30 minutes avec le client chaque mois",
-  privacy: "- Ne jamais publier une photo ou un témoignage sans **accord écrit**\n- Ne pas partager les accès aux comptes par message\n- Données clients utilisées uniquement pour la gestion de la marque (RGPD)",
+  reporting: "- Rapport KPI mensuel remis **avant le 5** du mois suivant\n- Indicateurs : portée, engagement, nouveaux abonnés, publications\n- Un point de suivi de 30 minutes avec le responsable chaque mois",
+  privacy: "- Ne jamais publier une photo ou un témoignage sans **accord écrit**\n- Ne pas partager les accès aux comptes par message\n- Données des clients, bénéficiaires ou donateurs utilisées uniquement pour la gestion de la marque (RGPD)",
   taboo: "- Politique et religion\n- Critiques ou comparaisons avec des concurrents\n- Promesses de résultats garantis",
 };
 

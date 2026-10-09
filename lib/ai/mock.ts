@@ -2,7 +2,7 @@ import type { LiveScriptsOutput, LiveStructureOutput, AuditOutput, EditorialOutp
 
 // Réponses de développement (AI_MOCK=1) : permettent de tester sans crédit API.
 export const mockIdentity = (): IdentityOutput => ({
-  positioning: "Une marque de proximité qui rend son offre simple, fiable et accessible à tous ses clients.",
+  positioning: "Une marque de proximité qui rend son offre simple, fiable et accessible à tout son public.",
   target_segments: [
     { name: "Jeunes actifs urbains", description: "25-35 ans, connectés, sensibles au rapport qualité-prix.", need: "Gagner du temps avec une offre fiable." },
   ],
@@ -16,8 +16,8 @@ export const mockIdentity = (): IdentityOutput => ({
 
 export const mockPillars = (): PillarsOutput => ({
   pillars: [
-    { name: "Éducation", description: "Conseils pratiques pour les clients.", examples: ["Carrousel 5 astuces", "Vidéo courte tutoriel"] },
-    { name: "Preuve sociale", description: "Témoignages et résultats clients.", examples: ["Avis client en image", "Avant/après"] },
+    { name: "Éducation", description: "Conseils pratiques pour le public.", examples: ["Carrousel 5 astuces", "Vidéo courte tutoriel"] },
+    { name: "Preuve sociale", description: "Témoignages et résultats concrets.", examples: ["Témoignage en image", "Avant/après"] },
     { name: "Coulisses", description: "Montrer l'équipe et le savoir-faire.", examples: ["Story du quotidien", "Live découverte"] },
   ],
 });

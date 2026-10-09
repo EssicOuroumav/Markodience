@@ -11,13 +11,23 @@ import { mockIdentity, mockPillars, mockTone } from "./mock";
  * Usage : AI_LIVE=1 AI_LIVE_OUT=/chemin/resultats.json npx vitest run lib/ai/live.test.ts
  */
 describe.skipIf(process.env.AI_LIVE !== "1")("génération réelle : Haiku et Sonnet", () => {
-  const q = {
+  const BRIEFS = {
+    ong: {
+      brand_name: "Association Espoir Santé", sector: "Associations & ONG", offer: "Dépistage gratuit et accompagnement des personnes touchées par le cancer, campagnes de sensibilisation en Côte d'Ivoire",
+      segments: ["Femmes de tous âges, enfants, personnes vulnérables ou en situation de handicap qui n'ont pas accès aux soins", "Donateurs et entreprises partenaires"],
+      problem: "L'accès aux soins et au dépistage précoce est difficile pour les personnes sans ressources",
+      differentiation: "Des équipes de terrain, des dépistages gratuits dans les villages, un suivi humain après le diagnostic",
+      personality: ["Humaine", "Engagée", "Rassurante"], goal: "notoriete" as const, channels: ["Facebook", "WhatsApp", "TikTok", "YouTube"], avoid: "Données médicales individuelles, images choquantes",
+    },
+    mode: {
     brand_name: "Maison Awa", sector: "Mode et couture", offer: "Tenues sur mesure en pagne et wax pour femmes actives à Abidjan, livrées en 7 jours",
     segments: ["Femmes de 25 à 40 ans, actives, qui veulent des tenues élégantes pour le bureau et les cérémonies"],
     problem: "Les clientes trouvent difficilement des couturiers fiables qui respectent les délais",
     differentiation: "Délais garantis, suivi par WhatsApp à chaque étape, retouches gratuites",
     personality: ["Élégante", "Fiable", "Chaleureuse"], goal: "notoriete" as const, channels: ["Instagram", "Facebook", "WhatsApp", "TikTok"], avoid: "Politique, religion",
+    },
   };
+  const q = BRIEFS[(process.env.AI_LIVE_BRIEF as keyof typeof BRIEFS) || "mode"];
   const out: Record<string, unknown> = {};
   for (const tier of ["light", "heavy"] as const) {
     it(`identité, piliers et tonalité (${tier})`, async () => {

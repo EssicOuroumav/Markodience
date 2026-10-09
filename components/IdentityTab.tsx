@@ -85,7 +85,7 @@ export default function IdentityTab({
       avoid: q.avoid.trim(),
     };
     if (!payload.offer.trim() || !payload.problem.trim() || !payload.differentiation.trim() || payload.segments.length === 0) {
-      setFormError("Complétez les questions 3 à 6 (au moins un segment de clientèle).");
+      setFormError("Complétez les questions 3 à 6 (au moins un public visé).");
       return;
     }
     if (payload.personality.some((w) => !w)) {
@@ -142,24 +142,24 @@ export default function IdentityTab({
               <div><label className="label" htmlFor="q1">Nom de la marque</label><input id="q1" className="input" value={q.brand_name} onChange={(e) => set("brand_name", e.target.value)} /></div>
               <div><label className="label" htmlFor="q2">Secteur d&apos;activité</label><input id="q2" className="input" value={q.sector} onChange={(e) => set("sector", e.target.value)} /></div>
             </div>
-            <div><label className="label" htmlFor="q3">En une phrase, que vend ou propose cette marque ?</label><input id="q3" className="input" placeholder="Ex. : des tenues africaines modernes sur mesure" value={q.offer} onChange={(e) => set("offer", e.target.value)} /></div>
+            <div><label className="label" htmlFor="q3">En une phrase, que propose cette marque ? <span className="font-normal text-ink-secondary">(produits, services, actions, causes…)</span></label><input id="q3" className="input" placeholder="Ex. : des tenues sur mesure, ou un programme de soutien aux familles" value={q.offer} onChange={(e) => set("offer", e.target.value)} /></div>
           </Group>
 
-          <Group n={2} Icon={Users} title="Vos clients" hint="Qui vous voulez toucher, et pourquoi vous.">
+          <Group n={2} Icon={Users} title="Votre public" hint="Les personnes que vous voulez toucher, et pourquoi vous.">
             <div>
-              <span className="label">Qui sont les clients actuels ou visés ? <span className="font-normal text-ink-secondary">(jusqu&apos;à 3 segments)</span></span>
+              <span className="label">Qui voulez-vous toucher ? <span className="font-normal text-ink-secondary">(clients, bénéficiaires, donateurs, adhérents… jusqu&apos;à 3 publics)</span></span>
               <div className="space-y-2.5">
                 {q.segments.map((sg, i) => (
                   <div key={i} className="flex gap-2">
-                    <input aria-label={`Segment ${i + 1}`} className="input" placeholder="Âge, situation, besoin principal" value={sg} onChange={(e) => set("segments", q.segments.map((x, j) => (j === i ? e.target.value : x)))} />
-                    {q.segments.length > 1 && (<button type="button" className="btn-secondary !px-3.5" aria-label={`Retirer le segment ${i + 1}`} onClick={() => set("segments", q.segments.filter((_, j) => j !== i))}><X size={16} /></button>)}
+                    <input aria-label={`Public ${i + 1}`} className="input" placeholder="Âge, situation, besoin principal" value={sg} onChange={(e) => set("segments", q.segments.map((x, j) => (j === i ? e.target.value : x)))} />
+                    {q.segments.length > 1 && (<button type="button" className="btn-secondary !px-3.5" aria-label={`Retirer le public ${i + 1}`} onClick={() => set("segments", q.segments.filter((_, j) => j !== i))}><X size={16} /></button>)}
                   </div>
                 ))}
               </div>
-              {q.segments.length < 3 && (<button type="button" className="btn-ghost mt-2 !px-3 text-accent" onClick={() => set("segments", [...q.segments, ""])}><Plus size={16} />Ajouter un segment</button>)}
+              {q.segments.length < 3 && (<button type="button" className="btn-ghost mt-2 !px-3 text-accent" onClick={() => set("segments", [...q.segments, ""])}><Plus size={16} />Ajouter un autre public</button>)}
             </div>
-            <div><label className="label" htmlFor="q5">Quel problème cette marque résout-elle pour ses clients ?</label><textarea id="q5" rows={3} className="input" value={q.problem} onChange={(e) => set("problem", e.target.value)} /></div>
-            <div><label className="label" htmlFor="q6">Qu&apos;est-ce qui différencie cette marque de ses concurrents ?</label><textarea id="q6" rows={3} className="input" value={q.differentiation} onChange={(e) => set("differentiation", e.target.value)} /></div>
+            <div><label className="label" htmlFor="q5">Quel besoin ou quel problème cette marque traite-t-elle pour son public ?</label><textarea id="q5" rows={3} className="input" value={q.problem} onChange={(e) => set("problem", e.target.value)} /></div>
+            <div><label className="label" htmlFor="q6">Qu&apos;est-ce qui différencie cette marque de ce qui existe déjà autour d&apos;elle (concurrents, autres organisations…) ?</label><textarea id="q6" rows={3} className="input" value={q.differentiation} onChange={(e) => set("differentiation", e.target.value)} /></div>
           </Group>
 
           <Group n={3} Icon={Heart} title="Votre personnalité" hint="Le caractère de la marque et son objectif.">
