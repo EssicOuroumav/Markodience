@@ -106,6 +106,8 @@ try {
   for (const [m, p] of [["POST", "/api/generate"], ["POST", "/api/checkout"], ["POST", "/api/admin/action"], ["POST", "/api/account/delete"], ["GET", "/api/account/export"], ["POST", "/api/editorial/validation"]]) {
     const r = await web(null, p, { method: m, headers: J, body: m === "POST" ? "{}" : undefined }); check(`${m} ${p} sans session : 401`, r.status === 401, `${r.status}`);
   }
+  { const r = await web(null, "/api/cron/reminders"); check("GET /api/cron/reminders sans secret : 401 ou 503 (jamais 200)", r.status === 401 || r.status === 503, `${r.status}`);
+    const r2 = await web(null, "/api/cron/reminders", { headers: { Authorization: "Bearer mauvais-secret" } }); check("GET /api/cron/reminders avec un mauvais secret : 401 ou 503", r2.status === 401 || r2.status === 503, `${r2.status}`); }
   for (const p of ["/dashboard", "/dashboard/account", "/admin", "/reset-password"]) { const r = await web(null, p); check(`${p} sans session : redirigé vers la connexion`, r.status === 307, `${r.status}`); }
 
   console.log("\n— Paiement : montants et notifications falsifiés —");
