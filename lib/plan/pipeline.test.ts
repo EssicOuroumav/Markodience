@@ -4,7 +4,7 @@ import { briefSchema } from "./brief";
 
 describe("assemblage du plan", () => {
   it("ramène les pourcentages à 100", () => {
-    const mk = (pcts: number[]) => ({ pillars: pcts.map((pct, i) => ({ title: `P${i}`, pct, purpose: "x", formats: "y" })) });
+    const mk = (pcts: number[]) => ({ pillars: pcts.map((pct, i) => ({ title: `P${i}`, role: "preuve" as const, pct, purpose: "x", formats: "y" })) });
     for (const pcts of [[30, 20, 15, 15, 12, 8], [40, 30, 20, 20], [25, 25, 25, 20], [10, 10, 10, 10]]) {
       const n = normalizePillars(mk(pcts));
       expect(n.pillars.reduce((s, p) => s + p.pct, 0)).toBe(100);

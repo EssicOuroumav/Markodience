@@ -39,10 +39,10 @@ export function phaseOf(weekStart: string, weekEnd: string, activities: Activity
   return { phase: "evergreen", campaign: null };
 }
 
-export function buildWeeks(start: string, count: number, activities: Activity[], country?: string): Week[] {
+export function buildWeeks(start: string, count: number, activities: Activity[], country?: string, context?: string): Week[] {
   const first = mondayOnOrAfter(start);
   const last = iso(t(first) + (count * 7 - 1) * DAY);
-  const facts = factsBetween(first, last, country);
+  const facts = factsBetween(first, last, country, context);
   return Array.from({ length: count }, (_, i) => {
     const ws = iso(t(first) + i * 7 * DAY);
     const we = iso(t(ws) + 6 * DAY);

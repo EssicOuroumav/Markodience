@@ -9,6 +9,14 @@ export const identityStage = z.object({
   tagline: text(120),
   values: z.array(z.object({ name: text(40), text: text(300) })).min(4).max(8),
   /** Tonalité par registre : ce qu'on fait et ce qu'on proscrit, thème par thème. */
+  tagline_status: z.enum(["fourni", "propose"]).default("propose"),
+  /** Engagements chiffrés, fixés une seule fois et repris à l'identique dans toutes les étapes. */
+  commitments: z.object({
+    report_days: z.number().int().min(1).max(60),
+    reply_hours: z.number().int().min(1).max(168),
+    validation_hours: z.number().int().min(1).max(168),
+    health_review_hours: z.number().int().min(1).max(336),
+  }),
   tone_table: z.array(z.object({ register: text(60), do: text(300), dont: text(300) })).min(4).max(9),
   /** Même message écrit à éviter / à suivre. */
   rewrite: z.object({ avoid: text(400), follow: text(400) }),
@@ -16,14 +24,16 @@ export const identityStage = z.object({
 });
 export type IdentityStage = z.infer<typeof identityStage>;
 
+export const ROLES = ["preuve", "appel", "transparence", "voix", "pedagogie", "communaute"] as const;
+export type Role = (typeof ROLES)[number];
 export const pillarsStage = z.object({
-  pillars: z.array(z.object({ title: text(60), pct: z.number().int().min(3).max(60), purpose: text(300), formats: text(300) })).min(4).max(8),
+  pillars: z.array(z.object({ title: text(60), role: z.enum(ROLES), pct: z.number().int().min(3).max(60), purpose: text(300), formats: text(300) })).min(4).max(8),
 });
 export type PillarsStage = z.infer<typeof pillarsStage>;
 /** Les pourcentages doivent faire 100 : le code vérifie, l'IA n'a pas le dernier mot. */
 export const pillarsTotal = (p: PillarsStage) => p.pillars.reduce((n, x) => n + x.pct, 0);
 
-export const themesStage = z.object({ themes: z.array(z.object({ week: z.number().int().min(1).max(52), theme: text(160), pillar: text(60) })).min(4).max(52) });
+export const themesStage = z.object({ themes: z.array(z.object({ week: z.number().int().min(1).max(52), theme: text(160) })).min(4).max(52) });
 export type ThemesStage = z.infer<typeof themesStage>;
 
 export const networkStage = z.object({
@@ -62,9 +72,16 @@ export type KpiStage = z.infer<typeof kpiStage>;
 export const rulesStage = z.object({ rules: z.array(z.object({ title: text(60), text: text(360), tag: text(30) })).min(6).max(10) });
 export type RulesStage = z.infer<typeof rulesStage>;
 
+export const STAGES = ["identity", "pillars", "themes", "network", "templates", "organic", "kpi", "rules", "general"] as const;
+export type StageId = (typeof STAGES)[number];
 export const critiqueStage = z.object({
   score: z.number().min(0).max(100),
   verdict: text(400),
-  issues: z.array(z.object({ where: text(80), problem: text(300), fix: text(300) })).max(25),
+  strengths: z.array(text(200)).max(5).default([]),
+  issues: z.array(z.object({ severity: z.enum(["grave", "mineur"]).default("mineur"), stage: z.enum(STAGES), network: z.string().max(40).optional(), where: text(80), problem: text(300), fix: text(300) })).max(25),
+  /** « Constat / risques et limites » : ce que l'IA ne peut pas garantir. */
+  risks: z.array(z.object({ level: z.enum(["faible", "modere", "eleve"]), risk: text(200), mitigation: text(200) })).max(8).default([]),
+  /** Les questions dont les réponses amélioreraient le plan. */
+  questions: z.array(z.object({ question: text(200), why: text(200) })).max(6).default([]),
 });
 export type CritiqueStage = z.infer<typeof critiqueStage>;

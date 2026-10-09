@@ -4,6 +4,7 @@ import { describe, it } from "vitest";
 import { generateJson, usageLog } from "../ai/anthropic";
 import { briefSchema } from "./brief";
 import { runPlan, type Gen } from "./pipeline";
+import { lengthStats, placeholderCount } from "./quality";
 
 /**
  * ESSAI RÉEL (consomme du crédit) : ignoré sauf si AI_LIVE=1. Rejoue le cas AICHA et écrit le plan dans AI_LIVE_OUT.
@@ -32,6 +33,7 @@ const AICHA = briefSchema.parse({
     { name: "Habits Neufs pour Ma Tabaski", start: "2027-04-19", end: "2027-05-15", goal: "Collecter et distribuer des habits neufs aux enfants avant la Tabaski" },
   ],
   resources: { ad_budget: "aucun", team: "Un community manager et des bénévoles", validators: ["Direction Communication", "Référent médical partenaire (contenus santé)"] },
+  decisions: ["Trois publications par semaine sur chacun des trois réseaux (demande de la direction)", "Aucune publicité payante"],
   sensitivities: ["Mineurs et consentement des tuteurs", "Informations de santé", "Neutralité politique absolue", "Image digne des bénéficiaires, jamais misérabiliste", "Repères islamiques (zakat, sadaka) sans exclure personne"],
   tone_words: ["digne", "rigoureux", "chaleureux"],
   avoid: "Politique, misérabilisme, promesses non tenables",
@@ -57,8 +59,11 @@ describe.skipIf(process.env.AI_LIVE !== "1")("plan stratégique complet (cas AIC
     const input = usageLog.reduce((n, u) => n + u.input, 0);
     const output = usageLog.reduce((n, u) => n + u.output, 0);
     const cost = (input * 2 + output * 10) / 1_000_000;
-    const report = { seconds: Math.round((Date.now() - t0) / 1000), calls: usageLog.length, input, output, cost_usd: Number(cost.toFixed(3)), plan };
+    const themes = plan.months.flatMap((m) => m.weeks).map((w) => ({ week: w.index, theme: w.theme, pillar: w.pillar }));
+    const forChecks = { identity: plan.identity, pillars: plan.pillars, themes, networks: plan.networks, organic: plan.organic, kpi: plan.kpi, rules: plan.rules };
+    const quality = { checks: plan.checks.map((c) => `${c.ok ? "OK    " : "ÉCHEC "} ${c.detail}`), longueurs: lengthStats(forChecks), marqueurs_X: placeholderCount(forChecks), score_avant: plan.critiqueBefore.score, score_apres: plan.critique.score, etapes_corrigees: plan.repaired };
+    const report = { seconds: Math.round((Date.now() - t0) / 1000), calls: usageLog.length, input, output, cost_usd: Number(cost.toFixed(3)), quality, plan };
     if (process.env.AI_LIVE_OUT) writeFileSync(process.env.AI_LIVE_OUT, JSON.stringify(report, null, 2));
-    console.log(JSON.stringify({ ...report, plan: undefined }));
+    console.log(JSON.stringify({ ...report, plan: undefined }, null, 1));
   }, 900_000);
 });
