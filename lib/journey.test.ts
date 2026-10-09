@@ -12,7 +12,7 @@ describe("parcours guidé", () => {
     expect(JOURNEY_ORDER.indexOf("tone")).toBeLessThan(JOURNEY_ORDER.indexOf("audit"));
   });
   it("chaque onglet existe et chaque onglet est dans le parcours", () => {
-    expect([...JOURNEY_ORDER].sort()).toEqual(TABS.map((t) => t.slug).sort());
+    expect([...JOURNEY_ORDER].sort()).toEqual(TABS.filter((t) => !("optional" in t)).map((t) => t.slug).sort());
   });
   it("le palier gratuit n'a que les quatre premières étapes ; Pro et Agence les dix", () => {
     expect(journeySteps("gratuit", none).map((s) => s.slug)).toEqual(["identity", "charter", "pillars", "tone"]);

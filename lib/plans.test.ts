@@ -64,9 +64,10 @@ describe("cohérence avec la migration RLS", () => {
   });
   it("le propriétaire contourne la limite", () => expect(limits).toContain("'admin'"));
   it("les tables payantes sont verrouillées pour le palier gratuit", () => {
-    expect(PAID_FEATURES.sort()).toEqual(["audit", "editorial", "kpi", "lives", "rules"]);
+    expect(PAID_FEATURES.sort()).toEqual(["audit", "editorial", "kpi", "library", "lives", "rules"]);
     for (const t of ["audits", "editorial_lines", "editorial_entries", "kpi_reports", "operational_rules", "live_guides", "live_team_members", "live_scripts"]) {
       expect(sql).toContain(`'${t}'`);
     }
+    expect(readFileSync("supabase/migrations/20261009000300_library.sql", "utf8")).toContain("plan_gate_library_upload");
   });
 });

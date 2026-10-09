@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Check, Pencil, Plus, Trash2 } from "lucide-react";
+import { purgeBrandFiles } from "@/lib/library";
 import { createClient } from "@/lib/supabase/client";
 import type { BrandProfile } from "@/types";
 import BrandLogo, { type Shape } from "./BrandLogo";
@@ -47,7 +48,9 @@ export default function BrandsList({ profiles, activeId, canAdd, limitText }: Pr
     if (typed === null) return;
     if (typed.trim() !== p.name) return setError("Le nom saisi ne correspond pas : la marque n'a pas été supprimée.");
     setBusy(p.id);
-    const { error: err } = await createClient().from("brand_profiles").delete().eq("id", p.id);
+    const supabase = createClient();
+    await purgeBrandFiles(supabase, p.id);
+    const { error: err } = await supabase.from("brand_profiles").delete().eq("id", p.id);
     setBusy(null);
     if (err) return setError("La suppression a échoué. Réessayez.");
     if (p.id === activeId) document.cookie = "active_brand=; path=/; max-age=0";

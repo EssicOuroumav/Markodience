@@ -17,9 +17,9 @@ export async function GET() {
   const ids = (brands ?? []).map((b) => b.id);
   const byBrand = async (table: string) => (ids.length ? (await supabase.from(table).select("*").in("brand_profile_id", ids)).data ?? [] : []);
 
-  const [identity, pillars, tone, lines, audits, kpi, rules, guides, team, posts] = await Promise.all([
+  const [identity, pillars, tone, lines, audits, kpi, rules, guides, team, posts, assets] = await Promise.all([
     byBrand("brand_identity"), byBrand("content_pillars"), byBrand("tone_voice"), byBrand("editorial_lines"),
-    byBrand("audits"), byBrand("kpi_reports"), byBrand("operational_rules"), byBrand("live_guides"), byBrand("live_team_members"), byBrand("posts"),
+    byBrand("audits"), byBrand("kpi_reports"), byBrand("operational_rules"), byBrand("live_guides"), byBrand("live_team_members"), byBrand("posts"), byBrand("assets"),
   ]);
   const lineIds = lines.map((l: { id: string }) => l.id);
   const guideIds = guides.map((g: { id: string }) => g.id);
@@ -36,7 +36,7 @@ export async function GET() {
     subscription, payments, brands,
     brand_identity: identity, content_pillars: pillars, tone_voice: tone,
     editorial_lines: lines, editorial_entries: entries, audits, kpi_reports: kpi, operational_rules: rules,
-    live_guides: guides, live_scripts: scripts, live_team_members: team, posts,
+    live_guides: guides, live_scripts: scripts, live_team_members: team, posts, library_files: assets,
   };
   const day = new Date().toISOString().slice(0, 10);
   return new NextResponse(JSON.stringify(body, null, 2), {

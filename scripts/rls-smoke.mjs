@@ -59,6 +59,10 @@ try {
   check("gratuit : piliers autorisés", (await rest(a, "content_pillars", { method: "POST", body: { brand_profile_id: aProfile, name: "p" } })).status === 201);
   const up = await call(`/storage/v1/object/audits/${aProfile}/x/1.png`, { method: "POST", token: a.token, raw: { type: "image/png", data: Buffer.from("x") } });
   check("gratuit : dépôt dans le bucket audits refusé", up.status >= 400);
+  const upLib = await call(`/storage/v1/object/library/${aProfile}/x.png`, { method: "POST", token: a.token, raw: { type: "image/png", data: Buffer.from("x") } });
+  check("gratuit : dépôt dans la bibliothèque refusé", upLib.status >= 400, upLib.status);
+  check("gratuit : écriture assets refusée", (await rest(a, "assets", { method: "POST", body: { brand_profile_id: aProfile, name: "x", path: `${aProfile}/x.png`, mime: "image/png", size_bytes: 1 } })).status === 403);
+  check("B ne peut pas lire les fichiers de A", (await rest(b, `assets?brand_profile_id=eq.${aProfile}`)).json?.length === 0);
 
   // Abonnements et paiements
   const patch = await rest(a, `subscriptions?user_id=eq.${a.id}`, { method: "PATCH", body: { plan: "agence" } });

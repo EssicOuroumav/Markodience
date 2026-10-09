@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, CalendarCheck, Fingerprint, LayoutGrid, Palette, ListChecks, MessageCircleHeart, Radio, ScanSearch, type LucideIcon } from "lucide-react";
+import { BarChart3, CalendarDays, CalendarCheck, FolderOpen, Fingerprint, LayoutGrid, Palette, ListChecks, MessageCircleHeart, Radio, ScanSearch, type LucideIcon } from "lucide-react";
 import type { TabSlug } from "./tabs";
 import type { IllustrationName } from "@/components/illustrations";
 
@@ -10,6 +10,7 @@ export const TAB_ICONS: Record<TabSlug, LucideIcon> = {
   tone: MessageCircleHeart,
   editorial: CalendarDays,
   posts: CalendarCheck,
+  library: FolderOpen,
   kpi: BarChart3,
   rules: ListChecks,
   lives: Radio,
@@ -23,6 +24,7 @@ export const TAB_ILLUSTRATIONS: Record<TabSlug, IllustrationName> = {
   tone: "chat",
   editorial: "calendar",
   posts: "calendar",
+  library: "start",
   kpi: "chart",
   rules: "rules",
   lives: "live",

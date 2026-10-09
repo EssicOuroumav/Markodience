@@ -19,7 +19,10 @@ export async function purgeUserFiles(admin: SupabaseClient, userId: string, bran
     return removed;
   }
   let total = await purge("logos", userId);
-  for (const id of brandIds) total += await purge("audits", id);
+  for (const id of brandIds) {
+    total += await purge("audits", id);
+    total += await purge("library", id);
+  }
   return total;
 }
 

@@ -7,7 +7,7 @@
 export type PlanId = "gratuit" | "pro" | "agence";
 export type Feature =
   | "identity" | "pillars" | "tone"
-  | "audit" | "editorial" | "kpi" | "rules" | "lives"
+  | "audit" | "editorial" | "kpi" | "rules" | "lives" | "library"
   | "white_label" | "multi_export";
 
 type PlanDef = {
@@ -22,7 +22,7 @@ type PlanDef = {
 };
 
 const BASE = ["identity", "pillars", "tone"] as const;
-const PRO_FEATURES = [...BASE, "audit", "editorial", "kpi", "rules", "lives"] as const;
+const PRO_FEATURES = [...BASE, "audit", "editorial", "kpi", "rules", "lives", "library"] as const;
 
 export const PLANS: Record<PlanId, PlanDef> = {
   gratuit: {
