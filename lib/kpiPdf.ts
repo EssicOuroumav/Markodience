@@ -11,6 +11,7 @@ export type KpiPdfInput = {
   watermark?: boolean; // palier Gratuit
   color?: string | null; // couleur principale de la marque (en-tête et tableau)
   customIndicators?: { key: string; label: string; unit: string }[]; // indicateurs personnalisés des objectifs
+  footer?: string; // nom au pied de page (marque blanche : nom de l'agence, vide = rien)
 };
 
 const INK: [number, number, number] = [29, 29, 31];
@@ -25,7 +26,7 @@ export function kpiFileName(brandName: string, month: string): string {
   return `KPI_${clean(brandName) || "Marque"}_${clean(mois)}${annee}.pdf`;
 }
 
-export function buildKpiPdf({ brandName, month, data, exportDate, watermark = false, color, customIndicators = [] }: KpiPdfInput): jsPDF {
+export function buildKpiPdf({ brandName, month, data, exportDate, watermark = false, color, customIndicators = [], footer = "Markodience" }: KpiPdfInput): jsPDF {
   const ACCENT = accentFrom(color).map(Math.round) as [number, number, number];
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const pageW = doc.internal.pageSize.getWidth();
@@ -84,7 +85,7 @@ export function buildKpiPdf({ brandName, month, data, exportDate, watermark = fa
     doc.line(MARGIN, pageH - 18, pageW - MARGIN, pageH - 18);
     doc.setFont("helvetica", "normal").setFontSize(8).setTextColor(...MUTED);
     doc.text(brandName, MARGIN, pageH - 12);
-    doc.text("Markodience", pageW / 2, pageH - 12, { align: "center" });
+    if (footer) doc.text(footer, pageW / 2, pageH - 12, { align: "center" });
     doc.text(`Page ${p} / ${total}`, pageW - MARGIN, pageH - 12, { align: "right" });
     if (watermark) {
       doc.setFontSize(8).setTextColor(160, 160, 165);

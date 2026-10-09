@@ -47,7 +47,7 @@ const STEPS = [
 const PLAN_BULLETS: Record<"gratuit" | "pro" | "agence", string[]> = {
   gratuit: ["1 profil de marque", "Identité, piliers, tonalité", "Exports avec filigrane"],
   pro: ["Jusqu’à 3 profils de marque", "Audit, ligne éditoriale, KPIs, règles, Guide Lives", "Workflow de validation", "Exports sans filigrane"],
-  agence: ["Jusqu’à 10 profils de marque", "Tout le palier Pro", "Marque blanche et export multi-clients (bientôt)", "Facturé par siège, 2 minimum"],
+  agence: ["Jusqu’à 10 profils de marque", "Tout le palier Pro", "Marque blanche et export multi-clients", "Facturé par siège, 2 minimum"],
 };
 
 export default async function Home(props: { searchParams: Promise<{ compte?: string }> }) {

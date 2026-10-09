@@ -2,10 +2,12 @@ import { Layers } from "lucide-react";
 import BrandsList from "@/components/BrandsList";
 import PageHeader from "@/components/PageHeader";
 import { getDashboardContext } from "@/lib/brand";
-import { PLANS, canCreateProfile } from "@/lib/plans";
+import MultiExport from "@/components/MultiExport";
+import { PLANS, canCreateProfile, hasFeature } from "@/lib/plans";
+import { footerBrand } from "@/lib/whiteLabel";
 
 export default async function BrandsPage() {
-  const { profiles, active, plan, owner } = await getDashboardContext();
+  const { profiles, active, plan, owner, user } = await getDashboardContext();
   const max = owner ? null : PLANS[plan].maxProfiles;
   const canAdd = owner || canCreateProfile(plan, profiles.length);
   const used = profiles.length;
@@ -23,6 +25,7 @@ export default async function BrandsPage() {
         </div>
         <p className="max-w-sm text-[14px] text-ink-secondary">{owner ? "En tant que propriétaire, vous n'avez aucune limite de marques." : `Palier ${PLANS[plan].label} : ${canAdd ? "vous pouvez encore ajouter des marques." : "limite atteinte."} ${canAdd ? "" : next}`}</p>
       </div>
+      {hasFeature(plan, "multi_export") && profiles.length > 0 && <MultiExport brands={profiles.map((p) => ({ id: p.id, name: p.name, primary_color: p.primary_color }))} footer={footerBrand(plan, user.user_metadata)} />}
       <BrandsList profiles={profiles} activeId={active.id} canAdd={canAdd} limitText={next} />
     </div>
   );

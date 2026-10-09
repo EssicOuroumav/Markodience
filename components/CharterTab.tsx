@@ -24,8 +24,8 @@ function Card({ Icon, title, children, className = "" }: { Icon: typeof Palette;
   );
 }
 
-export default function CharterTab({ brandId, brandName, brandColor, logoUrl, hasIdentity, palette: initialPalette, guide: initialGuide, watermark }: {
-  brandId: string; brandName: string; brandColor: string | null; logoUrl: string | null; hasIdentity: boolean; palette: Color[]; guide: VisualGuide | null; watermark: boolean;
+export default function CharterTab({ brandId, brandName, brandColor, logoUrl, hasIdentity, palette: initialPalette, guide: initialGuide, watermark, footer }: {
+  brandId: string; brandName: string; brandColor: string | null; logoUrl: string | null; hasIdentity: boolean; palette: Color[]; guide: VisualGuide | null; watermark: boolean; footer?: string;
 }) {
   const supabase = createClient();
   const [palette, setPalette] = useState<Color[]>(initialPalette);
@@ -50,7 +50,7 @@ export default function CharterTab({ brandId, brandName, brandColor, logoUrl, ha
         supabase.from("tone_voice").select("do_list, dont_list").eq("brand_profile_id", brandId).maybeSingle(),
       ]);
       const { buildBrandGuidePdf, brandGuideFileName } = await import("@/lib/brandGuidePdf");
-      buildBrandGuidePdf({ brandName, color: brandColor, identity: id, pillars: pillars ?? [], tone, watermark }).save(brandGuideFileName(brandName));
+      buildBrandGuidePdf({ brandName, color: brandColor, identity: id, pillars: pillars ?? [], tone, watermark, footer }).save(brandGuideFileName(brandName));
     } finally {
       setExporting(false);
     }

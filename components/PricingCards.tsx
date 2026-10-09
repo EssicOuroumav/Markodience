@@ -6,7 +6,7 @@ import { PLANS, MAX_SEATS, formatXof, priceFor, type PlanId } from "@/lib/plans"
 const BULLETS: Record<PlanId, string[]> = {
   gratuit: ["1 profil de marque", "Identité, piliers, tonalité", "Exports avec filigrane"],
   pro: ["Jusqu'à 3 profils de marque", "Audit, ligne éditoriale, KPIs, règles, Guide Lives", "Exports sans filigrane"],
-  agence: ["Jusqu'à 10 profils de marque", "Tout le palier Pro", "Marque blanche et export multi-clients (bientôt)", "Facturé par siège (2 minimum)"],
+  agence: ["Jusqu'à 10 profils de marque", "Tout le palier Pro", "Marque blanche et export multi-clients", "Facturé par siège (2 minimum)"],
 };
 
 export default function PricingCards({ currentPlan }: { currentPlan: PlanId }) {

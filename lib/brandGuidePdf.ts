@@ -18,6 +18,7 @@ export type BrandGuideInput = {
   tone?: { do_list?: unknown; dont_list?: unknown } | null;
   exportDate?: string; // YYYY-MM-DD
   watermark?: boolean;
+  footer?: string; // nom au pied de page (marque blanche : nom de l'agence, vide = rien)
 };
 
 const INK: [number, number, number] = [29, 29, 31];
@@ -42,7 +43,7 @@ export function pdfText(v: unknown): string {
 
 const strings = (v: unknown): string[] => (Array.isArray(v) ? v.map(pdfText).filter(Boolean) : []);
 
-export function buildBrandGuidePdf({ brandName, color, identity, pillars = [], tone, exportDate, watermark = false }: BrandGuideInput): jsPDF {
+export function buildBrandGuidePdf({ brandName, color, identity, pillars = [], tone, exportDate, watermark = false, footer = "Markodience" }: BrandGuideInput): jsPDF {
   const ACCENT = accentFrom(color).map(Math.round) as [number, number, number];
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const pageW = doc.internal.pageSize.getWidth();
@@ -182,7 +183,7 @@ export function buildBrandGuidePdf({ brandName, color, identity, pillars = [], t
     doc.setDrawColor(210, 210, 215).setLineWidth(0.2).line(MARGIN, pageH - 18, pageW - MARGIN, pageH - 18);
     doc.setFont("helvetica", "normal").setFontSize(8).setTextColor(...MUTED);
     doc.text(name, MARGIN, pageH - 12);
-    doc.text("Markodience", pageW / 2, pageH - 12, { align: "center" });
+    if (footer) doc.text(pdfText(footer), pageW / 2, pageH - 12, { align: "center" });
     doc.text(`Page ${p} / ${total}`, pageW - MARGIN, pageH - 12, { align: "right" });
     if (watermark) doc.setTextColor(160, 160, 165).text("Genere avec Markodience - version gratuite", pageW / 2, pageH - 7, { align: "center" });
   }
