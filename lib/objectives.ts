@@ -5,6 +5,9 @@ import { monthLabel, monthStart } from "./kpi";
  * Objectifs marketing mesurés. Un objectif peut être relié à un indicateur :
  *  - un indicateur prédéfini (les 4 chiffres historiques du rapport mensuel), ou
  *  - un indicateur personnalisé (« Contacts WhatsApp », « Dons reçus »…) défini par l'utilisateur ou proposé par l'IA.
+
+ * Un objectif de régularité qui ne se compte pas (« publier un bilan chaque trimestre ») est « à cocher » : une case par
+ * période (mois ou trimestre), cochée quand l'engagement a été tenu.
  * Les valeurs se saisissent dans le rapport mensuel (onglet KPIs) : champs prédéfinis, ou `data.custom[clé]` pour les personnalisés.
  */
 export const OBJECTIVE_METRICS = ["reach", "engagement", "new_followers", "posts_done"] as const;
@@ -42,7 +45,12 @@ export const METRIC_INFO: Record<ObjectiveMetric, { label: string; unit: string;
 };
 
 export type Indicator = { key: string; label: string; unit: string; mode: IndicatorMode; builtin?: ObjectiveMetric };
-export type Objective = { text: string; indicator?: Indicator; target?: number; since?: string };
+export type CheckFrequency = "monthly" | "quarterly";
+export const CHECK_FREQUENCIES: readonly CheckFrequency[] = ["monthly", "quarterly"];
+export const FREQUENCY_LABELS: Record<CheckFrequency, string> = { monthly: "Chaque mois", quarterly: "Chaque trimestre" };
+/** Objectif à cocher : `since` (YYYY-MM-01) est le début du suivi, `done` la liste des périodes tenues (clés « 2026-10 » ou « 2026-Q4 »). */
+export type Checklist = { frequency: CheckFrequency; since: string; done: string[] };
+export type Objective = { text: string; indicator?: Indicator; target?: number; since?: string; check?: Checklist };
 
 const isMetric = (v: unknown): v is ObjectiveMetric => typeof v === "string" && (OBJECTIVE_METRICS as readonly string[]).includes(v);
 const isMode = (v: unknown): v is IndicatorMode => v === "monthly" || v === "cumulative";
@@ -67,6 +75,20 @@ export function buildIndicator(src: { builtin?: unknown; metric?: unknown; label
   return { key: customKey(label), label, unit: str(src.unit, 24), mode };
 }
 
+const PERIOD_KEY = /^\d{4}-(0[1-9]|1[0-2]|Q[1-4])$/;
+const isFrequency = (v: unknown): v is CheckFrequency => v === "monthly" || v === "quarterly";
+
+/** Objectif à cocher à partir d'une saisie (utilisateur ou IA) ; null si la fréquence est inconnue. */
+function parseChecklist(raw: unknown, now: Date): Checklist | null {
+  if (!raw || typeof raw !== "object") return null;
+  const c = raw as Record<string, unknown>;
+  if (!isFrequency(c.frequency)) return null;
+  const since = typeof c.since === "string" && /^\d{4}-\d{2}-01$/.test(c.since) ? c.since : monthStart(now);
+  const valid = (k: unknown): k is string => typeof k === "string" && PERIOD_KEY.test(k) && (c.frequency === "quarterly" ? k.includes("Q") : !k.includes("Q"));
+  const done = Array.isArray(c.done) ? [...new Set(c.done.filter(valid))].sort() : [];
+  return { frequency: c.frequency, since, done };
+}
+
 /**
  * Tolérant : les anciens objectifs (texte simple, ou « metric » + « target ») restent valides, l'IA peut envoyer des
  * objets plus ou moins complets. Une mesure incomplète (indicateur sans cible, ou l'inverse) est retirée. Un cumul reçoit
@@ -84,7 +106,8 @@ export function normalizeObjectives(raw: unknown, now: Date = new Date()): Objec
     const indicator = buildIndicator(ind);
     const target = typeof o.target === "number" && Number.isFinite(o.target) && o.target > 0 && o.target <= 1_000_000_000 ? o.target : undefined;
     if (!indicator || !target) {
-      out.push({ text });
+      const check = parseChecklist(o.check ?? (o.frequency ? { frequency: o.frequency } : null), now);
+      out.push(check ? { text, check } : { text });
       continue;
     }
     const since = typeof o.since === "string" && /^\d{4}-\d{2}-01$/.test(o.since) ? o.since : monthStart(now);
@@ -132,6 +155,56 @@ export function objectiveProgress(o: Objective, reports: KpiPoint[]): ObjectiveP
   }
   const percent = Math.min(100, Math.round((current / o.target) * 100));
   return { current, target: o.target, percent, reached: current >= o.target, basis };
+}
+
+// ---------------------------------------------------------------- objectifs à cocher
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/** Clé de la période d'une date (YYYY-MM-JJ ou Date) : « 2026-10 » (mois) ou « 2026-Q4 » (trimestre). */
+export function periodKey(date: Date | string, frequency: CheckFrequency): string {
+  const [y, m] = typeof date === "string" ? date.split("-").map(Number) : [date.getFullYear(), date.getMonth() + 1];
+  return frequency === "monthly" ? `${y}-${pad2(m)}` : `${y}-Q${Math.floor((m - 1) / 3) + 1}`;
+}
+
+export function periodLabel(key: string): string {
+  if (key.includes("Q")) {
+    const [y, q] = key.split("-Q");
+    return `T${q} ${y}`;
+  }
+  return monthLabel(`${key}-01`);
+}
+
+/** Périodes écoulées depuis le début du suivi jusqu'à la période en cours incluse, de la plus ancienne à la plus récente. */
+export function periodsSince(since: string, now: Date, frequency: CheckFrequency): string[] {
+  const keys: string[] = [];
+  const [y0, m0] = since.split("-").map(Number);
+  let y = y0, m = m0;
+  const last = periodKey(now, frequency);
+  for (let guard = 0; guard < 600; guard++) {
+    const key = periodKey(`${y}-${pad2(m)}-01`, frequency);
+    if (keys[keys.length - 1] !== key) keys.push(key);
+    if (key === last || key > last) break;
+    m += 1;
+    if (m > 12) { m = 1; y += 1; }
+  }
+  return keys;
+}
+
+export type ChecklistProgress = { periods: string[]; done: number; total: number; percent: number; currentKey: string; currentDone: boolean };
+
+/** Périodes tenues sur les périodes écoulées (la période en cours compte dans le total tant qu'elle n'est pas cochée). */
+export function checklistProgress(check: Checklist, now: Date): ChecklistProgress {
+  const periods = periodsSince(check.since, now, check.frequency);
+  const done = periods.filter((p) => check.done.includes(p)).length;
+  const currentKey = periodKey(now, check.frequency);
+  return { periods, done, total: periods.length, percent: Math.round((done / Math.max(periods.length, 1)) * 100), currentKey, currentDone: check.done.includes(currentKey) };
+}
+
+/** Coche ou décoche une période (liste triée, sans doublon). */
+export function toggleDone(check: Checklist, key: string): Checklist {
+  const done = check.done.includes(key) ? check.done.filter((k) => k !== key) : [...check.done, key];
+  return { ...check, done: [...new Set(done)].sort() };
 }
 
 // Validation d'une saisie venant de l'IA (champs facultatifs, tolérance gérée par normalizeObjectives).

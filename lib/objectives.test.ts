@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { METRIC_INFO, buildIndicator, customIndicators, customKey, indicatorValue, normalizeObjectives, objectiveProgress, uniqueIndicators } from "./objectives";
+import { METRIC_INFO, buildIndicator, checklistProgress, customIndicators, customKey, indicatorValue, normalizeObjectives, objectiveProgress, periodKey, periodLabel, periodsSince, toggleDone, uniqueIndicators } from "./objectives";
 import { EMPTY_KPI, kpiData } from "./kpi";
 
 const now = new Date(2026, 9, 15);
@@ -109,5 +109,47 @@ describe("rapport mensuel et indicateurs personnalisés", () => {
     expect(kpiData.parse(legacy).custom).toEqual({});
     expect(kpiData.safeParse({ ...EMPTY_KPI, custom: { "mauvaise clé": 1 } }).success).toBe(false);
     expect(kpiData.safeParse({ ...EMPTY_KPI, custom: { c_x: -1 } }).success).toBe(false);
+  });
+});
+
+describe("objectifs à cocher", () => {
+  it("clés et libellés de période", () => {
+    expect(periodKey(new Date(2026, 9, 15), "monthly")).toBe("2026-10");
+    expect(periodKey(new Date(2026, 9, 15), "quarterly")).toBe("2026-Q4");
+    expect(periodKey("2026-03-31", "quarterly")).toBe("2026-Q1");
+    expect(periodKey("2026-04-01", "quarterly")).toBe("2026-Q2");
+    expect(periodLabel("2026-10")).toBe("octobre 2026");
+    expect(periodLabel("2026-Q4")).toBe("T4 2026");
+  });
+  it("périodes écoulées depuis le début, période en cours incluse", () => {
+    expect(periodsSince("2026-08-01", new Date(2026, 9, 15), "monthly")).toEqual(["2026-08", "2026-09", "2026-10"]);
+    expect(periodsSince("2026-08-01", new Date(2026, 9, 15), "quarterly")).toEqual(["2026-Q3", "2026-Q4"]);
+    expect(periodsSince("2026-10-01", new Date(2026, 9, 15), "quarterly")).toEqual(["2026-Q4"]);
+    expect(periodsSince("2025-11-01", new Date(2026, 1, 1), "monthly")).toEqual(["2025-11", "2025-12", "2026-01", "2026-02"]);
+  });
+  it("normalise un objectif à cocher (format utilisateur ou IA) sans mesure", () => {
+    expect(normalizeObjectives([{ text: "Bilan trimestriel", check: { frequency: "quarterly" } }], now)).toEqual([{ text: "Bilan trimestriel", check: { frequency: "quarterly", since: "2026-10-01", done: [] } }]);
+    expect(normalizeObjectives([{ text: "Bilan", frequency: "monthly" }], now)[0].check).toEqual({ frequency: "monthly", since: "2026-10-01", done: [] });
+    expect(normalizeObjectives([{ text: "x", check: { frequency: "chaque jour" } }], now)).toEqual([{ text: "x" }]);
+  });
+  it("garde seulement les périodes valides de la bonne fréquence, sans doublon", () => {
+    const [o] = normalizeObjectives([{ text: "x", check: { frequency: "quarterly", since: "2026-07-01", done: ["2026-Q3", "2026-Q3", "2026-10", "n'importe quoi", "2026-Q9"] } }], now);
+    expect(o.check?.done).toEqual(["2026-Q3"]);
+  });
+  it("une mesure complète l'emporte sur un suivi à cocher", () => {
+    const [o] = normalizeObjectives([{ text: "x", metric: "reach", target: 10, check: { frequency: "monthly" } }], now);
+    expect(o.indicator?.key).toBe("reach");
+    expect(o.check).toBeUndefined();
+  });
+  it("avancement : périodes tenues sur périodes écoulées", () => {
+    const check = { frequency: "monthly" as const, since: "2026-08-01", done: ["2026-08", "2026-10"] };
+    expect(checklistProgress(check, new Date(2026, 9, 15))).toMatchObject({ done: 2, total: 3, percent: 67, currentKey: "2026-10", currentDone: true });
+    expect(checklistProgress({ ...check, done: ["2026-08"] }, new Date(2026, 9, 15))).toMatchObject({ done: 1, total: 3, currentDone: false });
+  });
+  it("cocher et décocher une période", () => {
+    const c = { frequency: "quarterly" as const, since: "2026-07-01", done: ["2026-Q3"] };
+    expect(toggleDone(c, "2026-Q4").done).toEqual(["2026-Q3", "2026-Q4"]);
+    expect(toggleDone(toggleDone(c, "2026-Q4"), "2026-Q4").done).toEqual(["2026-Q3"]);
+    expect(toggleDone(c, "2026-Q3").done).toEqual([]);
   });
 });

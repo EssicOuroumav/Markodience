@@ -30,7 +30,7 @@ Structure JSON exacte :
   "positioning": string (2-3 phrases),
   "target_segments": [{ "name": string, "description": string, "need": string }] (1 à 3),
   "visual_palette": [{ "color": string (code hexadécimal #RRGGBB), "usage": string }] (3 à 5),
-  "marketing_objectives": [{ "text": string, "indicator": { "label": string, "unit": string, "mode": "monthly" | "cumulative", "builtin": "reach" | "engagement" | "new_followers" | "posts_done" | null } | null, "target": number | null }] (3 à 5)
+  "marketing_objectives": [{ "text": string, "indicator": { "label": string, "unit": string, "mode": "monthly" | "cumulative", "builtin": "reach" | "engagement" | "new_followers" | "posts_done" | null } | null, "target": number | null, "check": { "frequency": "monthly" | "quarterly" } | null }] (3 à 5)
 }
 Pour chaque objectif : "text" est une phrase claire et réaliste.
 Si l'objectif se compte en chiffres, renseigne "indicator" et "target" :
@@ -39,7 +39,8 @@ Si l'objectif se compte en chiffres, renseigne "indicator" et "target" :
 - "mode" : "monthly" si le texte vise un chiffre CHAQUE mois (« 100 contacts par mois »), "cumulative" si les mois s'additionnent jusqu'à un total (« 5 000 abonnés en 6 mois »).
 - "builtin" : seulement si l'indicateur est exactement l'un de ces chiffres du rapport mensuel (reach = personnes touchées dans le mois, engagement = interactions du mois, new_followers = nouveaux abonnés, posts_done = publications du mois), sinon null.
 - "target" : un nombre cohérent avec le texte (celui du texte quand il en donne un), jamais gonflé au-delà de ce qui est réaliste pour cette marque.
-Si l'objectif ne se compte pas (régularité, image, partenariat…), mets null à "indicator" et à "target".
+Si l'objectif est un engagement de régularité qui ne se compte pas en chiffres (ex. « publier un bilan visuel chaque trimestre », « répondre à chaque message dans la journée »), mets null à "indicator" et "target" et renseigne "check" avec la fréquence ("monthly" ou "quarterly").
+Si l'objectif ne se compte pas et n'est pas un engagement régulier (image, notoriété…), mets null à "indicator", "target" et "check".
 Respecte les sujets à éviter indiqués. Réponds uniquement par le JSON.`;
 }
 
