@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { notifyProgress } from "@/lib/progressEvents";
 import { callGenerate } from "@/lib/api";
 import { OBJECTIVES, OBJECTIVE_LABELS, moveItem, type LiveStep, type Objective } from "@/lib/lives";
 import EditableText from "./EditableText";
@@ -55,6 +56,7 @@ export default function LivesTab({
     const { data, error: err } = await supabase.from("live_guides").insert({ brand_profile_id: brandId, objective }).select("id, objective, structure_data").single();
     if (err || !data) return setError("Le guide n'a pas pu être créé.");
     setGuides((g) => [...g, data as Guide]);
+    notifyProgress();
     setActiveId(data.id);
     setPicking(false);
     setMenu(false);

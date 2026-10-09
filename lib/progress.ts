@@ -10,7 +10,7 @@ export type ProgressStep = { slug: TabSlug; label: string; done: boolean; featur
 export const getBrandProgress = cache(async () => {
   const { supabase, active, plan } = await getDashboardContext();
   const month = monthStart(new Date());
-  const [identity, pillars, tone, lines, audit, kpi, brand, guides] = await Promise.all([
+  const [identity, pillars, tone, lines, audit, kpi, brand, guides, rules, kpiEver] = await Promise.all([
     supabase.from("brand_identity").select("positioning").eq("brand_profile_id", active.id).maybeSingle(),
     supabase.from("content_pillars").select("id", { count: "exact", head: true }).eq("brand_profile_id", active.id),
     supabase.from("tone_voice").select("do_list").eq("brand_profile_id", active.id).maybeSingle(),
@@ -19,6 +19,8 @@ export const getBrandProgress = cache(async () => {
     supabase.from("kpi_reports").select("submitted_at, deadline").eq("brand_profile_id", active.id).eq("month", month).maybeSingle(),
     supabase.from("brand_profiles").select("kpi_deadline_day").eq("id", active.id).single(),
     supabase.from("live_guides").select("id", { count: "exact", head: true }).eq("brand_profile_id", active.id),
+    supabase.from("operational_rules").select("id", { count: "exact", head: true }).eq("brand_profile_id", active.id).neq("content", ""),
+    supabase.from("kpi_reports").select("id", { count: "exact", head: true }).eq("brand_profile_id", active.id).not("submitted_at", "is", null),
   ]);
 
   const lineIds = (lines.data ?? []).map((l) => l.id);
@@ -28,8 +30,10 @@ export const getBrandProgress = cache(async () => {
     { slug: "identity", label: "Identité de marque", done: !!identity.data?.positioning, feature: "identity" },
     { slug: "pillars", label: "Piliers de contenu", done: (pillars.count ?? 0) > 0, feature: "pillars" },
     { slug: "tone", label: "Tonalité & voix", done: !!tone.data?.do_list, feature: "tone" },
-    { slug: "editorial", label: "Ligne éditoriale", done: entries.length > 0, feature: "editorial" },
     { slug: "audit", label: "Premier audit", done: !!audit.data, feature: "audit" },
+    { slug: "editorial", label: "Ligne éditoriale", done: entries.length > 0, feature: "editorial" },
+    { slug: "rules", label: "Règles opérationnelles", done: (rules.count ?? 0) > 0, feature: "rules" },
+    { slug: "lives", label: "Guide Lives", done: (guides.count ?? 0) > 0, feature: "lives" },
     { slug: "kpi", label: "Rapport KPI du mois", done: !!kpi.data?.submitted_at, feature: "kpi" },
   ];
   const available = steps.filter((s) => hasFeature(plan, s.feature));
@@ -53,5 +57,7 @@ export const getBrandProgress = cache(async () => {
     kpiState,
     kpiDeadline: deadline,
     kpiSubmittedAt: kpi.data?.submitted_at ?? null,
+    /** Au moins un rapport KPI soumis un mois quelconque : critère du parcours guidé (le rapport du mois, lui, revient chaque mois). */
+    kpiEver: (kpiEver.count ?? 0) > 0,
   };
 });

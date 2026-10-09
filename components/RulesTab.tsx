@@ -3,6 +3,7 @@
 import { Ban, BarChart3, CalendarClock, ChevronDown, Image as ImageIcon, List, MessageCircle, ShieldCheck, Wand2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { notifyProgress } from "@/lib/progressEvents";
 import { RULE_HINTS, RULE_SECTIONS, RULE_TEMPLATES, type RuleKey } from "@/lib/rules";
 import MarkdownView from "./MarkdownView";
 import SaveIndicator, { type SaveState } from "./SaveIndicator";
@@ -22,7 +23,7 @@ function Section({ brandId, k, label, initial, defaultOpen, onSave }: { brandId:
     if (value === lastSaved.current) return;
     onSave("saving");
     const { error } = await supabase.from("operational_rules").upsert({ brand_profile_id: brandId, section: k, content: value }, { onConflict: "brand_profile_id,section" });
-    if (!error) lastSaved.current = value;
+    if (!error) { lastSaved.current = value; notifyProgress(); }
     onSave(error ? "error" : "saved");
   }
 

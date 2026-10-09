@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { notifyProgress } from "@/lib/progressEvents";
 import { EMPTY_KPI, dateLabel, deadlineFor, deadlineState, kpiData, monthLabel, recentMonths, wasOnTime, type KpiData } from "@/lib/kpi";
 import SaveIndicator, { type SaveState } from "./SaveIndicator";
 import PageHeader from "./PageHeader";
@@ -82,6 +83,7 @@ export default function KpiTab({ brandId, brandName, brandColor, deadlineDay: in
     }
     setReports((rs) => [data as KpiReport, ...rs.filter((r) => r.month !== month)]);
     setSave("saved");
+    notifyProgress();
   }
 
   async function saveDay(next: number) {

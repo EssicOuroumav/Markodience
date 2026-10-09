@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { ArrowRight, CalendarDays, Check, ChevronRight, Radio, ScanSearch, Sparkles } from "lucide-react";
+import JourneyRestore from "@/components/JourneyRestore";
 import ScoreRing from "@/components/ScoreRing";
 import { getDashboardContext } from "@/lib/brand";
 import { dateLabel, monthLabel } from "@/lib/kpi";
 import { getBrandProgress } from "@/lib/progress";
+import { journeyComplete, journeySteps } from "@/lib/journey";
 import { hasFeature } from "@/lib/plans";
 import { TABS } from "@/lib/tabs";
 import { TAB_ICONS } from "@/lib/tabIcons";
@@ -12,6 +14,8 @@ export default async function DashboardHome() {
   const { active, plan, user } = await getDashboardContext();
   const pr = await getBrandProgress();
   const { steps, percent, next, auditScore, audit, entries, weeksDone, channels, guides, kpiState, kpiDeadline, month } = pr;
+  const dismissed = Array.isArray(user.user_metadata?.journey_dismissed) ? (user.user_metadata.journey_dismissed as string[]) : [];
+  const guideHidden = dismissed.includes(active.id) && !journeyComplete(journeySteps(plan, { ...pr.done, kpi: pr.kpiEver }));
   const nextTab = next ? TABS.find((t) => t.slug === next.slug) : null;
   const score = auditScore;
   const deadline = kpiDeadline;
@@ -34,6 +38,7 @@ export default async function DashboardHome() {
             <div className="mt-5 flex flex-wrap items-center gap-3">
               {next && nextTab && <Link href={`/dashboard/${nextTab.slug}`} className="btn-primary">{next.label} <ArrowRight size={18} /></Link>}
               <Link href="/dashboard/upgrade" className="btn-ghost">Mon palier</Link>
+              {guideHidden && <JourneyRestore brandId={active.id} dismissed={dismissed} />}
             </div>
           </div>
         </div>
