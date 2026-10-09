@@ -260,7 +260,7 @@ export default function IdentityTab({
           <article className="card-flat lg:col-span-2">
             <div className="flex items-center gap-3"><span aria-hidden className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-accent"><Compass size={19} strokeWidth={1.8} /></span><h2 className="section-title">Mission, vision et valeurs</h2></div>
             <div className="mt-3 grid gap-x-10 gap-y-5 lg:grid-cols-2">
-              {FOUNDATION_FIELDS.map((f) => (
+              {FOUNDATION_FIELDS.filter((f) => f.key === "mission" || foundations[f.key]).map((f) => (
                 <div key={f.key}>
                   <h3 className="text-[13px] font-semibold uppercase tracking-[0.1em] text-ink-secondary">{f.label}</h3>
                   <EditableText multiline label={f.label} className="text-[16px] leading-relaxed" placeholder={f.hint} value={foundations[f.key]} onSave={(v) => saveFoundations({ [f.key]: v })} />

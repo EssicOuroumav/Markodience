@@ -3,9 +3,9 @@ import { z } from "zod";
 /** Fondations de la marque : ce que dit une organisation d'elle-même, au-delà du positionnement. */
 export const foundationsSchema = z.object({
   mission: z.string().min(1).max(600),
-  vision: z.string().min(1).max(600),
+  vision: z.string().max(600).default(""),
   values: z.array(z.object({ name: z.string().min(1).max(60), description: z.string().max(400).default("") })).min(1).max(6),
-  promise: z.string().min(1).max(400),
+  promise: z.string().max(400).default(""),
   slogan: z.string().max(160).default(""),
   key_message: z.string().max(400).default(""),
 });

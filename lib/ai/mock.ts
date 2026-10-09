@@ -1,4 +1,4 @@
-import type { PostsOutput } from "../posts";
+import type { PostsFillOutput, PostsOutput } from "../posts";
 import type { IdentityExtendOutput } from "../identity";
 import type { LiveScriptsOutput, LiveStructureOutput, AuditOutput, EditorialOutput, IdentityOutput, PillarsOutput, ToneOutput } from "./schemas";
 
@@ -114,4 +114,8 @@ export const mockPosts = (days: number[]): PostsOutput => ({
     hashtags: ["solidarite", "communaute", "ensemble"],
     call_to_action: "Écrivez-nous en message privé pour en savoir plus.",
   })),
+});
+
+export const mockPostsFill = (ns: number[]): PostsFillOutput => ({
+  posts: ns.map((n) => ({ n, caption: "Légende complète prête à publier, fidèle à l'idée du plan. Chiffres : [X].", visual_idea: "Photo prise sur le terrain, lumière naturelle, avec accord des personnes.", hashtags: ["solidarite", "ensemble"], call_to_action: "Écrivez-nous en message privé." })),
 });

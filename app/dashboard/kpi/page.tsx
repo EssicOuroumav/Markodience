@@ -2,6 +2,8 @@ import KpiTab, { type KpiReport } from "@/components/KpiTab";
 import { getDashboardContext } from "@/lib/brand";
 import { lockedView } from "@/lib/gate";
 import { footerBrand } from "@/lib/whiteLabel";
+import { KpiPlanTable } from "@/components/StrategyBlocks";
+import { kpiStage } from "@/lib/plan/schemas";
 import { PLANS } from "@/lib/plans";
 import { customIndicators, normalizeObjectives } from "@/lib/objectives";
 
@@ -9,12 +11,16 @@ export default async function KpiPage() {
   const { supabase, user, active, plan } = await getDashboardContext();
   const locked = lockedView(plan, "kpi");
   if (locked) return locked;
-  const [{ data: reports }, { data: brand }, { data: identity }] = await Promise.all([
+  const [{ data: reports }, { data: brand }, { data: identity }, { data: strategy }] = await Promise.all([
     supabase.from("kpi_reports").select("id, month, data, submitted_at, deadline").eq("brand_profile_id", active.id).order("month", { ascending: false }),
     supabase.from("brand_profiles").select("kpi_deadline_day").eq("id", active.id).single(),
     supabase.from("brand_identity").select("marketing_objectives").eq("brand_profile_id", active.id).maybeSingle(),
+    supabase.from("brand_strategy").select("kpi_plan").eq("brand_profile_id", active.id).maybeSingle(),
   ]);
+  const planned = kpiStage.safeParse(strategy?.kpi_plan);
   return (
+    <>
+    {planned.success && <KpiPlanTable plan={planned.data} />}
     <KpiTab
       key={active.id}
       brandId={active.id}
@@ -26,5 +32,6 @@ export default async function KpiPage() {
       footer={footerBrand(plan, user.user_metadata)}
       customIndicators={customIndicators(normalizeObjectives(identity?.marketing_objectives))}
     />
+    </>
   );
 }

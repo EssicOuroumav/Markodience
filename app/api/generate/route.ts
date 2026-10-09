@@ -13,13 +13,13 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/payments/admin";
 import { createJob, deleteJob, finishJob, getJob, purgeOldJobs } from "@/lib/jobs";
 import { AiError, AI_MESSAGES, generateJson } from "@/lib/ai/anthropic";
-import { mockAudit, mockLiveScripts, mockLiveStructure, mockEditorial, mockPosts, mockIdentity, mockExtend, mockPillars, mockTone } from "@/lib/ai/mock";
-import { liveScriptsPrompt, liveStepPrompt, liveStructurePrompt, type LiveContext, auditPrompt, editorialLinePrompt, editorialWeekPrompt, postsWeekPrompt, identityPrompt, identityExtendPrompt, pillarsPrompt, tonePrompt, type BrandContext, type EditorialContext } from "@/lib/ai/prompts";
+import { mockAudit, mockLiveScripts, mockLiveStructure, mockEditorial, mockPosts, mockPostsFill, mockIdentity, mockExtend, mockPillars, mockTone } from "@/lib/ai/mock";
+import { liveScriptsPrompt, liveStepPrompt, liveStructurePrompt, type LiveContext, auditPrompt, editorialLinePrompt, editorialWeekPrompt, postsWeekPrompt, postsFillPrompt, identityPrompt, identityExtendPrompt, pillarsPrompt, tonePrompt, type BrandContext, type EditorialContext } from "@/lib/ai/prompts";
 import type { LiveStep } from "@/lib/lives";
 import { OBJECTIVES, type Objective } from "@/lib/lives";
 import { pillarRotation, weeksForPeriod, type PeriodMonths } from "@/lib/editorial";
 import { identityExtendOutput, parseFoundations } from "@/lib/identity";
-import { addDays, hashtagsText, postsOutput, postsPerWeek, spreadDays, weekStartDate } from "@/lib/posts";
+import { addDays, hashtagsText, postsFillOutput, postsOutput, postsPerWeek, spreadDays, weekStartDate } from "@/lib/posts";
 import { liveScriptsOutput, liveStepOutput, liveStructureOutput, auditOutput, editorialOutput, generateRequest, type GenerateRequest, identityOutput, pillarsOutput, toneOutput } from "@/lib/ai/schemas";
 
 export const runtime = "nodejs";
@@ -124,6 +124,7 @@ async function run(supabase: Supa, req: GenerateRequest): Promise<NextResponse> 
       return await handleEditorial(supabase, req);
     }
     if (req.type === "posts_week") return await handlePosts(supabase, req);
+    if (req.type === "post_write") return await handlePostWrite(supabase, req);
     if (req.type === "plan_extract" || req.type === "plan_stage") {
       const gen: Gen = (prompt, schema, tier = "heavy", mock) => generateJson(prompt, schema, mock ?? (() => { throw new Error("réponse simulée manquante"); }), tier, { thinking: "off", maxTokens: 8192 });
       const out = await handlePlan(supabase, req as PlanRequest, gen);
@@ -234,7 +235,7 @@ function creditsFor(req: GenerateRequest): number {
 function requiredFeature(type: string): Feature | null {
   if (type.startsWith("plan_")) return "editorial";
   if (type === "audit") return "audit";
-  if (type.startsWith("editorial") || type.startsWith("posts")) return "editorial";
+  if (type.startsWith("editorial") || type.startsWith("posts") || type === "post_write") return "editorial";
   if (type.startsWith("live_")) return "lives";
   return null;
 }
@@ -282,6 +283,14 @@ async function handlePosts(supabase: Supa, req: { type: "posts_week"; entry_id: 
   const { data: identity } = await supabase.from("brand_identity").select("foundations").eq("brand_profile_id", line.brand_profile_id).maybeSingle();
   const foundations = parseFoundations(identity?.foundations);
 
+  // Publications déjà prévues par le plan : on rédige leurs légendes (sans changer le projet de chacune).
+  const { data: planned } = await supabase.from("posts").select("id, scheduled_date, idea, hook, pillar, format").eq("editorial_entry_id", entry.id).eq("status", "brouillon").neq("idea", "").order("scheduled_date");
+  if (planned && planned.length > 0) {
+    const n = await fillCaptions(supabase, ctx, { theme: entry.theme, phase: null, campaign: null }, foundations, planned);
+    if (n === null) return fail(500, "Les légendes n'ont pas pu être enregistrées.", "db");
+    return NextResponse.json({ ok: true, data: { count: n } });
+  }
+
   const days = spreadDays(postsPerWeek(entry.frequency));
   const result = await generateJson(
     postsWeekPrompt({ ...ctx, foundations: foundations ? { slogan: foundations.slogan, key_message: foundations.key_message, promise: foundations.promise } : null }, entry, days),
@@ -307,6 +316,54 @@ async function handlePosts(supabase: Supa, req: { type: "posts_week"; entry_id: 
   const { error } = await supabase.from("posts").insert(rows);
   if (error) return fail(500, "Les publications n'ont pas pu être enregistrées.", "db");
   return NextResponse.json({ ok: true, data: { count: rows.length } });
+}
+
+type PlannedRow = { id: string; scheduled_date: string | null; idea: string | null; hook: string | null; pillar: string | null; format: string | null };
+
+/** Rédige et enregistre les légendes de publications prévues ; renvoie leur nombre, ou null si l'enregistrement échoue. */
+async function fillCaptions(
+  supabase: Supa,
+  ctx: EditorialContext,
+  week: { theme: string | null; phase: string | null; campaign: string | null },
+  foundations: ReturnType<typeof parseFoundations>,
+  rows: PlannedRow[],
+): Promise<number | null> {
+  const dayName = (iso: string | null) => (iso ? new Intl.DateTimeFormat("fr-FR", { weekday: "long", timeZone: "UTC" }).format(new Date(iso + "T00:00:00Z")) : "");
+  const numbered = rows.map((r, n) => ({ n, day: dayName(r.scheduled_date), idea: r.idea ?? "", hook: r.hook ?? "", pillar: r.pillar, format: r.format }));
+  const result = await generateJson(
+    postsFillPrompt({ ...ctx, foundations: foundations ? { slogan: foundations.slogan, key_message: foundations.key_message, promise: foundations.promise } : null }, week, numbered),
+    postsFillOutput,
+    () => mockPostsFill(numbered.map((r) => r.n)),
+    "heavy",
+  );
+  let saved = 0;
+  for (const p of result.posts) {
+    const row = rows[p.n];
+    if (!row) continue;
+    const { error } = await supabase.from("posts").update({ caption: p.caption, visual_idea: p.visual_idea, hashtags: hashtagsText(p.hashtags), call_to_action: p.call_to_action }).eq("id", row.id);
+    if (error) return null;
+    saved++;
+  }
+  return saved;
+}
+
+/** Une seule publication du plan : rédige sa légende. */
+async function handlePostWrite(supabase: Supa, req: { type: "post_write"; post_id: string }) {
+  const { data: post } = await supabase.from("posts").select("id, brand_profile_id, editorial_entry_id, channel, scheduled_date, idea, hook, pillar, format").eq("id", req.post_id).maybeSingle();
+  if (!post) return fail(404, "Publication introuvable.", "not_found");
+  const [{ data: brand }, { data: pillars }, { data: tone }, { data: identity }, entry] = await Promise.all([
+    supabase.from("brand_profiles").select("name, sector").eq("id", post.brand_profile_id).maybeSingle(),
+    supabase.from("content_pillars").select("name, description").eq("brand_profile_id", post.brand_profile_id),
+    supabase.from("tone_voice").select("do_list, dont_list").eq("brand_profile_id", post.brand_profile_id).maybeSingle(),
+    supabase.from("brand_identity").select("foundations").eq("brand_profile_id", post.brand_profile_id).maybeSingle(),
+    post.editorial_entry_id ? supabase.from("editorial_entries").select("theme, phase, campaign").eq("id", post.editorial_entry_id).maybeSingle() : Promise.resolve({ data: null }),
+  ]);
+  if (!brand) return fail(404, "Profil de marque introuvable.", "not_found");
+  const ctx: EditorialContext = { channel: post.channel ?? "", brand: { name: brand.name, sector: brand.sector }, pillars: pillars ?? [], tone: tone ?? null };
+  const week = { theme: (entry.data as { theme?: string } | null)?.theme ?? null, phase: (entry.data as { phase?: string } | null)?.phase ?? null, campaign: (entry.data as { campaign?: string } | null)?.campaign ?? null };
+  const n = await fillCaptions(supabase, ctx, week, parseFoundations(identity?.foundations), [post as PlannedRow]);
+  if (n === null) return fail(500, "La légende n'a pas pu être enregistrée.", "db");
+  return NextResponse.json({ ok: true, data: { count: n } });
 }
 
 async function handleEditorial(

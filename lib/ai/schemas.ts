@@ -124,6 +124,7 @@ export const generateRequest = z.discriminatedUnion("type", [
   z.object({ type: z.literal("editorial_line"), editorial_line_id: z.string().uuid() }),
   z.object({ type: z.literal("editorial_week"), entry_id: z.string().uuid() }),
   z.object({ type: z.literal("posts_week"), entry_id: z.string().uuid() }),
+  z.object({ type: z.literal("post_write"), post_id: z.string().uuid() }),
   z.object({ type: z.literal("plan_extract"), brand_profile_id: z.string().uuid(), text: z.string().min(40).max(MAX_DESCRIPTION) }),
   z.object({ type: z.literal("plan_stage"), brand_profile_id: z.string().uuid(), stage: z.enum(PLAN_STAGES), network: z.string().max(40).optional(), brief: briefSchema.optional() }),
 ]);

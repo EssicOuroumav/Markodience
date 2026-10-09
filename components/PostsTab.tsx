@@ -14,7 +14,8 @@ import SaveIndicator, { type SaveState } from "./SaveIndicator";
 import { notifyProgress } from "@/lib/progressEvents";
 
 export type WeekOption = { id: string; channel: string; week: number; theme: string };
-const COLUMNS = "id, brand_profile_id, editorial_entry_id, channel, scheduled_date, caption, visual_idea, hashtags, call_to_action, status";
+const COLUMNS = "id, brand_profile_id, editorial_entry_id, channel, scheduled_date, caption, visual_idea, hashtags, call_to_action, status, idea, hook, pillar, format";
+const LIST_STEP = 60;
 const STATUS_CLS: Record<PostStatus, string> = { brouillon: "bg-black/10 text-ink", pret: "bg-warning/25 text-ink", publie: "bg-success/25 text-ink" };
 const DOT_CLS: Record<PostStatus, string> = { brouillon: "bg-black/30", pret: "bg-warning", publie: "bg-success" };
 
@@ -32,6 +33,8 @@ export default function PostsTab({ brandId, weeks, initialPosts, channels }: { b
   const [error, setError] = useState<string | null>(null);
   const [save, setSave] = useState<SaveState>("idle");
   const [copied, setCopied] = useState<string | null>(null);
+  const [writing, setWriting] = useState<string | null>(null);
+  const [limit, setLimit] = useState(LIST_STEP);
 
   const visible = useMemo(() => posts.filter((p) => !channel || p.channel === channel), [posts, channel]);
   const byDay = useMemo(() => groupByDate(visible), [visible]);
@@ -39,6 +42,9 @@ export default function PostsTab({ brandId, weeks, initialPosts, channels }: { b
   const monthPrefix = `${cursor.y}-${String(cursor.m + 1).padStart(2, "0")}`;
   const shown = (day ? visible.filter((p) => p.scheduled_date === day) : view === "calendar" ? visible.filter((p) => p.scheduled_date?.startsWith(monthPrefix)) : visible)
     .slice().sort((a, b) => (a.scheduled_date ?? "9").localeCompare(b.scheduled_date ?? "9"));
+  // Vue liste : les prochaines publications d'abord, par tranches (le plan en compte des centaines).
+  const upcoming = view === "list" && !day ? [...shown.filter((p) => (p.scheduled_date ?? "9") >= today), ...shown.filter((p) => (p.scheduled_date ?? "9") < today)] : shown;
+  const visibleList = view === "list" && !day ? upcoming.slice(0, limit) : shown;
 
   async function reload() {
     const { data } = await supabase.from("posts").select(COLUMNS).eq("brand_profile_id", brandId).order("scheduled_date", { ascending: true });
@@ -48,7 +54,7 @@ export default function PostsTab({ brandId, weeks, initialPosts, channels }: { b
   async function generate() {
     if (!weekId) return;
     const w = weeks.find((x) => x.id === weekId);
-    if (posts.some((p) => p.editorial_entry_id === weekId && p.status === "brouillon") && !window.confirm("Les brouillons de cette semaine seront remplacés (les publications « Prêt » et « Publié » restent). Continuer ?")) return;
+    if (posts.some((p) => p.editorial_entry_id === weekId && p.status === "brouillon" && p.caption) && !window.confirm("Les légendes déjà rédigées de cette semaine seront remplacées (les publications « Prêt » et « Publié » restent). Continuer ?")) return;
     setBusy(true);
     setError(null);
     const res = await callGenerate({ type: "posts_week", entry_id: weekId });
@@ -67,6 +73,17 @@ export default function PostsTab({ brandId, weeks, initialPosts, channels }: { b
     const { error: err } = await supabase.from("posts").update(p).eq("id", id);
     setSave(err ? "error" : "saved");
     if (!err && p.status) notifyProgress();
+  }
+
+  async function write(p: Post) {
+    setWriting(p.id);
+    setError(null);
+    const res = await callGenerate({ type: "post_write", post_id: p.id });
+    if (!res.ok) { setWriting(null); return setError(res.error); }
+    const { data } = await supabase.from("posts").select(COLUMNS).eq("id", p.id).single();
+    if (data) setPosts((ps) => ps.map((x) => (x.id === p.id ? (data as Post) : x)));
+    setWriting(null);
+    notifyProgress();
   }
 
   async function remove(id: string) {
@@ -174,7 +191,7 @@ export default function PostsTab({ brandId, weeks, initialPosts, channels }: { b
         <p className="mt-3 text-ink-secondary">Aucune publication ici. Rédigez une semaine ci-dessus ou ajoutez-en une à la main.</p>
       ) : (
         <ul className="mt-4 grid gap-4 lg:grid-cols-2">
-          {shown.map((p) => (
+          {visibleList.map((p) => (
             <li key={p.id} className="card relative overflow-hidden !pl-7">
               <span aria-hidden className={`absolute inset-y-0 left-0 w-1.5 ${DOT_CLS[p.status]}`} />
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -184,6 +201,16 @@ export default function PostsTab({ brandId, weeks, initialPosts, channels }: { b
                 </div>
                 <button type="button" aria-label={`Statut : ${POST_STATUS_LABEL[p.status]}. Cliquer pour changer`} className={`rounded-pill px-3 py-1 text-[13px] font-medium ${STATUS_CLS[p.status]}`} onClick={() => patch(p.id, { status: nextPostStatus(p.status) })}>{POST_STATUS_LABEL[p.status]}</button>
               </div>
+              {(p.idea || p.hook) && (
+                <div className="mt-2 rounded-xl bg-canvas p-3 text-[14px]">
+                  <div className="flex flex-wrap gap-1.5">{p.pillar && <span className="rounded-pill bg-white px-2.5 py-0.5 text-[12px] font-medium">{p.pillar}</span>}{p.format && <span className="rounded-pill bg-white px-2.5 py-0.5 text-[12px] font-medium text-ink-secondary">{p.format}</span>}</div>
+                  <EditableText multiline label="Idée du plan" className="mt-1 text-[14px]" value={p.idea ?? ""} onSave={(v) => patch(p.id, { idea: v })} />
+                  <EditableText label="Accroche" className="text-[14px] font-semibold" value={p.hook ?? ""} onSave={(v) => patch(p.id, { hook: v })} />
+                </div>
+              )}
+              {!p.caption && p.idea ? (
+                <button type="button" className="btn-primary mt-3" disabled={writing !== null} onClick={() => write(p)}><Sparkles size={16} />{writing === p.id ? "Rédaction…" : "Rédiger la légende"}</button>
+              ) : (
               <div className="mt-2 space-y-1">
                 <EditableText multiline label="Légende" className="text-[15px] leading-relaxed" value={p.caption} onSave={(v) => patch(p.id, { caption: v })} />
                 <p className="caption px-2 pt-1 font-semibold uppercase tracking-[0.08em]">Idée de visuel</p>
@@ -192,6 +219,7 @@ export default function PostsTab({ brandId, weeks, initialPosts, channels }: { b
                 <EditableText multiline label="Appel à l'action" className="text-[14px]" placeholder="Appel à l'action" value={p.call_to_action} onSave={(v) => patch(p.id, { call_to_action: v })} />
                 <EditableText label="Hashtags" className="text-[14px] text-accent" placeholder="#hashtags" value={p.hashtags} onSave={(v) => patch(p.id, { hashtags: v })} />
               </div>
+              )}
               <div className="mt-3 flex flex-wrap gap-2">
                 <button type="button" className="btn-secondary" onClick={() => copy(p)}>{copied === p.id ? <Check size={16} /> : <ClipboardCopy size={16} />}{copied === p.id ? "Copié" : "Copier le texte"}</button>
                 <button type="button" className="btn-ghost text-danger" onClick={() => remove(p.id)}><Trash2 size={16} />Supprimer</button>
@@ -200,6 +228,7 @@ export default function PostsTab({ brandId, weeks, initialPosts, channels }: { b
           ))}
         </ul>
       )}
+      {view === "list" && !day && upcoming.length > limit && <button type="button" className="btn-secondary mt-4" onClick={() => setLimit((l) => l + LIST_STEP)}>Afficher {Math.min(LIST_STEP, upcoming.length - limit)} publications de plus</button>}
     </section>
   );
 }

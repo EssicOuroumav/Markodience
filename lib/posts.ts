@@ -16,6 +16,11 @@ export type Post = {
   hashtags: string;
   call_to_action: string;
   status: PostStatus;
+  /** Publication prévue par le plan stratégique : idée, accroche, pilier et format (la légende vient ensuite). */
+  idea?: string;
+  hook?: string;
+  pillar?: string | null;
+  format?: string | null;
 };
 
 /** Ce que l'IA renvoie pour une semaine : quelques publications réparties sur les jours (0 = premier jour de la semaine). */
@@ -34,6 +39,12 @@ export const postsOutput = z.object({
     .max(7),
 });
 export type PostsOutput = z.infer<typeof postsOutput>;
+
+/** Légendes rédigées pour des publications déjà prévues par le plan (une entrée par ligne, dans l'ordre reçu). */
+export const postsFillOutput = z.object({
+  posts: z.array(z.object({ n: z.number().int().min(0).max(20), caption: z.string().min(1).max(2200), visual_idea: z.string().max(600).default(""), hashtags: z.array(z.string().max(40)).max(12).default([]), call_to_action: z.string().max(240).default("") })).min(1).max(12),
+});
+export type PostsFillOutput = z.infer<typeof postsFillOutput>;
 
 export const hashtagsText = (tags: string[]) => tags.map((t) => "#" + t.replace(/^#+/, "").replace(/\s+/g, "")).filter((t) => t.length > 1).join(" ");
 

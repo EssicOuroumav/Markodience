@@ -243,3 +243,28 @@ Structure JSON exacte :
 { "posts": [{ "day_offset": number, "caption": string, "visual_idea": string, "hashtags": string[], "call_to_action": string }] }
 Une publication par jour listé. Réponds uniquement par le JSON.`;
 }
+
+export function postsFillPrompt(
+  ctx: EditorialContext & { foundations?: { slogan?: string; key_message?: string; promise?: string } | null },
+  week: { theme: string | null; phase: string | null; campaign: string | null },
+  rows: { n: number; day: string; idea: string; hook: string; pillar: string | null; format: string | null }[],
+): string {
+  return `Rédige la légende complète de chacune de ces publications déjà prévues dans le plan, pour le canal « ${ctx.channel} ».
+<contexte>
+${JSON.stringify({ marque: ctx.brand.name, secteur: ctx.brand.sector, tonalite: ctx.tone, fondations: ctx.foundations ?? null, semaine: week }, null, 2)}
+</contexte>
+<publications>
+${rows.map((r) => JSON.stringify(r)).join("\n")}
+</publications>
+
+Règles :
+- Respecte l'idée, l'accroche, le pilier et le format de chaque ligne : tu écris la légende, tu ne changes pas le projet. L'accroche ouvre la légende.
+- La légende est complète et prête à publier, écrite pour le canal (longueur, ton, emojis avec modération), en français. Tout chiffre que tu ne connais pas reste « [X] » : n'invente aucune donnée.
+- « visual_idea » : ce qu'il faut photographier ou filmer, concret et réalisable avec un téléphone, dans le respect des règles de la marque (consentement, dignité).
+- « hashtags » : 3 à 5, sans le signe #. « call_to_action » : une phrase courte (peut être vide).
+- Respecte les sujets à éviter de la tonalité.
+
+Structure JSON exacte :
+{ "posts": [{ "n": number (le numéro de la ligne), "caption": string, "visual_idea": string, "hashtags": string[], "call_to_action": string }] }
+Une entrée par publication, avec le même « n ». Réponds uniquement par le JSON.`;
+}

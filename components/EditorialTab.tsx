@@ -10,6 +10,8 @@ import GenerateError from "./GenerateError";
 import SaveIndicator, { type SaveState } from "./SaveIndicator";
 import PageHeader from "./PageHeader";
 import EmptyState from "./EmptyState";
+import { NetworkInfo } from "./StrategyBlocks";
+import type { NetworkStage } from "@/lib/plan/schemas";
 
 export type Entry = {
   id: string;
@@ -27,16 +29,24 @@ export type Entry = {
   validated_at: string | null;
   validation_requested_by: string | null;
   validation_requested_at: string | null;
+  phase?: "avant" | "pendant" | "apres" | "evergreen" | null;
+  campaign?: string | null;
 };
 export type Line = { id: string; channel: string | null; period_start: string | null; period_end: string | null };
 
 const ENTRY_COLUMNS =
-  "id, editorial_line_id, week_number, position, theme, content_type, format, frequency, suggested_time, status, validation_status, validated_by, validated_at, validation_requested_by, validation_requested_at";
+  "id, editorial_line_id, week_number, position, theme, content_type, format, frequency, suggested_time, status, validation_status, validated_by, validated_at, validation_requested_by, validation_requested_at, phase, campaign";
 const CHANNEL_OPTIONS = ["Facebook", "Instagram", "TikTok", "YouTube", "Site web", "Autre"];
 const STATUS_UI: Record<EntryStatus, { label: string; cls: string }> = {
   a_venir: { label: "À venir", cls: "bg-black/10 text-ink" },
   en_cours: { label: "En cours", cls: "bg-warning/20 text-ink" },
   termine: { label: "Terminé", cls: "bg-success/20 text-ink" },
+};
+const PHASE_UI: Record<string, { label: string; cls: string }> = {
+  avant: { label: "Avant", cls: "bg-accent-soft text-accent" },
+  pendant: { label: "Pendant", cls: "bg-success/20 text-ink" },
+  apres: { label: "Après", cls: "bg-warning/25 text-ink" },
+  evergreen: { label: "Permanent", cls: "bg-black/10 text-ink" },
 };
 const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : "");
 
@@ -45,11 +55,13 @@ export default function EditorialTab({
   initialLines,
   initialEntries,
   hasPillars,
+  profiles = {},
 }: {
   brandId: string;
   initialLines: Line[];
   initialEntries: Entry[];
   hasPillars: boolean;
+  profiles?: Record<string, NetworkStage>;
 }) {
   const supabase = createClient();
   const [lines, setLines] = useState<Line[]>(initialLines);
@@ -214,6 +226,8 @@ export default function EditorialTab({
         </div>
       )}
 
+      {active && profiles[active.channel ?? ""] && <NetworkInfo profile={profiles[active.channel ?? ""]} />}
+
       {adding && (
         <div className="card mt-6 space-y-4">
           <h2 className="text-[20px]">Ajouter un canal</h2>
@@ -275,6 +289,7 @@ export default function EditorialTab({
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="caption whitespace-nowrap font-semibold uppercase tracking-wide">⠿ Semaine {e.week_number}</span>
                     <div className="flex flex-wrap items-center gap-2">
+                      {e.phase && PHASE_UI[e.phase] && <span className={`rounded-pill px-2.5 py-0.5 text-[12px] font-medium ${PHASE_UI[e.phase].cls}`} title={e.campaign ?? undefined}>{PHASE_UI[e.phase].label}{e.campaign ? ` · ${e.campaign}` : ""}</span>}
                       {v === "en_attente" && <span className="rounded-pill bg-accent/10 px-2 py-0.5 text-[12px] text-accent" title={`Demandé par ${e.validation_requested_by ?? ""}`}>En attente de validation · {fmt(e.validation_requested_at)}</span>}
                       {v === "valide" && <span className="rounded-pill bg-success/20 px-2 py-0.5 text-[12px]" title={`Validé le ${fmt(e.validated_at)} par ${e.validated_by ?? ""}`}>Validé</span>}
                       <button type="button" aria-label={`Statut : ${st.label}. Cliquer pour changer`} className={`rounded-pill px-3 py-1 text-[13px] font-medium ${st.cls}`}

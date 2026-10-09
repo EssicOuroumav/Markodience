@@ -68,3 +68,14 @@ describe("cahier des charges", () => {
     expect(completedStages(null)).toEqual([]);
   });
 });
+
+import { briefProblems } from "./brief";
+describe("problèmes de la fiche", () => {
+  const ok = { name: "A", mission: "m", audiences: [{ name: "x" }], networks: [{ name: "Facebook" }], plan_start: "2026-08-03", activities: [{ name: "c", start: "2026-10-01", end: "2026-10-31" }] };
+  it("une fiche complète n'a aucun problème", () => expect(briefProblems(ok)).toEqual([]));
+  it("liste chaque manque en français", () => {
+    const p = briefProblems({ name: " ", mission: "", audiences: [{ name: "" }], networks: [], plan_start: "2026-08-04", activities: [{ name: "Rentrée", start: "", end: "" }, { name: "Bilan", start: "2026-10-10", end: "2026-10-01" }, { name: "", start: "2026-10-01", end: "2026-10-02" }] });
+    expect(p).toEqual(["Le nom de la marque.", "La mission, en une ou deux phrases.", "Au moins un public à toucher.", "Au moins un réseau social.", "Les dates de « Rentrée » (début et fin).", "« Bilan » se termine avant son début.", "Le nom de chaque activité.", "La date de début du plan : un lundi."]);
+  });
+  it("repère un réseau cité deux fois", () => expect(briefProblems({ ...ok, networks: [{ name: "TikTok" }, { name: " tiktok " }] })).toContain("Un réseau est cité deux fois."));
+});

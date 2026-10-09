@@ -11,7 +11,7 @@ import SaveIndicator, { type SaveState } from "./SaveIndicator";
 import PageHeader from "./PageHeader";
 import EmptyState from "./EmptyState";
 
-export type Pillar = { id: string; name: string | null; description: string | null; examples: string[] | null };
+export type Pillar = { id: string; name: string | null; description: string | null; examples: string[] | null; pct?: number | null };
 
 export default function PillarsTab({ brandId, initial, hasIdentity }: { brandId: string; initial: Pillar[]; hasIdentity: boolean }) {
   const supabase = createClient();
@@ -21,7 +21,7 @@ export default function PillarsTab({ brandId, initial, hasIdentity }: { brandId:
   const [save, setSave] = useState<SaveState>("idle");
 
   async function reload() {
-    const { data } = await supabase.from("content_pillars").select("id, name, description, examples").eq("brand_profile_id", brandId);
+    const { data } = await supabase.from("content_pillars").select("id, name, description, examples, pct").eq("brand_profile_id", brandId);
     setPillars((data as Pillar[]) ?? []);
   }
 
@@ -50,7 +50,7 @@ export default function PillarsTab({ brandId, initial, hasIdentity }: { brandId:
     const { data, error: err } = await supabase
       .from("content_pillars")
       .insert({ brand_profile_id: brandId, name: "Nouveau pilier", description: "", examples: [] })
-      .select("id, name, description, examples")
+      .select("id, name, description, examples, pct")
       .single();
     if (err || !data) return setSave("error");
     setPillars((ps) => [...ps, data as Pillar]);
@@ -87,7 +87,10 @@ export default function PillarsTab({ brandId, initial, hasIdentity }: { brandId:
           {pillars.map((p, i) => (
             <article key={p.id} className="card group relative flex flex-col overflow-hidden">
               <span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent to-accent-light opacity-80" />
-              <span aria-hidden className="num mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-accent-soft text-[14px] font-semibold text-accent">{String(i + 1).padStart(2, "0")}</span>
+              <div className="mb-3 flex items-center justify-between">
+                <span aria-hidden className="num inline-flex h-9 w-9 items-center justify-center rounded-xl bg-accent-soft text-[14px] font-semibold text-accent">{String(i + 1).padStart(2, "0")}</span>
+                {p.pct != null && <span className="num rounded-pill bg-accent-soft px-3 py-1 text-[14px] font-semibold text-accent" title="Part des semaines de l'année">{p.pct} %</span>}
+              </div>
               <EditableText label="Nom du pilier" className="text-[20px] font-semibold" value={p.name ?? ""} onSave={(v) => update(p.id, { name: v })} />
               <EditableText multiline label="Description du pilier" className="mt-1 text-[15px]" value={p.description ?? ""} onSave={(v) => update(p.id, { description: v })} />
               <h3 className="mt-5 border-t hairline pt-4 text-[12px] font-semibold uppercase tracking-[0.1em] text-ink-secondary">Exemples de formats</h3>
