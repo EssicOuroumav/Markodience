@@ -6,6 +6,7 @@ import { normalizeObjectives } from "@/lib/objectives";
 import { hasFeature, isPlanId, type Feature } from "@/lib/plans";
 import { consumeQuota, quotaMessage, refundQuota } from "@/lib/quota";
 import { createClient } from "@/lib/supabase/server";
+import { withHeartbeat } from "@/lib/stream";
 import { AiError, AI_MESSAGES, generateJson } from "@/lib/ai/anthropic";
 import { mockAudit, mockLiveScripts, mockLiveStructure, mockEditorial, mockIdentity, mockPillars, mockTone } from "@/lib/ai/mock";
 import { liveScriptsPrompt, liveStepPrompt, liveStructurePrompt, type LiveContext, auditPrompt, editorialLinePrompt, editorialWeekPrompt, identityPrompt, pillarsPrompt, tonePrompt, type BrandContext, type EditorialContext } from "@/lib/ai/prompts";
@@ -48,7 +49,7 @@ export async function POST(request: Request) {
 
   // Quota quotidien : consommé avant l'appel, rendu si la génération échoue.
   // Le propriétaire (rôle admin) n'est soumis à aucun quota.
-  if (owner) return run(supabase, req);
+  if (owner) return withHeartbeat(run(supabase, req));
   let quota;
   try {
     quota = await consumeQuota(user.id, plan);
@@ -57,9 +58,13 @@ export async function POST(request: Request) {
   }
   if (!quota.ok) return fail(429, quotaMessage(plan, quota.limit), "quota");
 
-  const response = await run(supabase, req);
-  if (!response.ok) await refundQuota(user.id).catch(() => undefined);
-  return response;
+  // Le remboursement du quota dépend du résultat du travail, pas de la réponse envoyée au navigateur (qui peut être un flux).
+  const work = run(supabase, req);
+  work.then(
+    async (response) => { if (!response.ok) await refundQuota(user.id).catch(() => undefined); },
+    async () => { await refundQuota(user.id).catch(() => undefined); },
+  );
+  return withHeartbeat(work);
 }
 
 async function run(supabase: Supa, req: GenerateRequest): Promise<NextResponse> {

@@ -1,6 +1,7 @@
 import { notifyProgress } from "./progressEvents";
 
-export type GenerateResult = { ok: true; data: unknown } | { ok: false; error: string };
+/** `network` : la requête n'a reçu aucune réponse (connexion coupée) ; le serveur a pu terminer son travail malgré tout. */
+export type GenerateResult = { ok: true; data: unknown } | { ok: false; error: string; network?: boolean };
 
 /** Appelle /api/generate ; ne lève jamais, renvoie toujours un message affichable. */
 export async function callGenerate(body: unknown): Promise<GenerateResult> {
@@ -17,6 +18,6 @@ export async function callGenerate(body: unknown): Promise<GenerateResult> {
     }
     return { ok: false, error: json?.error ?? "La génération a échoué. Réessayez." };
   } catch {
-    return { ok: false, error: "Connexion impossible. Vérifiez votre réseau et réessayez." };
+    return { ok: false, error: "Connexion impossible. Vérifiez votre réseau et réessayez.", network: true };
   }
 }

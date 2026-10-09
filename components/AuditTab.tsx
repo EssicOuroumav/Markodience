@@ -4,6 +4,7 @@ import { UploadCloud, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { callGenerate } from "@/lib/api";
+import { notifyProgress } from "@/lib/progressEvents";
 import { ACCEPTED, AUDIT_NETWORKS, MAX_FILES, MAX_TOTAL_BYTES, formatMegabytes, storageName, validateFile, validateTotal, type AuditNetwork } from "@/lib/audit";
 import AuditReport from "./AuditReport";
 import GenerateError from "./GenerateError";
@@ -26,6 +27,7 @@ export default function AuditTab({ brandId, initial }: { brandId: string; initia
   const [picked, setPicked] = useState<Picked[]>([]);
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [recovering, setRecovering] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [current, setCurrent] = useState<AuditRow | null>(null);
@@ -63,6 +65,16 @@ export default function AuditTab({ brandId, initial }: { brandId: string; initia
     setPicked((p) => p.filter((_, j) => j !== i));
   }
 
+  /** Interroge la base (toutes les 4 s, jusqu'à 80 s) pour savoir si l'audit a été enregistré malgré la coupure. */
+  async function waitForSavedAudit(id: string): Promise<unknown | null> {
+    for (let attempt = 0; attempt < 20; attempt++) {
+      await new Promise((r) => setTimeout(r, 4000));
+      const { data } = await supabase.from("audits").select("report_data").eq("id", id).maybeSingle();
+      if (data?.report_data) return data.report_data;
+    }
+    return null;
+  }
+
   async function run() {
     setError(null);
     setCurrent(null);
@@ -85,7 +97,17 @@ export default function AuditTab({ brandId, initial }: { brandId: string; initia
       uploaded.current = paths;
     }
 
-    const res = await callGenerate({ type: "audit", brand_profile_id: brandId, audit_id: auditId.current, files: uploaded.current, network });
+    let res = await callGenerate({ type: "audit", brand_profile_id: brandId, audit_id: auditId.current, files: uploaded.current, network });
+    if (!res.ok && res.network) {
+      // La connexion a été coupée pendant l'analyse : le serveur peut l'avoir terminée. On vérifie, sans relancer (pas de double consommation).
+      setRecovering(true);
+      const saved = await waitForSavedAudit(auditId.current);
+      setRecovering(false);
+      if (saved) {
+        res = { ok: true, data: { id: auditId.current, report: saved } };
+        notifyProgress();
+      }
+    }
     setLoading(false);
     if (!res.ok) return setError(res.error);
 
@@ -151,7 +173,7 @@ export default function AuditTab({ brandId, initial }: { brandId: string; initia
       {error && <GenerateError message={error} onRetry={run} />}
 
       <button type="button" className="btn-primary mt-6" disabled={picked.length === 0 || !network || loading} onClick={run}>
-        {loading ? "Analyse en cours…" : network ? `Lancer l'audit ${network}` : "Lancer l'audit"}
+        {recovering ? "Connexion instable : vérification du résultat…" : loading ? "Analyse en cours…" : network ? `Lancer l'audit ${network}` : "Lancer l'audit"}
       </button>
       {picked.length > 0 && !network && <p className="caption mt-2">Choisissez le réseau ci-dessus pour lancer l&apos;audit.</p>}
 
