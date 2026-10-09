@@ -224,20 +224,24 @@ export default function IdentityTab({
     <section className="rise">
       <PageHeader tab="identity"><SaveIndicator state={save} /></PageHeader>
       <p className="caption -mt-4 mb-2">Cliquez sur un texte pour le modifier : les changements sont enregistrés automatiquement.</p>
-      <div className="mt-6 grid gap-6 xl:grid-cols-3">
-        <article className="card-flat">
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-2">
+        <article className="card-flat lg:col-span-2">
           <div className="flex items-center gap-3"><span aria-hidden className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-accent"><Target size={19} strokeWidth={1.8} /></span><h2 className="section-title">Positionnement</h2></div>
-          <div className="mt-3">
-            <EditableText multiline label="Positionnement" value={identity.positioning ?? ""} onSave={(v) => persist({ positioning: v })} />
+          <div className="mt-3 grid gap-x-10 gap-y-6 lg:grid-cols-[1.15fr_1fr]">
+            <div>
+              <EditableText multiline label="Positionnement" className="text-[17px] leading-relaxed" value={identity.positioning ?? ""} onSave={(v) => persist({ positioning: v })} />
+            </div>
+            <div className="border-t hairline pt-5 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
+              <h3 className="text-[13px] font-semibold uppercase tracking-[0.1em] text-ink-secondary">Objectifs marketing</h3>
+              <ul className="mt-2 space-y-1">
+                {objectives.map((o, i) => (
+                  <li key={i}>
+                    <EditableText multiline label={`Objectif ${i + 1}`} value={o} onSave={(v) => persist({ marketing_objectives: objectives.map((x, j) => (j === i ? v : x)).filter((x) => x.trim()) })} />
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
-          <h3 className="mt-7 border-t hairline pt-5 text-[13px] font-semibold uppercase tracking-[0.1em] text-ink-secondary">Objectifs marketing</h3>
-          <ul className="mt-2 space-y-1">
-            {objectives.map((o, i) => (
-              <li key={i}>
-                <EditableText label={`Objectif ${i + 1}`} value={o} onSave={(v) => persist({ marketing_objectives: objectives.map((x, j) => (j === i ? v : x)).filter((x) => x.trim()) })} />
-              </li>
-            ))}
-          </ul>
         </article>
         <article className="card-flat">
           <div className="flex items-center gap-3"><span aria-hidden className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-accent"><Users size={19} strokeWidth={1.8} /></span><h2 className="section-title">Cibles prioritaires</h2></div>

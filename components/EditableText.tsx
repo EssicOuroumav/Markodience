@@ -23,12 +23,24 @@ export default function EditableText({ value, onSave, placeholder = "Cliquez pou
   }
   const ref = useRef<HTMLTextAreaElement | HTMLInputElement>(null);
 
+  /** Le champ prend la hauteur de son texte : tout le contenu reste visible pendant la modification. */
+  const fit = (el: HTMLTextAreaElement | HTMLInputElement | null) => {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight + (el.offsetHeight - el.clientHeight)}px`; // + bordures
+  };
+
   useEffect(() => {
-    if (editing) ref.current?.focus();
+    if (!editing) return;
+    const el = ref.current;
+    el?.focus();
+    fit(el);
   }, [editing]);
 
+  const cancelled = useRef(false);
   function commit() {
     setEditing(false);
+    if (cancelled.current) { cancelled.current = false; return; }
     if (draft !== value) onSave(draft);
   }
 
@@ -44,20 +56,19 @@ export default function EditableText({ value, onSave, placeholder = "Cliquez pou
       </button>
     );
   }
-  const common = {
-    value: draft,
-    onChange: (e: React.ChangeEvent<HTMLTextAreaElement & HTMLInputElement>) => setDraft(e.target.value),
-    onBlur: commit,
-    "aria-label": label,
-    className: `input ${className}`,
-  };
-  return multiline ? (
-    <textarea ref={ref as React.RefObject<HTMLTextAreaElement>} rows={4} {...common} />
-  ) : (
-    <input
-      ref={ref as React.RefObject<HTMLInputElement>}
-      onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
-      {...common}
+  return (
+    <textarea
+      ref={ref as React.RefObject<HTMLTextAreaElement>}
+      rows={1}
+      value={draft}
+      onChange={(e) => { setDraft(e.target.value); fit(e.target); }}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") { cancelled.current = true; setDraft(value); setEditing(false); }
+        else if (!multiline && e.key === "Enter") { e.preventDefault(); (e.target as HTMLTextAreaElement).blur(); }
+      }}
+      aria-label={label}
+      className={`input block resize-none overflow-hidden ${className}`}
     />
   );
 }

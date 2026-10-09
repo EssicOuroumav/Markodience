@@ -21,7 +21,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </Navbar>
       <div className="pt-14">
         <Sidebar plan={plan} owner={owner} email={user.email ?? ""} brand={active} progress={{ percent: progress.percent, done: progress.done }} brandCount={profiles.length} brandMax={owner ? null : PLANS[plan].maxProfiles} />
-        <main className="mx-auto max-w-5xl px-5 pb-20 pt-8 md:ml-[284px] md:px-10 md:pt-10">
+        <main className="mx-auto max-w-[1360px] px-5 pb-20 pt-8 md:ml-[284px] md:px-10 md:pt-10">
           <SubscriptionBanner plan={plan} periodEnd={periodEnd} owner={owner} />
           <UpgradeToast />
           {children}
