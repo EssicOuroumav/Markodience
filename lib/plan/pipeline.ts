@@ -1,14 +1,10 @@
-import type { ZodType } from "zod";
-import { briefContext, type Brief } from "./brief";
-import { applyRewrites, collectOver, condensePrompt, condenseSchema } from "./brevity";
-import { assignPillars } from "./assign";
-import { buildWeeks, groupMonths, type Month, type Phase, type Week } from "./calendar";
-import { weekdaysIn } from "./networks";
-import * as P from "./prompts";
-import { allText, reportDelays, runChecks, type Check, type PlanForChecks } from "./quality";
+import type { Brief } from "./brief";
+import { groupMonths, type Month, type Phase, type Week } from "./calendar";
+import { allText, reportDelays, type Check, type PlanForChecks } from "./quality";
+import { identityRun, kpiRun, networkRun, organicRun, pillarsRun, reviewRun, rulesRun, themesRun, weeksOf, type Draft, type Gen } from "./stages";
 import * as S from "./schemas";
 
-export type Gen = <T>(prompt: string, schema: ZodType<T>, tier?: "light" | "heavy") => Promise<T>;
+export type { Gen } from "./stages";
 
 export type PlanRow = { day: string; pillar: string; format: string; idea: string; hook: string };
 export type WeekPlan = Week & { theme: string; pillar: string; rows: Record<string, PlanRow[]> };
@@ -31,16 +27,7 @@ export type Plan = {
   unresolved: S.CritiqueStage["issues"];
 };
 
-/** Ramène la somme des pourcentages à 100 (le plus gros pilier absorbe l'écart) : le total est une règle, pas une suggestion. */
-export function normalizePillars(p: S.PillarsStage): S.PillarsStage {
-  const total = S.pillarsTotal(p);
-  if (total === 100) return p;
-  const pillars = p.pillars.map((x) => ({ ...x, pct: Math.max(3, Math.round((x.pct / total) * 100)) }));
-  const diff = 100 - pillars.reduce((n, x) => n + x.pct, 0);
-  const biggest = pillars.reduce((bi, x, i) => (x.pct > pillars[bi].pct ? i : bi), 0);
-  pillars[biggest] = { ...pillars[biggest], pct: pillars[biggest].pct + diff };
-  return { pillars };
-}
+export { normalizePillars } from "./stages";
 
 const fill = (text: string, theme: string) => text.replaceAll("{theme}", theme.replace(/[.\s]+$/, "").toLowerCase());
 
@@ -49,38 +36,7 @@ export function rowsFor(week: { phase: Phase; theme: string }, templates: S.Temp
   return templates[week.phase].map((r) => ({ ...r, idea: fill(r.idea, week.theme), hook: fill(r.hook, week.theme).replace(/^./, (c) => c.toUpperCase()) }));
 }
 
-/** Réécrit en une passe, plus courte, les textes qui dépassent leur limite (deux passes au plus). */
-export async function tighten<T>(gen: Gen, stage: string, value: T): Promise<T> {
-  let current = value;
-  for (let pass = 0; pass < 2; pass++) {
-    const over = collectOver(stage, current);
-    if (over.length === 0) break;
-    const out = await gen(condensePrompt(over), condenseSchema, P.condenseModel);
-    current = applyRewrites(current, over, out.texts);
-  }
-  return current;
-}
-
-const PHASES = ["avant", "pendant", "apres", "evergreen"] as const;
-const daysOfTemplates = (t: S.TemplatesStage) => [...new Set(PHASES.flatMap((ph) => t[ph].flatMap((r) => weekdaysIn(r.day))))];
-
-type State = {
-  identity: S.IdentityStage;
-  pillars: S.PillarsStage;
-  themes: { week: number; theme: string; pillar: string }[];
-  networks: { profile: S.NetworkStage; templates: S.TemplatesStage }[];
-  organic: S.OrganicStage;
-  kpi: S.KpiStage;
-  rules: S.RulesStage;
-};
-
-const forChecks = (s: State): PlanForChecks => ({ ...s });
-
-function workload(brief: Brief, s: State): string {
-  const per = s.networks.map((n) => `${n.profile.network} ${n.templates.evergreen.length}`);
-  const total = s.networks.reduce((sum, n) => sum + n.templates.evergreen.length, 0);
-  return `${total} publications par semaine en période calme (${per.join(", ")}), pour : ${brief.resources.team || "équipe non précisée"}.`;
-}
+type State = Draft;
 
 /** Retours à appliquer à chaque étape : échecs des contrôles du code + problèmes relevés par la relecture. */
 export function feedbackByTarget(checks: Check[], critique: S.CritiqueStage, s: State): { feedback: Map<string, string[]>; unresolved: S.CritiqueStage["issues"] } {
@@ -115,54 +71,28 @@ export async function runPlan(brief: Brief, gen: Gen, onStage: (name: string) =>
   const repairEnabled = opts.repair ?? true;
 
   onStage("identité");
-  let identity = await tighten(gen, "identity", await gen(P.identityPrompt(brief), S.identityStage, "heavy"));
-  // Le code a le dernier mot sur ce que la marque impose déjà.
-  identity = { ...identity, commitments: { ...identity.commitments, ...brief.commitments }, ...(brief.tagline ? { tagline: brief.tagline, tagline_status: "fourni" as const } : {}) };
-
+  const identity = await identityRun(brief, gen);
   onStage("piliers");
-  const pillars = normalizePillars(await tighten(gen, "pillars", await gen(P.pillarsPrompt(brief, identity), S.pillarsStage, "heavy")));
-
+  const pillars = await pillarsRun(brief, identity, gen);
   onStage("calendrier");
-  const weeks = buildWeeks(brief.plan_start, brief.weeks, brief.activities, brief.country, briefContext(brief));
-  // Le code attribue le pilier de chaque semaine (pourcentages respectés) ; l'IA n'écrit que le thème.
-  const assigned = assignPillars(weeks.map((w) => w.phase), pillars.pillars);
-  const makeThemes = async (feedback?: string) => {
-    const out = await tighten(gen, "themes", await gen(P.themesPrompt(brief, weeks, pillars, assigned, feedback), S.themesStage, "heavy"));
-    return out.themes.map((t) => ({ ...t, pillar: assigned[t.week - 1] ?? "" }));
-  };
-  let themes = await makeThemes();
+  const weeks = weeksOf(brief);
+  const themes = await themesRun(brief, pillars, gen);
 
-  const state: State = { identity, pillars, themes, networks: [], organic: undefined as never, kpi: undefined as never, rules: undefined as never };
-
-  const makeNetwork = async (name: string, i: number, feedback?: { network?: string; templates?: string }) => {
-    const takenDays = state.networks.filter((_, k) => k !== i).flatMap((n) => daysOfTemplates(n.templates));
-    const others = state.networks.filter((_, k) => k !== i).flatMap((n) => n.templates.pendant.map((r) => `${n.profile.network} : ${r.idea}`)).slice(0, 8);
-    const profile = await tighten(gen, "network", await gen(P.networkPrompt(brief, name, identity, pillars, [...new Set(takenDays)], feedback?.network), S.networkStage, "heavy"));
-    const templates = await tighten(gen, "templates", await gen(P.templatesPrompt(brief, name, { frequency: profile.frequency, method: profile.method }, pillars, identity, others, feedback?.templates), S.templatesStage, "heavy"));
-    return { profile, templates };
-  };
+  const networks: Draft["networks"] = [];
   for (const [i, n] of brief.networks.entries()) {
     onStage(`réseau ${n.name}`);
-    state.networks[i] = await makeNetwork(n.name, i);
+    networks[i] = await networkRun(brief, n.name, { identity, pillars, others: networks.filter((_, k) => k !== i) }, gen);
   }
-
-  const cadences = () => state.networks.map((n) => `${n.profile.network} : ${n.profile.frequency}`);
   onStage("organique");
-  state.organic = await tighten(gen, "organic", await gen(P.organicPrompt(brief, pillars, identity), S.organicStage, "heavy"));
+  const organic = await organicRun(brief, pillars, identity, gen);
   onStage("indicateurs");
-  state.kpi = await tighten(gen, "kpi", await gen(P.kpiPrompt(brief, identity, cadences()), S.kpiStage, "heavy"));
+  const kpi = await kpiRun(brief, identity, networks, gen);
   onStage("règles");
-  state.rules = await tighten(gen, "rules", await gen(P.rulesPrompt(brief, identity), S.rulesStage, "heavy"));
-  state.themes = themes;
+  const rules = await rulesRun(brief, identity, gen);
 
-  const review = async (s: State) => {
-    const checks = runChecks(forChecks(s));
-    const critique = await gen(P.critiquePrompt(brief, { ...forChecks(s), networks: s.networks }, checks, workload(brief, s)), S.critiqueStage, "heavy");
-    return { checks, critique };
-  };
-
+  const state: State = { identity, pillars, themes, networks, organic, kpi, rules };
   onStage("relecture critique");
-  const first = await review(state);
+  const first = await reviewRun(brief, state, gen);
   let { checks, critique } = first;
   const repaired: string[] = [];
   let unresolved: S.CritiqueStage["issues"] = [];
@@ -171,21 +101,20 @@ export async function runPlan(brief: Brief, gen: Gen, onStage: (name: string) =>
     const { feedback, unresolved: un } = feedbackByTarget(checks, critique, state);
     unresolved = un;
     const text = (key: string) => feedback.get(key)?.join("\n");
-    if (text("themes")) { onStage("correction : thèmes"); themes = await makeThemes(text("themes")); state.themes = themes; repaired.push("themes"); }
+    if (text("themes")) { onStage("correction : thèmes"); state.themes = await themesRun(brief, pillars, gen, text("themes")); repaired.push("themes"); }
     for (const [i, n] of brief.networks.entries()) {
       const fb = { network: text(`network:${n.name}`), templates: text(`templates:${n.name}`) };
-      if (fb.network || fb.templates) { onStage(`correction : ${n.name}`); state.networks[i] = await makeNetwork(n.name, i, fb); repaired.push(`network:${n.name}`); }
+      if (fb.network || fb.templates) { onStage(`correction : ${n.name}`); state.networks[i] = await networkRun(brief, n.name, { identity, pillars, others: state.networks.filter((_, k) => k !== i) }, gen, fb); repaired.push(`network:${n.name}`); }
     }
-    if (text("organic")) { onStage("correction : organique"); state.organic = await tighten(gen, "organic", await gen(P.organicPrompt(brief, pillars, identity, text("organic")), S.organicStage, "heavy")); repaired.push("organic"); }
-    if (text("kpi")) { onStage("correction : indicateurs"); state.kpi = await tighten(gen, "kpi", await gen(P.kpiPrompt(brief, identity, cadences(), text("kpi")), S.kpiStage, "heavy")); repaired.push("kpi"); }
-    if (text("rules")) { onStage("correction : règles"); state.rules = await tighten(gen, "rules", await gen(P.rulesPrompt(brief, identity, text("rules")), S.rulesStage, "heavy")); repaired.push("rules"); }
+    if (text("organic")) { onStage("correction : organique"); state.organic = await organicRun(brief, pillars, identity, gen, text("organic")); repaired.push("organic"); }
+    if (text("kpi")) { onStage("correction : indicateurs"); state.kpi = await kpiRun(brief, identity, state.networks, gen, text("kpi")); repaired.push("kpi"); }
+    if (text("rules")) { onStage("correction : règles"); state.rules = await rulesRun(brief, identity, gen, text("rules")); repaired.push("rules"); }
     if (repaired.length) {
       onStage("seconde relecture");
-      ({ checks, critique } = await review(state));
+      ({ checks, critique } = await reviewRun(brief, state, gen));
     }
   }
 
-  // Assemblage final : le code déroule les modèles de chaque réseau sur les semaines.
   const themeOf = new Map(state.themes.map((t) => [t.week, t]));
   const planned: WeekPlan[] = weeks.map((w) => {
     const t = themeOf.get(w.index);
@@ -194,6 +123,7 @@ export async function runPlan(brief: Brief, gen: Gen, onStage: (name: string) =>
     return wp;
   });
   const months = groupMonths(weeks).map((m) => ({ ...m, weeks: planned.filter((w) => w.month === m.month) }));
+  
 
   return { brief, identity, pillars, months, networks: state.networks, organic: state.organic, kpi: state.kpi, rules: state.rules, checks, critique, critiqueBefore: first.critique, repaired, unresolved };
 }

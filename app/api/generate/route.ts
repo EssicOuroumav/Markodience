@@ -6,6 +6,9 @@ import { MAX_FILE_BYTES, MAX_TOTAL_BYTES } from "@/lib/audit";
 import { normalizeObjectives } from "@/lib/objectives";
 import { hasFeature, isPlanId, type Feature } from "@/lib/plans";
 import { consumeQuota, quotaMessage, refundQuota } from "@/lib/quota";
+import { handlePlan, type PlanRequest } from "@/lib/plan/handler";
+import { CREDITS } from "@/lib/plan/store";
+import type { Gen } from "@/lib/plan/stages";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/payments/admin";
 import { createJob, deleteJob, finishJob, getJob, purgeOldJobs } from "@/lib/jobs";
@@ -20,7 +23,7 @@ import { addDays, hashtagsText, postsOutput, postsPerWeek, spreadDays, weekStart
 import { liveScriptsOutput, liveStepOutput, liveStructureOutput, auditOutput, editorialOutput, generateRequest, type GenerateRequest, identityOutput, pillarsOutput, toneOutput } from "@/lib/ai/schemas";
 
 export const runtime = "nodejs";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 function fail(status: number, error: string, code = "error") {
   return NextResponse.json({ ok: false, code, error }, { status });
@@ -74,15 +77,20 @@ export async function POST(request: Request) {
   if (Math.random() < 0.02) void purgeOldJobs(admin).catch(() => undefined);
 
   // Quota quotidien : consommé avant le travail, rendu si la génération échoue. Le propriétaire n'a aucun quota.
-  if (!owner) {
+  // Une construction de plan coûte plusieurs crédits, une seule fois (à la préparation) ; ses étapes suivantes sont gratuites.
+  const credits = owner ? 0 : creditsFor(req);
+  let charged = 0;
+  for (; charged < credits; charged++) {
     let quota;
     try {
       quota = await consumeQuota(user.id, plan);
     } catch {
+      for (let i = 0; i < charged; i++) await refundQuota(user.id).catch(() => undefined);
       await deleteJob(admin, jobId).catch(() => undefined);
       return fail(503, "Le service est momentanément indisponible. Réessayez dans un instant.", "quota_unavailable");
     }
     if (!quota.ok) {
+      for (let i = 0; i < charged; i++) await refundQuota(user.id).catch(() => undefined);
       await deleteJob(admin, jobId).catch(() => undefined);
       return fail(429, quotaMessage(plan, quota.limit), "quota");
     }
@@ -103,7 +111,7 @@ export async function POST(request: Request) {
     } catch {
       outcome = { ok: false, body: { ok: false, code: "unknown", error: AI_MESSAGES.unknown }, status: 500 };
     }
-    if (!outcome.ok && !owner) await refundQuota(user.id).catch(() => undefined);
+    if (!outcome.ok) for (let i = 0; i < charged; i++) await refundQuota(user.id).catch(() => undefined);
     await finishJob(admin, jobId, outcome).catch(() => undefined);
   });
 
@@ -116,6 +124,11 @@ async function run(supabase: Supa, req: GenerateRequest): Promise<NextResponse> 
       return await handleEditorial(supabase, req);
     }
     if (req.type === "posts_week") return await handlePosts(supabase, req);
+    if (req.type === "plan_extract" || req.type === "plan_stage") {
+      const gen: Gen = (prompt, schema, tier = "heavy", mock) => generateJson(prompt, schema, mock ?? (() => { throw new Error("réponse simulée manquante"); }), tier, { thinking: "off", maxTokens: 8192 });
+      const out = await handlePlan(supabase, req as PlanRequest, gen);
+      return NextResponse.json(out.body, { status: out.status });
+    }
     if (req.type === "live_structure" || req.type === "live_step" || req.type === "live_scripts") {
       return await handleLives(supabase, req);
     }
@@ -212,7 +225,14 @@ async function run(supabase: Supa, req: GenerateRequest): Promise<NextResponse> 
 
 type Supa = Awaited<ReturnType<typeof createClient>>;
 
+function creditsFor(req: GenerateRequest): number {
+  if (req.type === "plan_extract") return CREDITS.extract;
+  if (req.type === "plan_stage") return req.stage === "start" ? CREDITS.start : 0;
+  return 1;
+}
+
 function requiredFeature(type: string): Feature | null {
+  if (type.startsWith("plan_")) return "editorial";
   if (type === "audit") return "audit";
   if (type.startsWith("editorial") || type.startsWith("posts")) return "editorial";
   if (type.startsWith("live_")) return "lives";
