@@ -8,6 +8,8 @@ export default async function IdentityPage() {
     .select("positioning, target_segments, visual_palette, marketing_objectives, questionnaire")
     .eq("brand_profile_id", active.id)
     .maybeSingle();
+  // Rapports KPI : avancement des objectifs mesurés (aucun pour un palier sans suivi KPI).
+  const { data: kpi } = await supabase.from("kpi_reports").select("month, data").eq("brand_profile_id", active.id).order("month", { ascending: false }).limit(36);
   return (
     <IdentityTab
       key={active.id}
@@ -15,6 +17,7 @@ export default async function IdentityPage() {
       brandName={active.name}
       sector={active.sector ?? ""}
       initial={(data as Identity | null) ?? null}
+      kpiReports={kpi ?? []}
     />
   );
 }

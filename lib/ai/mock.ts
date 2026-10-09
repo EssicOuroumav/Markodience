@@ -11,7 +11,11 @@ export const mockIdentity = (): IdentityOutput => ({
     { color: "#1D1D1F", usage: "Texte" },
     { color: "#F5F5F7", usage: "Fonds" },
   ],
-  marketing_objectives: ["Gagner 1 000 abonnés qualifiés en 3 mois", "Augmenter l'engagement de 20 %", "Générer 30 demandes par mois"],
+  marketing_objectives: [
+    { text: "Gagner 1 000 abonnés qualifiés en 3 mois", metric: "new_followers", target: 1000 },
+    { text: "Atteindre 20 000 personnes par mois", metric: "reach", target: 20000 },
+    "Générer 30 demandes par mois",
+  ],
 });
 
 export const mockPillars = (): PillarsOutput => ({

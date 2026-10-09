@@ -4,7 +4,7 @@ import { UploadCloud, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { callGenerate } from "@/lib/api";
-import { ACCEPTED, MAX_FILES, storageName, validateFile } from "@/lib/audit";
+import { ACCEPTED, AUDIT_NETWORKS, MAX_FILES, MAX_TOTAL_BYTES, formatMegabytes, storageName, validateFile, validateTotal, type AuditNetwork } from "@/lib/audit";
 import AuditReport from "./AuditReport";
 import GenerateError from "./GenerateError";
 import PageHeader from "./PageHeader";
@@ -14,6 +14,7 @@ export type AuditRow = { id: string; created_at: string; report_data: unknown };
 
 type Picked = { file: File; preview: string | null };
 
+const networkOf = (d: unknown) => (typeof (d as { network?: unknown })?.network === "string" ? (d as { network: string }).network : null);
 const scoreOf = (d: unknown) => (typeof (d as { score?: unknown })?.score === "number" ? Math.round((d as { score: number }).score) : null);
 const summaryOf = (d: unknown) => (typeof (d as { summary?: unknown })?.summary === "string" ? (d as { summary: string }).summary : "");
 const dateFr = (iso: string) => new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
@@ -21,6 +22,7 @@ const dateFr = (iso: string) => new Date(iso).toLocaleDateString("fr-FR", { day:
 export default function AuditTab({ brandId, initial }: { brandId: string; initial: AuditRow[] }) {
   const supabase = createClient();
   const [audits, setAudits] = useState<AuditRow[]>(initial);
+  const [network, setNetwork] = useState<AuditNetwork | null>(null);
   const [picked, setPicked] = useState<Picked[]>([]);
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -41,7 +43,7 @@ export default function AuditTab({ brandId, initial }: { brandId: string; initia
         setFileError(`Maximum ${MAX_FILES} fichiers par audit.`);
         break;
       }
-      const err = validateFile(file);
+      const err = validateFile(file) ?? validateTotal([...next.map((p) => p.file.size), file.size]);
       if (err) {
         setFileError(`${file.name} : ${err}`);
         continue;
@@ -65,6 +67,7 @@ export default function AuditTab({ brandId, initial }: { brandId: string; initia
     setError(null);
     setCurrent(null);
     if (picked.length === 0) return;
+    if (!network) return setError("Choisissez d'abord le réseau à auditer.");
     setLoading(true);
 
     if (!uploaded.current) {
@@ -82,7 +85,7 @@ export default function AuditTab({ brandId, initial }: { brandId: string; initia
       uploaded.current = paths;
     }
 
-    const res = await callGenerate({ type: "audit", brand_profile_id: brandId, audit_id: auditId.current, files: uploaded.current });
+    const res = await callGenerate({ type: "audit", brand_profile_id: brandId, audit_id: auditId.current, files: uploaded.current, network });
     setLoading(false);
     if (!res.ok) return setError(res.error);
 
@@ -91,6 +94,7 @@ export default function AuditTab({ brandId, initial }: { brandId: string; initia
     setAudits((a) => [row, ...a]);
     setCurrent(row);
     setPicked([]);
+    setNetwork(null);
     uploaded.current = null;
     auditId.current = crypto.randomUUID();
   }
@@ -99,22 +103,33 @@ export default function AuditTab({ brandId, initial }: { brandId: string; initia
     <section>
       <PageHeader tab="audit" />
 
+      <fieldset className="mt-2">
+        <legend className="label">Quel réseau voulez-vous auditer ?</legend>
+        <p className="caption mb-3">Un audit analyse un seul réseau : vous obtenez un score et des priorités propres à ce réseau. Lancez un audit par réseau.</p>
+        <div role="radiogroup" aria-label="Réseau à auditer" className="flex flex-wrap gap-2.5">
+          {AUDIT_NETWORKS.map((n) => (
+            <button key={n} type="button" role="radio" aria-checked={network === n} onClick={() => setNetwork(n)} className={`rounded-pill border px-4 py-2 text-[15px] font-medium transition ${network === n ? "border-accent bg-accent text-white shadow-glow" : "border-black/10 bg-white hover:border-accent/50"}`}>{n}</button>
+          ))}
+        </div>
+      </fieldset>
+
       <label
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
-        className={`group mt-2 flex cursor-pointer flex-col items-center justify-center rounded-[28px] border-2 border-dashed bg-white px-6 py-12 text-center shadow-card transition duration-300 ${dragging ? "scale-[1.01] border-accent bg-accent-soft/60" : "border-black/12 hover:border-accent/50 hover:bg-accent-soft/30"}`}
+        className={`group mt-6 flex cursor-pointer flex-col items-center justify-center rounded-[28px] border-2 border-dashed bg-white px-6 py-12 text-center shadow-card transition duration-300 ${dragging ? "scale-[1.01] border-accent bg-accent-soft/60" : "border-black/12 hover:border-accent/50 hover:bg-accent-soft/30"}`}
       >
         <input type="file" multiple accept="image/png,image/jpeg,application/pdf" className="sr-only" onChange={(e) => { if (e.target.files) addFiles(e.target.files); e.target.value = ""; }} />
         <span aria-hidden className="flex h-16 w-16 items-center justify-center rounded-3xl bg-accent-soft text-accent transition duration-300 group-hover:scale-105"><UploadCloud size={30} strokeWidth={1.6} /></span>
-        <span className="mt-5 text-[19px] font-semibold tracking-heading">Déposez vos captures ou PDF ici</span>
+        <span className="mt-5 text-[19px] font-semibold tracking-heading">{network ? `Déposez vos captures ${network} ou PDF ici` : "Déposez vos captures ou PDF ici"}</span>
         <span className="mt-1 text-[15px] text-ink-secondary">ou <span className="font-medium text-accent">parcourez vos fichiers</span></span>
-        <span className="caption mt-3">PNG, JPG ou PDF · 10 Mo max par fichier · {MAX_FILES} fichiers max</span>
+        <span className="caption mt-3">PNG, JPG ou PDF · 10 Mo max par fichier · {MAX_FILES} fichiers et {formatMegabytes(MAX_TOTAL_BYTES)} au total, au maximum</span>
       </label>
       {fileError && <p role="alert" className="mt-3 text-[15px] text-danger">{fileError}</p>}
 
+      {picked.length > 0 && <p className="caption mt-4">{picked.length} fichier{picked.length > 1 ? "s" : ""} · {formatMegabytes(picked.reduce((s, p) => s + p.file.size, 0))} sur {formatMegabytes(MAX_TOTAL_BYTES)}</p>}
       {picked.length > 0 && (
-        <ul className="mt-4 flex flex-wrap gap-3" aria-label="Fichiers à analyser">
+        <ul className="mt-3 flex flex-wrap gap-3" aria-label="Fichiers à analyser">
           {picked.map((p, i) => (
             <li key={i} className="relative w-28">
               <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-btn border border-line bg-bg-secondary">
@@ -135,9 +150,10 @@ export default function AuditTab({ brandId, initial }: { brandId: string; initia
 
       {error && <GenerateError message={error} onRetry={run} />}
 
-      <button type="button" className="btn-primary mt-6" disabled={picked.length === 0 || loading} onClick={run}>
-        {loading ? "Analyse en cours…" : "Lancer l'audit"}
+      <button type="button" className="btn-primary mt-6" disabled={picked.length === 0 || !network || loading} onClick={run}>
+        {loading ? "Analyse en cours…" : network ? `Lancer l'audit ${network}` : "Lancer l'audit"}
       </button>
+      {picked.length > 0 && !network && <p className="caption mt-2">Choisissez le réseau ci-dessus pour lancer l&apos;audit.</p>}
 
       {current && (
         <div className="mt-10">
@@ -158,7 +174,7 @@ export default function AuditTab({ brandId, initial }: { brandId: string; initia
                   className="card flex w-full items-center gap-4 text-left" aria-label={`Voir l'audit du ${dateFr(a.created_at)}`}>
                   <span className="text-[28px] font-semibold tracking-heading">{scoreOf(a.report_data) ?? "–"}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[15px] font-medium">{dateFr(a.created_at)}</span>
+                    <span className="flex flex-wrap items-center gap-2 text-[15px] font-medium">{dateFr(a.created_at)}{networkOf(a.report_data) && <span className="chip">{networkOf(a.report_data)}</span>}</span>
                     <span className="block truncate text-[14px] text-ink-secondary">{summaryOf(a.report_data)}</span>
                   </span>
                 </button>

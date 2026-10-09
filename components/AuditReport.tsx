@@ -22,7 +22,7 @@ export default function AuditReport({ data }: { data: unknown }) {
         <div className="relative flex flex-col items-center gap-7 text-center sm:flex-row sm:text-left">
           <ScoreRing value={r.score} size={140} stroke={13} label={`Score global : ${Math.round(r.score)} sur 100`} />
           <div>
-            <p className="eyebrow">Score global</p>
+            <p className="eyebrow">Score global{r.network ? ` · ${r.network}` : ""}</p>
             <p className="num mt-1 text-[44px] font-semibold leading-none tracking-[-0.03em]">{Math.round(r.score)}<span className="text-[22px] font-medium text-ink-secondary"> / 100</span></p>
             <p className="mt-3 max-w-2xl text-[17px] leading-relaxed text-ink-secondary">{r.summary}</p>
           </div>

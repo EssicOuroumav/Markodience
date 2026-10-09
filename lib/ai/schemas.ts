@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { AUDIT_NETWORKS, MAX_FILES } from "../audit";
+import { objectiveSchema } from "../objectives";
 
 export const identityOutput = z.object({
   positioning: z.string().min(1),
@@ -6,7 +8,8 @@ export const identityOutput = z.object({
     .array(z.object({ name: z.string(), description: z.string(), need: z.string() }))
     .min(1),
   visual_palette: z.array(z.object({ color: z.string(), usage: z.string() })).min(1),
-  marketing_objectives: z.array(z.string()).min(1),
+  // Un objectif est un texte, avec en option un indicateur du suivi mensuel et une cible (voir lib/objectives.ts).
+  marketing_objectives: z.array(z.union([z.string().min(1), objectiveSchema])).min(1),
 });
 
 export const pillarsOutput = z.object({
@@ -41,6 +44,8 @@ export type EditorialEntryOutput = z.infer<typeof editorialEntry>;
 
 export const PRIORITIES = ["faible", "modere", "eleve"] as const;
 export const auditOutput = z.object({
+  /** Réseau analysé, ajouté par le serveur (absent des anciens audits). */
+  network: z.string().max(40).optional(),
   score: z.number().min(0).max(100),
   summary: z.string().min(1),
   strengths: z.array(z.object({ title: z.string(), description: z.string() })),
@@ -92,7 +97,8 @@ export const generateRequest = z.discriminatedUnion("type", [
     type: z.literal("audit"),
     brand_profile_id: z.string().uuid(),
     audit_id: z.string().uuid(),
-    files: z.array(z.string().max(300)).min(1).max(5),
+    files: z.array(z.string().max(300)).min(1).max(MAX_FILES),
+    network: z.enum(AUDIT_NETWORKS).default("Autre"),
   }),
   z.object({ type: z.literal("live_structure"), live_guide_id: z.string().uuid() }),
   z.object({ type: z.literal("live_step"), live_guide_id: z.string().uuid(), step_index: z.number().int().min(0).max(20) }),

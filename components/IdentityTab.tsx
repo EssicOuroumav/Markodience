@@ -7,6 +7,8 @@ import { callGenerate } from "@/lib/api";
 import { CHANNELS, GOALS, type Questionnaire } from "@/lib/ai/schemas";
 import EditableText from "./EditableText";
 import GenerateError from "./GenerateError";
+import ObjectiveMeasure from "./ObjectiveMeasure";
+import { normalizeObjectives, type KpiPoint, type Objective } from "@/lib/objectives";
 import SaveIndicator, { type SaveState } from "./SaveIndicator";
 import PageHeader from "./PageHeader";
 
@@ -16,7 +18,7 @@ export type Identity = {
   positioning: string | null;
   target_segments: Segment[] | null;
   visual_palette: Color[] | null;
-  marketing_objectives: string[] | null;
+  marketing_objectives: (string | Objective)[] | null;
   questionnaire: Questionnaire | null;
 };
 
@@ -46,11 +48,14 @@ export default function IdentityTab({
   brandName,
   sector,
   initial,
+  kpiReports = [],
 }: {
   brandId: string;
   brandName: string;
   sector: string;
   initial: Identity | null;
+  /** Rapports KPI de la marque : servent à calculer l'avancement des objectifs mesurés. */
+  kpiReports?: KpiPoint[];
 }) {
   const supabase = createClient();
   const [identity, setIdentity] = useState<Identity | null>(initial?.positioning ? initial : null);
@@ -218,7 +223,8 @@ export default function IdentityTab({
 
   const segments = identity.target_segments ?? [];
   const palette = identity.visual_palette ?? [];
-  const objectives = identity.marketing_objectives ?? [];
+  const objectives = normalizeObjectives(identity.marketing_objectives);
+  const saveObjectives = (next: Objective[]) => persist({ marketing_objectives: normalizeObjectives(next) });
 
   return (
     <section className="rise">
@@ -236,7 +242,8 @@ export default function IdentityTab({
               <ul className="mt-2 space-y-1">
                 {objectives.map((o, i) => (
                   <li key={i}>
-                    <EditableText multiline label={`Objectif ${i + 1}`} value={o} onSave={(v) => persist({ marketing_objectives: objectives.map((x, j) => (j === i ? v : x)).filter((x) => x.trim()) })} />
+                    <EditableText multiline label={`Objectif ${i + 1}`} value={o.text} onSave={(v) => saveObjectives(objectives.map((x, j) => (j === i ? { ...x, text: v } : x)).filter((x) => x.text.trim()))} />
+                    <ObjectiveMeasure objective={o} reports={kpiReports} onChange={(patch) => saveObjectives(objectives.map((x, j) => (j === i ? { ...x, ...patch } : x)))} />
                   </li>
                 ))}
               </ul>

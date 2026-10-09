@@ -44,3 +44,40 @@ describe.skipIf(process.env.AI_LIVE !== "1")("génération réelle : Haiku et So
     }, 180_000);
   }
 });
+
+/**
+ * Objectifs mesurables et audit par réseau (appels réels, quelques centimes). Ignoré sauf AI_LIVE=1.
+ * Usage : AI_LIVE=1 AI_LIVE_BRIEF=ong AI_LIVE_OUT=/chemin/objectifs.json npx vitest run lib/ai/live.test.ts -t "objectifs"
+ */
+import { readFileSync } from "node:fs";
+import { auditPrompt } from "./prompts";
+import { auditOutput } from "./schemas";
+import { normalizeObjectives } from "../objectives";
+import { mockAudit } from "./mock";
+
+describe.skipIf(process.env.AI_LIVE !== "1")("objectifs mesurables et audit par réseau", () => {
+  it("objectifs : texte + indicateur + cible cohérents", async () => {
+    const q = {
+      brand_name: "Association Espoir Santé", sector: "Associations & ONG", offer: "Dépistage gratuit et accompagnement des personnes touchées par le cancer",
+      segments: ["Femmes et familles vulnérables sans accès aux soins"], problem: "Accès difficile au dépistage précoce", differentiation: "Équipes de terrain et suivi humain",
+      personality: ["Humaine", "Engagée", "Rassurante"], goal: "notoriete" as const, channels: ["Facebook", "WhatsApp", "TikTok"], avoid: "",
+    };
+    const identity = await generateJson(identityPrompt(q), identityOutput, mockIdentity, "heavy");
+    const objectives = normalizeObjectives(identity.marketing_objectives);
+    if (process.env.AI_LIVE_OUT) writeFileSync(process.env.AI_LIVE_OUT, JSON.stringify(objectives, null, 2));
+    expect(objectives.length).toBeGreaterThanOrEqual(3);
+    expect(objectives.every((o) => o.text.length > 10)).toBe(true);
+  }, 180_000);
+
+  it("audit : une image, réseau Facebook", async () => {
+    const data = readFileSync("public/logo-mark.png").toString("base64");
+    const blocks = [
+      { type: "image" as const, source: { type: "base64" as const, media_type: "image/png" as const, data } },
+      { type: "text" as const, text: auditPrompt({ network: "Facebook", name: "Association Espoir Santé", sector: "Associations & ONG", identity: null, pillars: [], tone: null }) },
+    ];
+    const report = await generateJson(blocks, auditOutput, mockAudit, "heavy");
+    if (process.env.AI_LIVE_OUT) writeFileSync(process.env.AI_LIVE_OUT.replace(".json", "-audit.json"), JSON.stringify(report, null, 2));
+    expect(report.score).toBeGreaterThanOrEqual(0);
+    expect(report.summary.length).toBeGreaterThan(10);
+  }, 180_000);
+});

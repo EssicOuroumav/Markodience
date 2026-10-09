@@ -1,6 +1,8 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/admin";
+import { MAX_FILE_BYTES, MAX_TOTAL_BYTES } from "@/lib/audit";
+import { normalizeObjectives } from "@/lib/objectives";
 import { hasFeature, isPlanId, type Feature } from "@/lib/plans";
 import { consumeQuota, quotaMessage, refundQuota } from "@/lib/quota";
 import { createClient } from "@/lib/supabase/server";
@@ -83,14 +85,17 @@ async function run(supabase: Supa, req: GenerateRequest): Promise<NextResponse> 
 
   try {
     if (req.type === "identity") {
-      const result = await generateJson(identityPrompt(req.questionnaire), identityOutput, mockIdentity, "heavy");
+      const generated = await generateJson(identityPrompt(req.questionnaire), identityOutput, mockIdentity, "heavy");
+      // Objectifs normalisés (texte + mesure facultative) : un même format en base quel que soit le modèle.
+      const objectives = normalizeObjectives(generated.marketing_objectives);
+      const result = { ...generated, marketing_objectives: objectives };
       const { error } = await supabase.from("brand_identity").upsert(
         {
           brand_profile_id: brand.id,
           positioning: result.positioning,
           target_segments: result.target_segments,
           visual_palette: result.visual_palette,
-          marketing_objectives: result.marketing_objectives,
+          marketing_objectives: objectives,
           questionnaire: req.questionnaire,
         },
         { onConflict: "brand_profile_id" },
@@ -257,15 +262,15 @@ const MEDIA: Record<string, { kind: "image" | "document"; type: string }> = {
   jpeg: { kind: "image", type: "image/jpeg" },
   pdf: { kind: "document", type: "application/pdf" },
 };
-const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 async function handleAudit(
   supabase: Supa,
   brand: { id: string; name: string; sector: string | null },
-  req: { audit_id: string; files: string[] },
+  req: { audit_id: string; files: string[]; network: string },
 ) {
   const prefix = `${brand.id}/${req.audit_id}/`;
   const blocks: Anthropic.ContentBlockParam[] = [];
+  let totalBytes = 0;
 
   for (const path of req.files) {
     // Les chemins doivent rester dans le dossier de cet audit (pas de ../).
@@ -279,6 +284,8 @@ async function handleAudit(
     const { data: blob, error } = await supabase.storage.from("audits").download(path);
     if (error || !blob) return fail(404, "Un fichier de l'audit est introuvable. Redéposez-le.", "file_missing");
     if (blob.size > MAX_FILE_BYTES) return fail(400, "Un fichier dépasse 10 Mo.", "bad_request");
+    totalBytes += blob.size;
+    if (totalBytes > MAX_TOTAL_BYTES) return fail(400, "Le poids total des fichiers dépasse la limite d'un audit. Retirez un fichier.", "bad_request");
     const data = Buffer.from(await blob.arrayBuffer()).toString("base64");
 
     if (media.kind === "image") {
@@ -293,17 +300,19 @@ async function handleAudit(
     supabase.from("content_pillars").select("name, description").eq("brand_profile_id", brand.id),
     supabase.from("tone_voice").select("do_list, dont_list").eq("brand_profile_id", brand.id).maybeSingle(),
   ]);
-  blocks.push({ type: "text", text: auditPrompt({ name: brand.name, sector: brand.sector, identity, pillars, tone }) });
+  blocks.push({ type: "text", text: auditPrompt({ network: req.network, name: brand.name, sector: brand.sector, identity, pillars, tone }) });
 
   const result = await generateJson(blocks, auditOutput, mockAudit, "heavy");
+  // Le réseau analysé est ajouté par le serveur (jamais lu de la réponse de l'IA).
+  const report = { ...result, network: req.network };
   const { error } = await supabase.from("audits").insert({
     id: req.audit_id,
     brand_profile_id: brand.id,
     source_files: req.files,
-    report_data: result,
+    report_data: report,
   });
   if (error) return fail(500, "Le rapport n'a pas pu être enregistré.", "db");
-  return NextResponse.json({ ok: true, data: { id: req.audit_id, report: result } });
+  return NextResponse.json({ ok: true, data: { id: req.audit_id, report } });
 }
 
 async function loadLiveContext(supabase: Supa, guideId: string) {
