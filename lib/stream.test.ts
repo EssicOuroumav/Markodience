@@ -17,6 +17,15 @@ describe("withHeartbeat", () => {
     expect(text.startsWith(" ")).toBe(true);
     expect(JSON.parse(text)).toEqual({ ok: true, data: { id: "a" } });
   });
+  it("le premier octet part tout de suite après le délai de grâce (les en-têtes ne partent qu'avec lui)", async () => {
+    const res = await withHeartbeat(later(400, json(200, { ok: true })), { graceMs: 20, intervalMs: 300 });
+    const reader = res.body!.getReader();
+    const t0 = Date.now();
+    const first = await reader.read();
+    expect(Date.now() - t0).toBeLessThan(100);
+    expect(new TextDecoder().decode(first.value)).toBe(" ");
+    reader.cancel();
+  });
   it("une erreur lente arrive dans le corps (ok false) et le client peut la lire", async () => {
     const res = await withHeartbeat(later(80, json(502, { ok: false, code: "credits", error: "Crédit épuisé" })), { graceMs: 10, intervalMs: 10 });
     expect(res.status).toBe(200);

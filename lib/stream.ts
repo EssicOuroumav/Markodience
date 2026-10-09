@@ -4,10 +4,11 @@
  * ne reçoive la réponse.
  *
  *  - Réponse rapide (avant `graceMs`) : renvoyée telle quelle, statut compris (404, 403, 409…).
- *  - Sinon : réponse 200 en flux qui envoie un espace toutes les `intervalMs` (ignoré par JSON.parse), puis le corps JSON
+ *  - Sinon : réponse 200 en flux qui envoie un espace IMMÉDIATEMENT (les en-têtes ne partent qu'avec le premier octet : sans cela
+ *    le navigateur reste ~10 s sans rien recevoir), puis un espace toutes les `intervalMs` (ignoré par JSON.parse), puis le corps JSON
  *    de la réponse finale. Le statut d'erreur est alors perdu : les clients lisent `ok` et `error` dans le corps.
  */
-export async function withHeartbeat(work: Promise<Response>, { graceMs = 3000, intervalMs = 5000 }: { graceMs?: number; intervalMs?: number } = {}): Promise<Response> {
+export async function withHeartbeat(work: Promise<Response>, { graceMs = 1500, intervalMs = 3000 }: { graceMs?: number; intervalMs?: number } = {}): Promise<Response> {
   let graceTimer: ReturnType<typeof setTimeout> | undefined;
   const quick = await Promise.race([
     work.then((r) => r, () => null),
@@ -21,6 +22,7 @@ export async function withHeartbeat(work: Promise<Response>, { graceMs = 3000, i
   const failure = JSON.stringify({ ok: false, code: "unknown", error: "La génération a échoué. Réessayez." });
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
+      controller.enqueue(enc.encode(" "));
       beat = setInterval(() => controller.enqueue(enc.encode(" ")), intervalMs);
       work.then(
         async (res) => {
