@@ -55,7 +55,12 @@ export default function ObjectiveMeasure({ objective, reports, onChange }: { obj
               <input className="input !mt-1 !py-2 !text-[14px]" inputMode="numeric" placeholder="Ex. : 5000" value={target} onChange={(e) => setTarget(e.target.value)} onKeyDown={(e) => e.key === "Enter" && save()} />
             </label>
           </div>
-          <p className="caption mt-2">{METRIC_INFO[metric].mode === "cumulative" ? "Les rapports mensuels sont additionnés à partir de ce mois." : "On compare le dernier rapport mensuel à la cible."}</p>
+          <div className="mt-3 rounded-xl bg-white/80 p-3 text-[13px] leading-relaxed text-ink-secondary">
+            <p><span className="font-semibold text-ink">{METRIC_INFO[metric].label} :</span> {METRIC_INFO[metric].help}</p>
+            <p className="mt-1.5"><span className="font-semibold text-ink">Exemple :</span> {METRIC_INFO[metric].example}</p>
+            <p className="mt-1.5">{METRIC_INFO[metric].mode === "cumulative" ? "Les rapports mensuels sont additionnés pour calculer l'avancement." : "L'avancement compare le dernier rapport mensuel à la cible."} Ce chiffre se saisit chaque mois dans <Link href="/dashboard/kpi" className="text-accent underline">KPIs &amp; Reporting</Link>.</p>
+          </div>
+          <p className="caption mt-2">Cet objectif ne se compte pas en chiffres (par exemple « publier un bilan chaque trimestre » ) ? Cliquez sur « Annuler » : la mesure est facultative.</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button type="button" className="btn-primary !px-4 !py-1.5 !text-[14px]" onClick={save}><Check size={15} />Enregistrer</button>
             <button type="button" className="btn-secondary !px-4 !py-1.5 !text-[14px]" onClick={() => setEditing(false)}>Annuler</button>

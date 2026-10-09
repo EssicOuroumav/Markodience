@@ -45,3 +45,12 @@ describe("objectiveProgress", () => {
     expect(objectiveProgress({ text: "x", metric: "reach", target: 10 }, [{ month: "2026-10-01", data: { reach: "beaucoup" } }])).toBeNull();
   });
 });
+
+describe("explications des indicateurs", () => {
+  it("chaque indicateur a une explication et un exemple chiffré", () => {
+    for (const info of Object.values(METRIC_INFO)) {
+      expect(info.help.length).toBeGreaterThan(30);
+      expect(info.example).toMatch(/\d/);
+    }
+  });
+});

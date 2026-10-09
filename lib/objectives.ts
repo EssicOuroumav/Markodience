@@ -6,11 +6,27 @@ export const OBJECTIVE_METRICS = ["reach", "engagement", "new_followers", "posts
 export type ObjectiveMetric = (typeof OBJECTIVE_METRICS)[number];
 
 /** « monthly » : on compare le dernier rapport mensuel à la cible. « cumulative » : on additionne les rapports depuis la date de départ. */
-export const METRIC_INFO: Record<ObjectiveMetric, { label: string; unit: string; mode: "monthly" | "cumulative" }> = {
-  reach: { label: "Portée mensuelle", unit: "personnes", mode: "monthly" },
-  engagement: { label: "Engagement mensuel", unit: "interactions", mode: "monthly" },
-  new_followers: { label: "Nouveaux abonnés (cumul)", unit: "abonnés", mode: "cumulative" },
-  posts_done: { label: "Publications par mois", unit: "publications", mode: "monthly" },
+export const METRIC_INFO: Record<ObjectiveMetric, { label: string; unit: string; mode: "monthly" | "cumulative"; help: string; example: string }> = {
+  reach: {
+    label: "Portée mensuelle", unit: "personnes", mode: "monthly",
+    help: "Le nombre de personnes différentes qui ont vu vos publications dans le mois (« Portée » dans les statistiques Facebook ou Instagram).",
+    example: "« Atteindre 100 000 personnes touchées par mois » : cible 100 000.",
+  },
+  engagement: {
+    label: "Engagement mensuel", unit: "interactions", mode: "monthly",
+    help: "Le total des interactions du mois : j'aime, commentaires, partages et messages reçus.",
+    example: "« Générer 1 200 interactions par mois » : cible 1 200.",
+  },
+  new_followers: {
+    label: "Nouveaux abonnés (cumul)", unit: "abonnés", mode: "cumulative",
+    help: "Le nombre d'abonnés gagnés dans le mois. Les mois s'additionnent à partir du moment où vous créez la mesure.",
+    example: "« Gagner 5 000 abonnés en 6 mois » : cible 5 000.",
+  },
+  posts_done: {
+    label: "Publications par mois", unit: "publications", mode: "monthly",
+    help: "Le nombre de publications faites dans le mois.",
+    example: "« Publier 3 fois par semaine » : cible 12 (3 × 4 semaines).",
+  },
 };
 
 export const objectiveSchema = z.object({
