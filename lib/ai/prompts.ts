@@ -19,7 +19,23 @@ export type BrandContext = {
   } | null;
 };
 
-export function identityPrompt(q: Questionnaire): string {
+const FOUNDATIONS_SPEC = `"foundations": {
+    "mission": string (1-2 phrases : pourquoi la marque existe et ce qu'elle fait pour son public),
+    "vision": string (1-2 phrases : ce que la marque veut voir changer ou devenir à long terme),
+    "values": [{ "name": string (un mot ou deux), "description": string (une phrase) }] (3 à 5),
+    "promise": string (ce que le public peut compter recevoir, à chaque fois),
+    "slogan": string (une phrase courte, mémorisable, sans cliché),
+    "key_message": string (l'idée à retrouver dans chaque publication)
+  }`;
+const VISUAL_GUIDE_SPEC = `"visual_guide": {
+    "typography": { "heading": { "font": string, "usage": string }, "body": { "font": string, "usage": string } },
+    "logo_rules": string[] (4 à 6 règles concrètes : zone de protection, version sur fond foncé, taille minimale, usages interdits…),
+    "imagery_style": string (3-4 phrases : type de photos ou d'illustrations, cadrage, lumière, sujets à privilégier et à éviter)
+  }`;
+const VISUAL_RULES = `Pour la typographie, choisis des polices gratuites et lisibles sur mobile (Google Fonts : Poppins, Montserrat, Inter, Lora, Nunito, Playfair Display…), en accord avec la personnalité de la marque.
+Les fondations et la charte doivent rester cohérentes avec le positionnement, le public et les sujets à éviter ; reste concret, sans formules creuses.`;
+
+export function identityPrompt(q: Questionnaire, primaryColor?: string | null): string {
   return `Génère l'identité de marque à partir de ce questionnaire (données utilisateur) :
 <questionnaire>
 ${JSON.stringify(q, null, 2)}
@@ -28,10 +44,13 @@ ${JSON.stringify(q, null, 2)}
 Structure JSON exacte :
 {
   "positioning": string (2-3 phrases),
-  "target_segments": [{ "name": string, "description": string, "need": string }] (1 à 3),
+  "target_segments": [{ "name": string, "description": string, "need": string, "barriers": string (ce qui l'empêche d'agir ou de s'engager), "channels": string (où il suit la marque), "language": string (langue ou registre qui lui parle), "best_time": string (moment où il est le plus joignable) }] (1 à 3),
   "visual_palette": [{ "color": string (code hexadécimal #RRGGBB), "usage": string }] (3 à 5),
+  ${FOUNDATIONS_SPEC},
+  ${VISUAL_GUIDE_SPEC},
   "marketing_objectives": [{ "text": string, "indicator": { "label": string, "unit": string, "mode": "monthly" | "cumulative", "builtin": "reach" | "engagement" | "new_followers" | "posts_done" | null } | null, "target": number | null, "check": { "frequency": "monthly" | "quarterly" } | null }] (3 à 5)
 }
+${primaryColor ? `La marque a déjà une couleur principale, ${primaryColor} : c'est la première couleur de la palette (elle ne se remplace pas), les autres s'accordent avec elle.\n` : ""}${VISUAL_RULES}
 Pour chaque objectif : "text" est une phrase claire et réaliste.
 Si l'objectif se compte en chiffres, renseigne "indicator" et "target" :
 - "label" : le nom court de ce qu'on compte, fidèle au texte de l'objectif (ex. « Contacts WhatsApp », « Dons reçus », « Inscriptions », « Personnes dépistées »). N'invente pas un indicateur différent de ce que dit le texte.
@@ -42,6 +61,21 @@ Si l'objectif se compte en chiffres, renseigne "indicator" et "target" :
 Si l'objectif est un engagement de régularité qui ne se compte pas en chiffres (ex. « publier un bilan visuel chaque trimestre », « répondre à chaque message dans la journée »), mets null à "indicator" et "target" et renseigne "check" avec la fréquence ("monthly" ou "quarterly").
 Si l'objectif ne se compte pas et n'est pas un engagement régulier (image, notoriété…), mets null à "indicator", "target" et "check".
 Respecte les sujets à éviter indiqués. Réponds uniquement par le JSON.`;
+}
+
+export function identityExtendPrompt(ctx: BrandContext & { questionnaire?: unknown }): string {
+  return `Complète l'identité de cette marque avec ses fondations et sa charte graphique, sans contredire l'existant :
+<marque>
+${JSON.stringify(ctx, null, 2)}
+</marque>
+
+Structure JSON exacte :
+{
+  ${FOUNDATIONS_SPEC},
+  ${VISUAL_GUIDE_SPEC}
+}
+${VISUAL_RULES}
+La charte tient compte de la palette déjà définie. Réponds uniquement par le JSON.`;
 }
 
 export function pillarsPrompt(ctx: BrandContext): string {

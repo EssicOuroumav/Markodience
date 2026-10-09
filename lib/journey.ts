@@ -5,7 +5,7 @@ import { TABS, type TabSlug } from "./tabs";
  * Parcours guidé d'une nouvelle marque. L'ordre suit les dépendances : l'audit juge les visuels à la lumière de
  * l'identité, des piliers et de la tonalité ; la ligne éditoriale exige les piliers ; les KPI sont un suivi mensuel, donc en dernier.
  */
-export const JOURNEY_ORDER: readonly TabSlug[] = ["identity", "pillars", "tone", "audit", "editorial", "rules", "lives", "kpi"];
+export const JOURNEY_ORDER: readonly TabSlug[] = ["identity", "charter", "pillars", "tone", "audit", "editorial", "rules", "lives", "kpi"];
 
 export type JourneyStep = { slug: TabSlug; label: string; done: boolean };
 

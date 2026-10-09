@@ -1,15 +1,29 @@
 import { z } from "zod";
 import { AUDIT_NETWORKS, MAX_FILES } from "../audit";
 import { objectiveInputSchema } from "../objectives";
+import { foundationsSchema, visualGuideSchema } from "../identity";
 
 export const identityOutput = z.object({
   positioning: z.string().min(1),
   target_segments: z
-    .array(z.object({ name: z.string(), description: z.string(), need: z.string() }))
+    .array(
+      z.object({
+        name: z.string(),
+        description: z.string(),
+        need: z.string(),
+        // Portrait détaillé (facultatif : absent des identités plus anciennes).
+        barriers: z.string().optional(),
+        channels: z.string().optional(),
+        language: z.string().optional(),
+        best_time: z.string().optional(),
+      }),
+    )
     .min(1),
   visual_palette: z.array(z.object({ color: z.string(), usage: z.string() })).min(1),
   // Un objectif est un texte, avec en option un indicateur du suivi mensuel et une cible (voir lib/objectives.ts).
   marketing_objectives: z.array(objectiveInputSchema).min(1),
+  foundations: foundationsSchema.optional(),
+  visual_guide: visualGuideSchema.optional(),
 });
 
 export const pillarsOutput = z.object({
@@ -91,6 +105,7 @@ export type Questionnaire = z.infer<typeof questionnaireSchema>;
 
 export const generateRequest = z.discriminatedUnion("type", [
   z.object({ type: z.literal("identity"), brand_profile_id: z.string().uuid(), questionnaire: questionnaireSchema }),
+  z.object({ type: z.literal("identity_extend"), brand_profile_id: z.string().uuid() }),
   z.object({ type: z.literal("pillars"), brand_profile_id: z.string().uuid() }),
   z.object({ type: z.literal("tone"), brand_profile_id: z.string().uuid() }),
   z.object({

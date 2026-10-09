@@ -1,7 +1,8 @@
 import type { Feature } from "./plans";
 
 export const TABS = [
-  { slug: "identity", description: "Positionnement, cibles prioritaires et palette : les fondations de la marque.", label: "Identité de marque", ready: true, feature: "identity" as Feature, pitch: "" },
+  { slug: "identity", description: "Mission, valeurs, positionnement, cibles et objectifs : les fondations de la marque.", label: "Identité de marque", ready: true, feature: "identity" as Feature, pitch: "" },
+  { slug: "charter", description: "Couleurs, typographie, règles du logo et style de visuels : le cadre à remettre à un graphiste ou à un partenaire.", label: "Charte graphique", ready: true, feature: "identity" as Feature, pitch: "" },
   { slug: "audit", description: "Analysez vos captures et PDF pour obtenir un score et des priorités d’amélioration.", label: "Audit", ready: true, feature: "audit" as Feature, pitch: "Analysez vos captures et PDF : score, points forts et priorités d'amélioration, en cohérence avec votre positionnement." },
   { slug: "pillars", description: "Les grands thèmes de contenu qui structurent toutes vos publications.", label: "Piliers de contenu", ready: true, feature: "pillars" as Feature, pitch: "" },
   { slug: "tone", description: "La voix de la marque : ce qu’on dit, et ce qu’on évite.", label: "Tonalité & voix", ready: true, feature: "tone" as Feature, pitch: "" },

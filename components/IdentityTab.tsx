@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Check, Heart, Megaphone, Palette, Plus, ShieldCheck, Sparkles, Target, Users, X } from "lucide-react";
+import { Building2, Check, Compass, Heart, Megaphone, Plus, ShieldCheck, Sparkles, Target, Users, X } from "lucide-react";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { callGenerate } from "@/lib/api";
@@ -11,13 +11,18 @@ import ObjectiveMeasure from "./ObjectiveMeasure";
 import { normalizeObjectives, type KpiPoint, type Objective } from "@/lib/objectives";
 import SaveIndicator, { type SaveState } from "./SaveIndicator";
 import PageHeader from "./PageHeader";
+import ExtendIdentity from "./ExtendIdentity";
+import { FOUNDATION_FIELDS, parseFoundations, type Foundations, type IdentityExtendOutput } from "@/lib/identity";
+import { notifyProgress } from "@/lib/progressEvents";
 
-type Segment = { name: string; description: string; need: string };
+type Segment = { name: string; description: string; need: string; barriers?: string; channels?: string; language?: string; best_time?: string };
 type Color = { color: string; usage: string };
 export type Identity = {
   positioning: string | null;
   target_segments: Segment[] | null;
   visual_palette: Color[] | null;
+  foundations?: unknown;
+  visual_guide?: unknown;
   marketing_objectives: (string | Objective)[] | null;
   questionnaire: Questionnaire | null;
 };
@@ -222,7 +227,8 @@ export default function IdentityTab({
   }
 
   const segments = identity.target_segments ?? [];
-  const palette = identity.visual_palette ?? [];
+  const foundations = parseFoundations(identity.foundations);
+  const saveFoundations = (patch: Partial<Foundations>) => persist({ foundations: { ...(foundations as Foundations), ...patch } });
   const objectives = normalizeObjectives(identity.marketing_objectives);
   const saveObjectives = (next: Objective[]) => persist({ marketing_objectives: normalizeObjectives(next) });
 
@@ -250,6 +256,32 @@ export default function IdentityTab({
             </div>
           </div>
         </article>
+        {foundations ? (
+          <article className="card-flat lg:col-span-2">
+            <div className="flex items-center gap-3"><span aria-hidden className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-accent"><Compass size={19} strokeWidth={1.8} /></span><h2 className="section-title">Mission, vision et valeurs</h2></div>
+            <div className="mt-3 grid gap-x-10 gap-y-5 lg:grid-cols-2">
+              {FOUNDATION_FIELDS.map((f) => (
+                <div key={f.key}>
+                  <h3 className="text-[13px] font-semibold uppercase tracking-[0.1em] text-ink-secondary">{f.label}</h3>
+                  <EditableText multiline label={f.label} className="text-[16px] leading-relaxed" placeholder={f.hint} value={foundations[f.key]} onSave={(v) => saveFoundations({ [f.key]: v })} />
+                </div>
+              ))}
+              <div>
+                <h3 className="text-[13px] font-semibold uppercase tracking-[0.1em] text-ink-secondary">Valeurs</h3>
+                <ul className="mt-1 space-y-2">
+                  {foundations.values.map((v, i) => (
+                    <li key={i} className="rounded-xl bg-canvas p-3">
+                      <EditableText label={`Valeur ${i + 1}`} className="font-semibold" value={v.name} onSave={(t) => saveFoundations({ values: foundations.values.map((x, j) => (j === i ? { ...x, name: t } : x)).filter((x) => x.name.trim()) })} />
+                      <EditableText multiline label={`Description de la valeur ${i + 1}`} className="text-[15px] text-ink-secondary" value={v.description} onSave={(t) => saveFoundations({ values: foundations.values.map((x, j) => (j === i ? { ...x, description: t } : x)) })} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </article>
+        ) : (
+          <div className="lg:col-span-2"><ExtendIdentity brandId={brandId} what="Mission, vision, valeurs, promesse, slogan, message clé, et la charte graphique (typographie, logo, visuels) sont ajoutés." onDone={(d: IdentityExtendOutput) => { setIdentity({ ...identity, foundations: d.foundations, visual_guide: d.visual_guide }); notifyProgress(); }} /></div>
+        )}
         <article className="card-flat">
           <div className="flex items-center gap-3"><span aria-hidden className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-accent"><Users size={19} strokeWidth={1.8} /></span><h2 className="section-title">Cibles prioritaires</h2></div>
           <div className="mt-3 space-y-4">
@@ -260,26 +292,16 @@ export default function IdentityTab({
                   <EditableText label={`Nom du segment ${i + 1}`} className="font-semibold" value={s.name} onSave={upd("name")} />
                   <EditableText multiline label={`Description du segment ${i + 1}`} className="text-[15px]" value={s.description} onSave={upd("description")} />
                   <EditableText multiline label={`Besoin du segment ${i + 1}`} className="text-[15px] text-ink-secondary" value={s.need} onSave={upd("need")} />
+                  {(["barriers", "channels", "language", "best_time"] as const).some((k) => s[k]) && (
+                    <dl className="mt-1 grid gap-x-4 gap-y-1 border-t hairline pt-2 text-[14px] sm:grid-cols-2">
+                      {([["barriers", "Freins"], ["channels", "Où le toucher"], ["language", "Langue et registre"], ["best_time", "Meilleur moment"]] as const).map(([k, label]) => (
+                        <div key={k}><dt className="caption font-semibold uppercase tracking-[0.08em]">{label}</dt><dd><EditableText multiline label={`${label} du segment ${i + 1}`} className="text-[14px]" value={s[k] ?? ""} onSave={upd(k)} /></dd></div>
+                      ))}
+                    </dl>
+                  )}
                 </div>
               );
             })}
-          </div>
-        </article>
-        <article className="card-flat">
-          <div className="flex items-center gap-3"><span aria-hidden className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-accent"><Palette size={19} strokeWidth={1.8} /></span><h2 className="section-title">Palette visuelle obligatoire</h2></div>
-          <div className="mt-3 space-y-3">
-            {palette.map((c, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <input type="color" aria-label={`Couleur ${i + 1}`} value={/^#[0-9a-fA-F]{6}$/.test(c.color) ? c.color : "#000000"}
-                  onChange={(e) => setIdentity({ ...identity, visual_palette: palette.map((x, j) => (j === i ? { ...x, color: e.target.value } : x)) })}
-                  onBlur={() => persist({ visual_palette: palette })}
-                  className="mt-1 h-11 w-11 shrink-0 cursor-pointer rounded-xl border border-black/10 bg-white p-1 shadow-card" />
-                <div className="min-w-0 flex-1">
-                  <p className="caption px-2">{c.color.toUpperCase()}</p>
-                  <EditableText multiline label={`Usage de la couleur ${i + 1}`} className="text-[15px]" value={c.usage} onSave={(v) => persist({ visual_palette: palette.map((x, j) => (j === i ? { ...x, usage: v } : x)) })} />
-                </div>
-              </div>
-            ))}
           </div>
         </article>
       </div>

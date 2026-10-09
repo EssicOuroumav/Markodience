@@ -87,3 +87,8 @@ renouvellement anticipé qui faisait perdre les jours restants, et double clic c
 en une seule transaction SQL (`activate_payment`, migration 20261001000700), index unique « une facture en attente par utilisateur »,
 webhook qui répond `ROK` (exigé par PayDunya), incidents de paiement envoyés à Sentry, scripts `rls-smoke.mjs` (contrôles SQL) et
 `payments-race.mjs` (bout en bout). **Ordre de mise en ligne : appliquer la migration dans Supabase AVANT de pousser le code.**
+
+## Lot « valeur » (2026-10-09 →)
+Décidé avec le propriétaire (analyse identité + site) : fondations et charte, guide de marque PDF, génération des publications, calendrier visuel, rappels e-mail/WhatsApp, bibliothèque de contenus, fonctions Agence. Pas de langues locales pour l'instant (français seul).
+- [x] Lot 1 — Identité enrichie : mission, vision, valeurs, promesse, slogan, message clé ; portraits de cibles détaillés (freins, canaux, langue, moment) ; nouvel onglet **Charte graphique** (couleurs reprenant celle de la marque, typographie, règles du logo, style de visuels) ; génération complémentaire `identity_extend` pour les marques existantes (identité inchangée) ; export **Guide de marque (PDF)** (identité, cibles, objectifs, charte, piliers, tonalité ; filigrane en Gratuit). Migration `20261009000100_identity_foundations.sql` (2 colonnes jsonb). Tests : 150.
+

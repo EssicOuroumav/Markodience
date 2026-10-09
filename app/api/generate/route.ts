@@ -10,11 +10,12 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/payments/admin";
 import { createJob, deleteJob, finishJob, getJob, purgeOldJobs } from "@/lib/jobs";
 import { AiError, AI_MESSAGES, generateJson } from "@/lib/ai/anthropic";
-import { mockAudit, mockLiveScripts, mockLiveStructure, mockEditorial, mockIdentity, mockPillars, mockTone } from "@/lib/ai/mock";
-import { liveScriptsPrompt, liveStepPrompt, liveStructurePrompt, type LiveContext, auditPrompt, editorialLinePrompt, editorialWeekPrompt, identityPrompt, pillarsPrompt, tonePrompt, type BrandContext, type EditorialContext } from "@/lib/ai/prompts";
+import { mockAudit, mockLiveScripts, mockLiveStructure, mockEditorial, mockIdentity, mockExtend, mockPillars, mockTone } from "@/lib/ai/mock";
+import { liveScriptsPrompt, liveStepPrompt, liveStructurePrompt, type LiveContext, auditPrompt, editorialLinePrompt, editorialWeekPrompt, identityPrompt, identityExtendPrompt, pillarsPrompt, tonePrompt, type BrandContext, type EditorialContext } from "@/lib/ai/prompts";
 import type { LiveStep } from "@/lib/lives";
 import { OBJECTIVES, type Objective } from "@/lib/lives";
 import { pillarRotation, weeksForPeriod, type PeriodMonths } from "@/lib/editorial";
+import { identityExtendOutput } from "@/lib/identity";
 import { liveScriptsOutput, liveStepOutput, liveStructureOutput, auditOutput, editorialOutput, generateRequest, type GenerateRequest, identityOutput, pillarsOutput, toneOutput } from "@/lib/ai/schemas";
 
 export const runtime = "nodejs";
@@ -124,14 +125,14 @@ async function run(supabase: Supa, req: GenerateRequest): Promise<NextResponse> 
   // RLS : ne renvoie le profil que s'il appartient à l'utilisateur connecté.
   const { data: brand } = await supabase
     .from("brand_profiles")
-    .select("id, name, sector")
+    .select("id, name, sector, primary_color")
     .eq("id", req.brand_profile_id)
     .maybeSingle();
   if (!brand) return fail(404, "Profil de marque introuvable.", "not_found");
 
   try {
     if (req.type === "identity") {
-      const generated = await generateJson(identityPrompt(req.questionnaire), identityOutput, mockIdentity, "heavy");
+      const generated = await generateJson(identityPrompt(req.questionnaire, brand.primary_color), identityOutput, mockIdentity, "heavy");
       // Objectifs normalisés (texte + mesure facultative) : un même format en base quel que soit le modèle.
       const objectives = normalizeObjectives(generated.marketing_objectives);
       const result = { ...generated, marketing_objectives: objectives };
@@ -142,11 +143,31 @@ async function run(supabase: Supa, req: GenerateRequest): Promise<NextResponse> 
           target_segments: result.target_segments,
           visual_palette: result.visual_palette,
           marketing_objectives: objectives,
+          foundations: result.foundations ?? null,
+          visual_guide: result.visual_guide ?? null,
           questionnaire: req.questionnaire,
         },
         { onConflict: "brand_profile_id" },
       );
       if (error) return fail(500, "L'identité n'a pas pu être enregistrée.", "db");
+      return NextResponse.json({ ok: true, data: result });
+    }
+
+    if (req.type === "identity_extend") {
+      const { data: existing } = await supabase
+        .from("brand_identity")
+        .select("positioning, target_segments, visual_palette, marketing_objectives, questionnaire")
+        .eq("brand_profile_id", brand.id)
+        .maybeSingle();
+      if (!existing?.positioning) return fail(409, "Générez d'abord l'identité de marque.", "identity_missing");
+      const result = await generateJson(
+        identityExtendPrompt({ name: brand.name, sector: brand.sector, identity: existing, questionnaire: existing.questionnaire }),
+        identityExtendOutput,
+        mockExtend,
+        "heavy",
+      );
+      const { error } = await supabase.from("brand_identity").update({ foundations: result.foundations, visual_guide: result.visual_guide }).eq("brand_profile_id", brand.id);
+      if (error) return fail(500, "Les fondations n'ont pas pu être enregistrées.", "db");
       return NextResponse.json({ ok: true, data: result });
     }
 

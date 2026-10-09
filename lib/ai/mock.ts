@@ -1,6 +1,32 @@
+import type { IdentityExtendOutput } from "../identity";
 import type { LiveScriptsOutput, LiveStructureOutput, AuditOutput, EditorialOutput, IdentityOutput, PillarsOutput, ToneOutput } from "./schemas";
 
 // Réponses de développement (AI_MOCK=1) : permettent de tester sans crédit API.
+export function mockExtend(): IdentityExtendOutput {
+  return {
+    foundations: {
+      mission: "Rendre notre offre simple et accessible à tout notre public, avec des actions concrètes.",
+      vision: "Une communauté qui nous fait confiance et qui s'engage durablement.",
+      values: [
+        { name: "Proximité", description: "Nous parlons comme notre public, dans son quotidien." },
+        { name: "Transparence", description: "Nous montrons ce que nous faisons, avec des preuves." },
+        { name: "Respect", description: "Nous traitons chaque personne avec dignité." },
+      ],
+      promise: "Des informations claires, vérifiables et utiles, à chaque publication.",
+      slogan: "Simple, concret, ensemble.",
+      key_message: "Ce que nous faisons est utile et visible.",
+    },
+    visual_guide: {
+      typography: {
+        heading: { font: "Poppins", usage: "Titres et visuels, en gras" },
+        body: { font: "Inter", usage: "Textes courts et légendes" },
+      },
+      logo_rules: ["Laisser un espace libre autour du logo", "Version claire sur fond foncé", "Largeur minimale 80 px", "Ne jamais déformer ni recolorer le logo"],
+      imagery_style: "Photos réelles du terrain, lumière naturelle, visages et gestes concrets. Éviter les banques d'images génériques.",
+    },
+  };
+}
+
 export const mockIdentity = (): IdentityOutput => ({
   positioning: "Une marque de proximité qui rend son offre simple, fiable et accessible à tout son public.",
   target_segments: [
@@ -11,6 +37,8 @@ export const mockIdentity = (): IdentityOutput => ({
     { color: "#1D1D1F", usage: "Texte" },
     { color: "#F5F5F7", usage: "Fonds" },
   ],
+  foundations: mockExtend().foundations,
+  visual_guide: mockExtend().visual_guide,
   marketing_objectives: [
     { text: "Gagner 1 000 abonnés qualifiés en 3 mois", indicator: { label: "Nouveaux abonnés", unit: "abonnés", mode: "cumulative", builtin: "new_followers" }, target: 1000 },
     { text: "Collecter 100 contacts WhatsApp par mois", indicator: { label: "Contacts WhatsApp", unit: "contacts", mode: "monthly", builtin: null }, target: 100 },

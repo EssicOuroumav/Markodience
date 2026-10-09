@@ -11,7 +11,7 @@ export const getBrandProgress = cache(async () => {
   const { supabase, active, plan } = await getDashboardContext();
   const month = monthStart(new Date());
   const [identity, pillars, tone, lines, audit, kpi, brand, guides, rules, kpiEver] = await Promise.all([
-    supabase.from("brand_identity").select("positioning").eq("brand_profile_id", active.id).maybeSingle(),
+    supabase.from("brand_identity").select("positioning, visual_guide").eq("brand_profile_id", active.id).maybeSingle(),
     supabase.from("content_pillars").select("id", { count: "exact", head: true }).eq("brand_profile_id", active.id),
     supabase.from("tone_voice").select("do_list").eq("brand_profile_id", active.id).maybeSingle(),
     supabase.from("editorial_lines").select("id, channel").eq("brand_profile_id", active.id),
@@ -28,6 +28,7 @@ export const getBrandProgress = cache(async () => {
 
   const steps: ProgressStep[] = [
     { slug: "identity", label: "Identité de marque", done: !!identity.data?.positioning, feature: "identity" },
+    { slug: "charter", label: "Charte graphique", done: !!identity.data?.visual_guide, feature: "identity" },
     { slug: "pillars", label: "Piliers de contenu", done: (pillars.count ?? 0) > 0, feature: "pillars" },
     { slug: "tone", label: "Tonalité & voix", done: !!tone.data?.do_list, feature: "tone" },
     { slug: "audit", label: "Premier audit", done: !!audit.data, feature: "audit" },
