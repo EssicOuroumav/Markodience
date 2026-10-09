@@ -56,6 +56,12 @@ try {
   check("publications : A (gratuit) les lit", (await rest(a, `posts?brand_profile_id=eq.${aProfile}`)).json?.length === 1);
   check("gratuit : écriture posts refusée", (await rest(a, "posts", { method: "POST", body: { brand_profile_id: aProfile, caption: "x" } })).status === 403);
   check("publications : B ne peut pas écrire chez A", (await rest(b, "posts", { method: "POST", body: { brand_profile_id: aProfile, caption: "x" } })).status === 403);
+  // Plan stratégique : réservé aux paliers payants, isolé par marque
+  check("gratuit : écriture brand_strategy refusée", (await rest(a, "brand_strategy", { method: "POST", body: { brand_profile_id: aProfile, brief: {} } })).status === 403);
+  const stratRow = await admin("/rest/v1/brand_strategy", { method: "POST", body: { brand_profile_id: aProfile, brief: { x: 1 } } });
+  check("brand_strategy : création par le service", stratRow.status === 201, stratRow.status);
+  check("brand_strategy : B ne la voit pas", (await rest(b, `brand_strategy?brand_profile_id=eq.${aProfile}`)).json?.length === 0);
+  check("brand_strategy : B ne peut pas écrire chez A", (await rest(b, "brand_strategy", { method: "POST", body: { brand_profile_id: aProfile, brief: {} } })).status === 403);
   check("gratuit : piliers autorisés", (await rest(a, "content_pillars", { method: "POST", body: { brand_profile_id: aProfile, name: "p" } })).status === 201);
   const up = await call(`/storage/v1/object/audits/${aProfile}/x/1.png`, { method: "POST", token: a.token, raw: { type: "image/png", data: Buffer.from("x") } });
   check("gratuit : dépôt dans le bucket audits refusé", up.status >= 400);
