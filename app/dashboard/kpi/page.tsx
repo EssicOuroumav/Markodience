@@ -2,14 +2,16 @@ import KpiTab, { type KpiReport } from "@/components/KpiTab";
 import { getDashboardContext } from "@/lib/brand";
 import { lockedView } from "@/lib/gate";
 import { PLANS } from "@/lib/plans";
+import { customIndicators, normalizeObjectives } from "@/lib/objectives";
 
 export default async function KpiPage() {
   const { supabase, active, plan } = await getDashboardContext();
   const locked = lockedView(plan, "kpi");
   if (locked) return locked;
-  const [{ data: reports }, { data: brand }] = await Promise.all([
+  const [{ data: reports }, { data: brand }, { data: identity }] = await Promise.all([
     supabase.from("kpi_reports").select("id, month, data, submitted_at, deadline").eq("brand_profile_id", active.id).order("month", { ascending: false }),
     supabase.from("brand_profiles").select("kpi_deadline_day").eq("id", active.id).single(),
+    supabase.from("brand_identity").select("marketing_objectives").eq("brand_profile_id", active.id).maybeSingle(),
   ]);
   return (
     <KpiTab
@@ -20,6 +22,7 @@ export default async function KpiPage() {
       deadlineDay={brand?.kpi_deadline_day ?? 5}
       initial={(reports as KpiReport[]) ?? []}
       watermark={PLANS[plan].exportWatermark}
+      customIndicators={customIndicators(normalizeObjectives(identity?.marketing_objectives))}
     />
   );
 }

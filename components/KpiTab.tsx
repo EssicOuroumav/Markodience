@@ -6,10 +6,11 @@ import { notifyProgress } from "@/lib/progressEvents";
 import { EMPTY_KPI, dateLabel, deadlineFor, deadlineState, kpiData, monthLabel, recentMonths, wasOnTime, type KpiData } from "@/lib/kpi";
 import SaveIndicator, { type SaveState } from "./SaveIndicator";
 import PageHeader from "./PageHeader";
+import type { Indicator } from "@/lib/objectives";
 
 export type KpiReport = { id: string; month: string; data: unknown; submitted_at: string | null; deadline: string | null };
 
-type Props = { brandId: string; brandName: string; brandColor?: string | null; deadlineDay: number; initial: KpiReport[]; watermark: boolean };
+type Props = { brandId: string; brandName: string; brandColor?: string | null; deadlineDay: number; initial: KpiReport[]; watermark: boolean; customIndicators?: Indicator[] };
 
 const todayIso = () => {
   const d = new Date();
@@ -21,7 +22,7 @@ const toForm = (raw: unknown): KpiData => {
 };
 const num = (v: string) => (v === "" ? 0 : Math.max(0, Math.floor(Number(v)) || 0));
 
-export default function KpiTab({ brandId, brandName, brandColor, deadlineDay: initialDay, initial, watermark }: Props) {
+export default function KpiTab({ brandId, brandName, brandColor, deadlineDay: initialDay, initial, watermark, customIndicators = [] }: Props) {
   const supabase = createClient();
   const months = recentMonths(new Date());
   const [reports, setReports] = useState<KpiReport[]>(initial);
@@ -95,7 +96,7 @@ export default function KpiTab({ brandId, brandName, brandColor, deadlineDay: in
 
   async function exportPdf(m: string, raw: unknown) {
     const { buildKpiPdf, kpiFileName } = await import("@/lib/kpiPdf");
-    buildKpiPdf({ brandName, month: m, data: toForm(raw), watermark, color: brandColor }).save(kpiFileName(brandName, m));
+    buildKpiPdf({ brandName, month: m, data: toForm(raw), watermark, color: brandColor, customIndicators }).save(kpiFileName(brandName, m));
   }
 
   const field = (id: string, label: string, value: number, onChange: (n: number) => void) => (
@@ -160,6 +161,15 @@ export default function KpiTab({ brandId, brandName, brandColor, deadlineDay: in
           <p className="caption mt-1">Ratio : {shown.posts_done} / {shown.posts_planned}</p>
         </div>
       </div>
+      {customIndicators.length > 0 && (
+        <div className="mt-6 border-t hairline pt-5">
+          <h3 className="text-[15px] font-semibold">Vos indicateurs personnalisés</h3>
+          <p className="caption mb-4 mt-1">Ils viennent des objectifs que vous avez définis dans l&apos;identité de marque.</p>
+          <div className="grid gap-5 sm:grid-cols-2">
+            {customIndicators.map((c) => field(`custom-${c.key}`, c.unit ? `${c.label} (${c.unit})` : c.label, shown.custom?.[c.key] ?? 0, (n) => set("custom", { ...(form.custom ?? {}), [c.key]: n })))}
+          </div>
+        </div>
+      )}
       <div className="mt-5">
         <label className="label" htmlFor="best">Meilleur contenu du mois</label>
         <input id="best" className="input" disabled={readOnly} value={shown.best_content} maxLength={1000} onChange={(e) => set("best_content", e.target.value)} placeholder="Courte description" />

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { AUDIT_NETWORKS, MAX_FILES } from "../audit";
-import { objectiveSchema } from "../objectives";
+import { objectiveInputSchema } from "../objectives";
 
 export const identityOutput = z.object({
   positioning: z.string().min(1),
@@ -9,7 +9,7 @@ export const identityOutput = z.object({
     .min(1),
   visual_palette: z.array(z.object({ color: z.string(), usage: z.string() })).min(1),
   // Un objectif est un texte, avec en option un indicateur du suivi mensuel et une cible (voir lib/objectives.ts).
-  marketing_objectives: z.array(z.union([z.string().min(1), objectiveSchema])).min(1),
+  marketing_objectives: z.array(objectiveInputSchema).min(1),
 });
 
 export const pillarsOutput = z.object({

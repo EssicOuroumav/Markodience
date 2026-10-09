@@ -12,9 +12,9 @@ export const mockIdentity = (): IdentityOutput => ({
     { color: "#F5F5F7", usage: "Fonds" },
   ],
   marketing_objectives: [
-    { text: "Gagner 1 000 abonnés qualifiés en 3 mois", metric: "new_followers", target: 1000 },
-    { text: "Atteindre 20 000 personnes par mois", metric: "reach", target: 20000 },
-    "Générer 30 demandes par mois",
+    { text: "Gagner 1 000 abonnés qualifiés en 3 mois", indicator: { label: "Nouveaux abonnés", unit: "abonnés", mode: "cumulative", builtin: "new_followers" }, target: 1000 },
+    { text: "Collecter 100 contacts WhatsApp par mois", indicator: { label: "Contacts WhatsApp", unit: "contacts", mode: "monthly", builtin: null }, target: 100 },
+    "Publier un bilan visuel chaque trimestre",
   ],
 });
 

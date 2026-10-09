@@ -10,6 +10,7 @@ export type KpiPdfInput = {
   exportDate?: string; // YYYY-MM-DD
   watermark?: boolean; // palier Gratuit
   color?: string | null; // couleur principale de la marque (en-tête et tableau)
+  customIndicators?: { key: string; label: string; unit: string }[]; // indicateurs personnalisés des objectifs
 };
 
 const INK: [number, number, number] = [29, 29, 31];
@@ -24,7 +25,7 @@ export function kpiFileName(brandName: string, month: string): string {
   return `KPI_${clean(brandName) || "Marque"}_${clean(mois)}${annee}.pdf`;
 }
 
-export function buildKpiPdf({ brandName, month, data, exportDate, watermark = false, color }: KpiPdfInput): jsPDF {
+export function buildKpiPdf({ brandName, month, data, exportDate, watermark = false, color, customIndicators = [] }: KpiPdfInput): jsPDF {
   const ACCENT = accentFrom(color).map(Math.round) as [number, number, number];
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const pageW = doc.internal.pageSize.getWidth();
@@ -50,6 +51,7 @@ export function buildKpiPdf({ brandName, month, data, exportDate, watermark = fa
       ["Engagement total (likes + commentaires + partages)", formatNumber(data.engagement)],
       ["Nouveaux abonnés", formatNumber(data.new_followers)],
       ["Publications réalisées / planifiées", `${formatNumber(data.posts_done)} / ${formatNumber(data.posts_planned)}`],
+      ...customIndicators.map((c): [string, string] => [c.unit ? `${c.label} (${c.unit})` : c.label, formatNumber(data.custom?.[c.key] ?? 0)]),
     ],
     styles: { font: "helvetica", fontSize: 10, textColor: INK, cellPadding: 3 },
     headStyles: { fillColor: ACCENT, textColor: 255, fontStyle: "bold" },

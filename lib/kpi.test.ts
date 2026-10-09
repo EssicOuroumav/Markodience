@@ -75,3 +75,18 @@ describe("PDF aux couleurs de la marque", () => {
     expect(doc.getNumberOfPages()).toBe(1);
   });
 });
+
+describe("PDF avec indicateurs personnalisés", () => {
+  it("ajoute une ligne par indicateur personnalisé avec sa valeur", () => {
+    const data = { ...EMPTY_KPI, reach: 1234, custom: { c_contacts_whatsapp: 80 } };
+    const doc = buildKpiPdf({ brandName: "Ma Marque", month: "2026-10-01", data, exportDate: "2026-11-02", customIndicators: [{ key: "c_contacts_whatsapp", label: "Contacts WhatsApp", unit: "contacts" }, { key: "c_dons", label: "Dons reçus", unit: "FCFA" }] });
+    const text = doc.output().replace(/\\([()])/g, "$1"); // les parenthèses sont échappées dans le flux PDF
+    expect(text).toContain("Contacts WhatsApp (contacts)");
+    expect(text).toContain("Dons reçus (FCFA)");
+    expect(text).toContain("80");
+  });
+  it("sans indicateur personnalisé, le PDF reste identique à l'ancien format", () => {
+    const doc = buildKpiPdf({ brandName: "Ma Marque", month: "2026-10-01", data: EMPTY_KPI, exportDate: "2026-11-02" });
+    expect(doc.output()).not.toContain("Contacts WhatsApp");
+  });
+});

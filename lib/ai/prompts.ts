@@ -30,9 +30,16 @@ Structure JSON exacte :
   "positioning": string (2-3 phrases),
   "target_segments": [{ "name": string, "description": string, "need": string }] (1 à 3),
   "visual_palette": [{ "color": string (code hexadécimal #RRGGBB), "usage": string }] (3 à 5),
-  "marketing_objectives": [{ "text": string, "metric": "reach" | "engagement" | "new_followers" | "posts_done" | null, "target": number | null }] (3 à 5)
+  "marketing_objectives": [{ "text": string, "indicator": { "label": string, "unit": string, "mode": "monthly" | "cumulative", "builtin": "reach" | "engagement" | "new_followers" | "posts_done" | null } | null, "target": number | null }] (3 à 5)
 }
-Pour chaque objectif : "text" est une phrase claire et réaliste. Renseigne "metric" et "target" UNIQUEMENT si l'objectif se mesure avec l'un de ces indicateurs du suivi mensuel (reach = personnes touchées par mois, engagement = interactions par mois, new_followers = nouveaux abonnés cumulés, posts_done = publications par mois) ; "target" est alors un nombre cohérent avec le texte, jamais inventé au-delà de ce qui est réaliste pour cette marque. Sinon, mets null aux deux.
+Pour chaque objectif : "text" est une phrase claire et réaliste.
+Si l'objectif se compte en chiffres, renseigne "indicator" et "target" :
+- "label" : le nom court de ce qu'on compte, fidèle au texte de l'objectif (ex. « Contacts WhatsApp », « Dons reçus », « Inscriptions », « Personnes dépistées »). N'invente pas un indicateur différent de ce que dit le texte.
+- "unit" : l'unité (contacts, FCFA, personnes…).
+- "mode" : "monthly" si le texte vise un chiffre CHAQUE mois (« 100 contacts par mois »), "cumulative" si les mois s'additionnent jusqu'à un total (« 5 000 abonnés en 6 mois »).
+- "builtin" : seulement si l'indicateur est exactement l'un de ces chiffres du rapport mensuel (reach = personnes touchées dans le mois, engagement = interactions du mois, new_followers = nouveaux abonnés, posts_done = publications du mois), sinon null.
+- "target" : un nombre cohérent avec le texte (celui du texte quand il en donne un), jamais gonflé au-delà de ce qui est réaliste pour cette marque.
+Si l'objectif ne se compte pas (régularité, image, partenariat…), mets null à "indicator" et à "target".
 Respecte les sujets à éviter indiqués. Réponds uniquement par le JSON.`;
 }
 

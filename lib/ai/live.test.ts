@@ -56,18 +56,23 @@ import { normalizeObjectives } from "../objectives";
 import { mockAudit } from "./mock";
 
 describe.skipIf(process.env.AI_LIVE !== "1")("objectifs mesurables et audit par réseau", () => {
-  it("objectifs : texte + indicateur + cible cohérents", async () => {
-    const q = {
-      brand_name: "Association Espoir Santé", sector: "Associations & ONG", offer: "Dépistage gratuit et accompagnement des personnes touchées par le cancer",
-      segments: ["Femmes et familles vulnérables sans accès aux soins"], problem: "Accès difficile au dépistage précoce", differentiation: "Équipes de terrain et suivi humain",
-      personality: ["Humaine", "Engagée", "Rassurante"], goal: "notoriete" as const, channels: ["Facebook", "WhatsApp", "TikTok"], avoid: "",
-    };
-    const identity = await generateJson(identityPrompt(q), identityOutput, mockIdentity, "heavy");
-    const objectives = normalizeObjectives(identity.marketing_objectives);
-    if (process.env.AI_LIVE_OUT) writeFileSync(process.env.AI_LIVE_OUT, JSON.stringify(objectives, null, 2));
-    expect(objectives.length).toBeGreaterThanOrEqual(3);
-    expect(objectives.every((o) => o.text.length > 10)).toBe(true);
-  }, 180_000);
+  it("objectifs : texte + indicateur + cible cohérents, pour trois types de marques", async () => {
+    const base = { segments: ["x"], personality: ["a", "b", "c"], goal: "notoriete" as const, channels: ["Facebook", "WhatsApp"], avoid: "" };
+    const brands = [
+      { ...base, brand_name: "Association Espoir Santé", sector: "Associations & ONG", offer: "Dépistage gratuit du cancer et accompagnement", segments: ["Femmes vulnérables"], problem: "Accès aux soins", differentiation: "Équipes de terrain" },
+      { ...base, brand_name: "Boutique Awa", sector: "Commerce et boutique", offer: "Vente de pagnes et tenues sur mesure", segments: ["Femmes actives d'Abidjan"], problem: "Trouver des tenues élégantes livrées vite", differentiation: "Livraison en 7 jours" },
+      { ...base, brand_name: "Chez Mariam", sector: "Restauration", offer: "Cuisine ivoirienne, plats du jour et livraison", segments: ["Employés et familles de Cocody"], problem: "Manger local, rapide et de qualité", differentiation: "Plats faits maison, livraison en 30 minutes" },
+    ];
+    const out: Record<string, unknown> = {};
+    for (const q of brands) {
+      const identity = await generateJson(identityPrompt(q), identityOutput, mockIdentity, "heavy");
+      const objectives = normalizeObjectives(identity.marketing_objectives);
+      out[q.brand_name] = objectives;
+      expect(objectives.length).toBeGreaterThanOrEqual(3);
+      expect(objectives.every((o) => o.text.length > 10)).toBe(true);
+    }
+    if (process.env.AI_LIVE_OUT) writeFileSync(process.env.AI_LIVE_OUT, JSON.stringify(out, null, 2));
+  }, 300_000);
 
   it("audit : une image, réseau Facebook", async () => {
     const data = readFileSync("public/logo-mark.png").toString("base64");

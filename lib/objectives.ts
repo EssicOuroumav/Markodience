@@ -1,12 +1,24 @@
 import { z } from "zod";
 import { monthLabel, monthStart } from "./kpi";
 
-/** Indicateurs du suivi mensuel (onglet KPIs) auxquels un objectif peut être relié. */
+/**
+ * Objectifs marketing mesurés. Un objectif peut être relié à un indicateur :
+ *  - un indicateur prédéfini (les 4 chiffres historiques du rapport mensuel), ou
+ *  - un indicateur personnalisé (« Contacts WhatsApp », « Dons reçus »…) défini par l'utilisateur ou proposé par l'IA.
+ * Les valeurs se saisissent dans le rapport mensuel (onglet KPIs) : champs prédéfinis, ou `data.custom[clé]` pour les personnalisés.
+ */
 export const OBJECTIVE_METRICS = ["reach", "engagement", "new_followers", "posts_done"] as const;
 export type ObjectiveMetric = (typeof OBJECTIVE_METRICS)[number];
 
-/** « monthly » : on compare le dernier rapport mensuel à la cible. « cumulative » : on additionne les rapports depuis la date de départ. */
-export const METRIC_INFO: Record<ObjectiveMetric, { label: string; unit: string; mode: "monthly" | "cumulative"; help: string; example: string }> = {
+export type IndicatorMode = "monthly" | "cumulative";
+export const INDICATOR_MODES: readonly IndicatorMode[] = ["monthly", "cumulative"];
+export const MODE_LABELS: Record<IndicatorMode, string> = {
+  monthly: "Par mois : on compare chaque mois à la cible",
+  cumulative: "Cumul : les mois s'additionnent jusqu'à la cible",
+};
+
+/** Indicateurs prédéfinis : `mode` est leur période par défaut (modifiable pour chaque objectif). */
+export const METRIC_INFO: Record<ObjectiveMetric, { label: string; unit: string; mode: IndicatorMode; help: string; example: string }> = {
   reach: {
     label: "Portée mensuelle", unit: "personnes", mode: "monthly",
     help: "Le nombre de personnes différentes qui ont vu vos publications dans le mois (« Portée » dans les statistiques Facebook ou Instagram).",
@@ -18,9 +30,9 @@ export const METRIC_INFO: Record<ObjectiveMetric, { label: string; unit: string;
     example: "« Générer 1 200 interactions par mois » : cible 1 200.",
   },
   new_followers: {
-    label: "Nouveaux abonnés (cumul)", unit: "abonnés", mode: "cumulative",
-    help: "Le nombre d'abonnés gagnés dans le mois. Les mois s'additionnent à partir du moment où vous créez la mesure.",
-    example: "« Gagner 5 000 abonnés en 6 mois » : cible 5 000.",
+    label: "Nouveaux abonnés", unit: "abonnés", mode: "cumulative",
+    help: "Le nombre d'abonnés gagnés dans le mois, tous réseaux confondus.",
+    example: "« Gagner 5 000 abonnés en 6 mois » : cible 5 000, en cumul.",
   },
   posts_done: {
     label: "Publications par mois", unit: "publications", mode: "monthly",
@@ -29,62 +41,98 @@ export const METRIC_INFO: Record<ObjectiveMetric, { label: string; unit: string;
   },
 };
 
-export const objectiveSchema = z.object({
-  text: z.string().min(1).max(600),
-  metric: z.enum(OBJECTIVE_METRICS).nullish(),
-  target: z.number().positive().max(1_000_000_000).nullish(),
-  since: z.string().regex(/^\d{4}-\d{2}-01$/).nullish(),
-});
-export type Objective = z.infer<typeof objectiveSchema>;
+export type Indicator = { key: string; label: string; unit: string; mode: IndicatorMode; builtin?: ObjectiveMetric };
+export type Objective = { text: string; indicator?: Indicator; target?: number; since?: string };
+
+const isMetric = (v: unknown): v is ObjectiveMetric => typeof v === "string" && (OBJECTIVE_METRICS as readonly string[]).includes(v);
+const isMode = (v: unknown): v is IndicatorMode => v === "monthly" || v === "cumulative";
+const str = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+
+/** Clé stable d'un indicateur personnalisé, dérivée de son nom : deux objectifs au même nom partagent le même champ du rapport. */
+export function customKey(label: string): string {
+  const slug = label.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 28);
+  return `c_${slug || "indicateur"}`;
+}
+export const CUSTOM_KEY = /^c_[a-z0-9_]{1,30}$/;
+
+/** Construit un indicateur à partir d'une saisie (utilisateur ou IA) ; null si inexploitable. */
+export function buildIndicator(src: { builtin?: unknown; metric?: unknown; label?: unknown; unit?: unknown; mode?: unknown }): Indicator | null {
+  const builtin = isMetric(src.builtin) ? src.builtin : isMetric(src.metric) ? src.metric : undefined;
+  const mode = isMode(src.mode) ? src.mode : builtin ? METRIC_INFO[builtin].mode : "monthly";
+  if (builtin) {
+    return { key: builtin, label: str(src.label, 40) || METRIC_INFO[builtin].label, unit: str(src.unit, 24) || METRIC_INFO[builtin].unit, mode, builtin };
+  }
+  const label = str(src.label, 40);
+  if (label.length < 2) return null;
+  return { key: customKey(label), label, unit: str(src.unit, 24), mode };
+}
 
 /**
- * Les anciens objectifs étaient de simples textes : ils restent valides (sans mesure). Une mesure incomplète
- * (indicateur sans cible, ou cible sans indicateur) est retirée. Pour un indicateur cumulatif, la date de départ est
- * fixée au mois courant si elle manque.
+ * Tolérant : les anciens objectifs (texte simple, ou « metric » + « target ») restent valides, l'IA peut envoyer des
+ * objets plus ou moins complets. Une mesure incomplète (indicateur sans cible, ou l'inverse) est retirée. Un cumul reçoit
+ * pour date de départ le mois courant s'il n'en a pas.
  */
 export function normalizeObjectives(raw: unknown, now: Date = new Date()): Objective[] {
   if (!Array.isArray(raw)) return [];
   const out: Objective[] = [];
   for (const item of raw) {
-    const parsed = objectiveSchema.safeParse(typeof item === "string" ? { text: item } : item);
-    if (!parsed.success) continue;
-    const text = parsed.data.text.trim();
+    const o = (typeof item === "string" ? { text: item } : item) as Record<string, unknown> | null;
+    if (!o || typeof o !== "object") continue;
+    const text = str(o.text, 600);
     if (!text) continue;
-    const { metric, target, since } = parsed.data;
-    if (!metric || !target) {
+    const ind = o.indicator && typeof o.indicator === "object" ? (o.indicator as Record<string, unknown>) : { metric: o.metric };
+    const indicator = buildIndicator(ind);
+    const target = typeof o.target === "number" && Number.isFinite(o.target) && o.target > 0 && o.target <= 1_000_000_000 ? o.target : undefined;
+    if (!indicator || !target) {
       out.push({ text });
       continue;
     }
-    out.push({ text, metric, target, ...(METRIC_INFO[metric].mode === "cumulative" ? { since: since ?? monthStart(now) } : {}) });
+    const since = typeof o.since === "string" && /^\d{4}-\d{2}-01$/.test(o.since) ? o.since : monthStart(now);
+    out.push({ text, indicator, target, ...(indicator.mode === "cumulative" ? { since } : {}) });
   }
   return out;
 }
 
+/** Indicateurs distincts utilisés par les objectifs (le premier nom rencontré fait foi). */
+export function uniqueIndicators(objectives: Objective[]): Indicator[] {
+  const seen = new Map<string, Indicator>();
+  for (const o of objectives) if (o.indicator && !seen.has(o.indicator.key)) seen.set(o.indicator.key, o.indicator);
+  return [...seen.values()];
+}
+/** Indicateurs personnalisés : ce sont eux qui ajoutent des champs au rapport mensuel. */
+export const customIndicators = (objectives: Objective[]) => uniqueIndicators(objectives).filter((i) => !i.builtin);
+
 export type KpiPoint = { month: string; data: unknown };
 export type ObjectiveProgress = { current: number; target: number; percent: number; reached: boolean; basis: string };
 
-const valueOf = (data: unknown, metric: ObjectiveMetric): number | null => {
-  const v = (data as Record<string, unknown> | null | undefined)?.[metric];
+/** Valeur d'un indicateur dans un rapport mensuel ; null si absente. */
+export function indicatorValue(data: unknown, ind: Indicator): number | null {
+  const rec = data as Record<string, unknown> | null | undefined;
+  const v = ind.builtin ? rec?.[ind.builtin] : (rec?.custom as Record<string, unknown> | undefined)?.[ind.key];
   return typeof v === "number" && Number.isFinite(v) ? v : null;
-};
+}
 
-/** Avancement d'un objectif d'après les rapports KPI ; null si l'objectif n'est pas mesuré ou s'il n'y a encore aucun rapport utile. */
+/** Avancement d'un objectif d'après les rapports KPI ; null si l'objectif n'est pas mesuré ou s'il n'y a encore aucune donnée. */
 export function objectiveProgress(o: Objective, reports: KpiPoint[]): ObjectiveProgress | null {
-  if (!o.metric || !o.target) return null;
-  const usable = reports.filter((r) => valueOf(r.data, o.metric!) !== null).sort((a, b) => (a.month < b.month ? 1 : -1));
+  const ind = o.indicator;
+  if (!ind || !o.target) return null;
+  const usable = reports.filter((r) => indicatorValue(r.data, ind) !== null).sort((a, b) => (a.month < b.month ? 1 : -1));
   let current: number;
   let basis: string;
-  if (METRIC_INFO[o.metric].mode === "cumulative") {
+  if (ind.mode === "cumulative") {
     const since = o.since ?? "0000-00-00";
     const counted = usable.filter((r) => r.month >= since);
     if (counted.length === 0) return null;
-    current = counted.reduce((sum, r) => sum + (valueOf(r.data, o.metric!) ?? 0), 0);
+    current = counted.reduce((sum, r) => sum + (indicatorValue(r.data, ind) ?? 0), 0);
     basis = `Cumul depuis ${monthLabel(since === "0000-00-00" ? counted[counted.length - 1].month : since)}`;
   } else {
     if (usable.length === 0) return null;
-    current = valueOf(usable[0].data, o.metric)!;
+    current = indicatorValue(usable[0].data, ind)!;
     basis = `Dernier rapport : ${monthLabel(usable[0].month)}`;
   }
   const percent = Math.min(100, Math.round((current / o.target) * 100));
   return { current, target: o.target, percent, reached: current >= o.target, basis };
 }
+
+// Validation d'une saisie venant de l'IA (champs facultatifs, tolérance gérée par normalizeObjectives).
+export const objectiveInputSchema = z.union([z.string().min(1), z.record(z.string(), z.unknown())]);

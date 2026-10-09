@@ -8,12 +8,14 @@ export const kpiData = z.object({
   new_followers: count,
   posts_done: count,
   posts_planned: count,
+  /** Indicateurs personnalisés définis par les objectifs de la marque, par clé (voir lib/objectives.ts). */
+  custom: z.record(z.string().regex(/^c_[a-z0-9_]{1,30}$/), count).default({}),
   best_content: z.string().max(1000).default(""),
   notes: z.string().max(2000).default(""),
 });
 export type KpiData = z.infer<typeof kpiData>;
 
-export const EMPTY_KPI: KpiData = { reach: 0, engagement: 0, new_followers: 0, posts_done: 0, posts_planned: 0, best_content: "", notes: "" };
+export const EMPTY_KPI: KpiData = { reach: 0, engagement: 0, new_followers: 0, posts_done: 0, posts_planned: 0, custom: {}, best_content: "", notes: "" };
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
