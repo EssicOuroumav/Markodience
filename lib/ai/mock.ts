@@ -1,3 +1,4 @@
+import type { PostsOutput } from "../posts";
 import type { IdentityExtendOutput } from "../identity";
 import type { LiveScriptsOutput, LiveStructureOutput, AuditOutput, EditorialOutput, IdentityOutput, PillarsOutput, ToneOutput } from "./schemas";
 
@@ -103,4 +104,14 @@ export const mockLiveScripts = (): LiveScriptsOutput => ({
     { situation: "Prix", content: "Le prix est de [prix] FCFA, livraison incluse." },
     { situation: "Disponibilité", content: "Oui, disponible ! Dites-moi votre ville pour la livraison." },
   ],
+});
+
+export const mockPosts = (days: number[]): PostsOutput => ({
+  posts: days.map((d, i) => ({
+    day_offset: d,
+    caption: `Publication ${i + 1} de la semaine : un message clair, concret et chaleureux pour notre public. Partagez-le autour de vous !`,
+    visual_idea: "Photo prise sur le terrain, lumière naturelle, visages et gestes concrets.",
+    hashtags: ["solidarite", "communaute", "ensemble"],
+    call_to_action: "Écrivez-nous en message privé pour en savoir plus.",
+  })),
 });

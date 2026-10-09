@@ -10,7 +10,7 @@ export type ProgressStep = { slug: TabSlug; label: string; done: boolean; featur
 export const getBrandProgress = cache(async () => {
   const { supabase, active, plan } = await getDashboardContext();
   const month = monthStart(new Date());
-  const [identity, pillars, tone, lines, audit, kpi, brand, guides, rules, kpiEver] = await Promise.all([
+  const [identity, pillars, tone, lines, audit, kpi, brand, guides, rules, kpiEver, posts] = await Promise.all([
     supabase.from("brand_identity").select("positioning, visual_guide").eq("brand_profile_id", active.id).maybeSingle(),
     supabase.from("content_pillars").select("id", { count: "exact", head: true }).eq("brand_profile_id", active.id),
     supabase.from("tone_voice").select("do_list").eq("brand_profile_id", active.id).maybeSingle(),
@@ -21,6 +21,7 @@ export const getBrandProgress = cache(async () => {
     supabase.from("live_guides").select("id", { count: "exact", head: true }).eq("brand_profile_id", active.id),
     supabase.from("operational_rules").select("id", { count: "exact", head: true }).eq("brand_profile_id", active.id).neq("content", ""),
     supabase.from("kpi_reports").select("id", { count: "exact", head: true }).eq("brand_profile_id", active.id).not("submitted_at", "is", null),
+    supabase.from("posts").select("id", { count: "exact", head: true }).eq("brand_profile_id", active.id),
   ]);
 
   const lineIds = (lines.data ?? []).map((l) => l.id);
@@ -33,6 +34,7 @@ export const getBrandProgress = cache(async () => {
     { slug: "tone", label: "Tonalité & voix", done: !!tone.data?.do_list, feature: "tone" },
     { slug: "audit", label: "Premier audit", done: !!audit.data, feature: "audit" },
     { slug: "editorial", label: "Ligne éditoriale", done: entries.length > 0, feature: "editorial" },
+    { slug: "posts", label: "Publications", done: (posts.count ?? 0) > 0, feature: "editorial" },
     { slug: "rules", label: "Règles opérationnelles", done: (rules.count ?? 0) > 0, feature: "rules" },
     { slug: "lives", label: "Guide Lives", done: (guides.count ?? 0) > 0, feature: "lives" },
     { slug: "kpi", label: "Rapport KPI du mois", done: !!kpi.data?.submitted_at, feature: "kpi" },

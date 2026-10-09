@@ -1,0 +1,95 @@
+import { z } from "zod";
+
+export const POST_STATUSES = ["brouillon", "pret", "publie"] as const;
+export type PostStatus = (typeof POST_STATUSES)[number];
+export const POST_STATUS_LABEL: Record<PostStatus, string> = { brouillon: "Brouillon", pret: "Prêt", publie: "Publié" };
+export const nextPostStatus = (s: PostStatus): PostStatus => POST_STATUSES[(POST_STATUSES.indexOf(s) + 1) % POST_STATUSES.length];
+
+export type Post = {
+  id: string;
+  brand_profile_id: string;
+  editorial_entry_id: string | null;
+  channel: string | null;
+  scheduled_date: string | null;
+  caption: string;
+  visual_idea: string;
+  hashtags: string;
+  call_to_action: string;
+  status: PostStatus;
+};
+
+/** Ce que l'IA renvoie pour une semaine : quelques publications réparties sur les jours (0 = premier jour de la semaine). */
+export const postsOutput = z.object({
+  posts: z
+    .array(
+      z.object({
+        day_offset: z.number().int().min(0).max(6),
+        caption: z.string().min(1).max(2200),
+        visual_idea: z.string().max(600).default(""),
+        hashtags: z.array(z.string().max(40)).max(12).default([]),
+        call_to_action: z.string().max(240).default(""),
+      }),
+    )
+    .min(1)
+    .max(7),
+});
+export type PostsOutput = z.infer<typeof postsOutput>;
+
+export const hashtagsText = (tags: string[]) => tags.map((t) => "#" + t.replace(/^#+/, "").replace(/\s+/g, "")).filter((t) => t.length > 1).join(" ");
+
+/** Nombre de publications de la semaine d'après « 3 posts par semaine » ; 3 par défaut, entre 1 et 5. */
+export function postsPerWeek(frequency: string | null | undefined): number {
+  const n = parseInt(/\d+/.exec(frequency ?? "")?.[0] ?? "", 10);
+  return Number.isFinite(n) ? Math.min(5, Math.max(1, n)) : 3;
+}
+
+const utc = (iso: string) => new Date(iso + "T00:00:00Z");
+export const toIso = (d: Date) => d.toISOString().slice(0, 10);
+export function addDays(iso: string, n: number): string {
+  const d = utc(iso);
+  d.setUTCDate(d.getUTCDate() + n);
+  return toIso(d);
+}
+/** Premier jour de la semaine n (1 = semaine qui commence à la date de début de la période). */
+export const weekStartDate = (periodStart: string, weekNumber: number) => addDays(periodStart, (Math.max(1, weekNumber) - 1) * 7);
+
+/** Jours répartis sur la semaine : évite que trois publications tombent le même jour. */
+export function spreadDays(count: number): number[] {
+  const slots = [[0], [0, 3], [0, 2, 4], [0, 2, 4, 5], [0, 1, 3, 4, 6]];
+  return slots[Math.min(Math.max(count, 1), 5) - 1];
+}
+
+/** Grille d'un mois, semaines du lundi au dimanche. */
+export function monthGrid(year: number, month0: number): { iso: string; inMonth: boolean }[][] {
+  const first = new Date(Date.UTC(year, month0, 1));
+  const lead = (first.getUTCDay() + 6) % 7;
+  const start = addDays(toIso(first), -lead);
+  const weeks: { iso: string; inMonth: boolean }[][] = [];
+  for (let w = 0; w < 6; w++) {
+    const row = Array.from({ length: 7 }, (_, d) => {
+      const iso = addDays(start, w * 7 + d);
+      return { iso, inMonth: utc(iso).getUTCMonth() === month0 };
+    });
+    if (w >= 4 && !row.some((c) => c.inMonth)) break;
+    weeks.push(row);
+  }
+  return weeks;
+}
+
+export const monthTitle = (year: number, month0: number) =>
+  new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(year, month0, 1)));
+export const dayTitle = (iso: string) =>
+  new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(utc(iso));
+
+export function groupByDate<T extends { scheduled_date: string | null }>(posts: T[]): Map<string, T[]> {
+  const map = new Map<string, T[]>();
+  for (const p of posts) {
+    if (!p.scheduled_date) continue;
+    map.set(p.scheduled_date, [...(map.get(p.scheduled_date) ?? []), p]);
+  }
+  return map;
+}
+
+/** Texte prêt à coller dans le réseau : légende, appel à l'action, hashtags. */
+export const postCopyText = (p: Pick<Post, "caption" | "call_to_action" | "hashtags">) =>
+  [p.caption.trim(), p.call_to_action.trim(), p.hashtags.trim()].filter(Boolean).join("\n\n");

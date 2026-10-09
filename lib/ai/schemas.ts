@@ -120,5 +120,6 @@ export const generateRequest = z.discriminatedUnion("type", [
   z.object({ type: z.literal("live_scripts"), live_guide_id: z.string().uuid() }),
   z.object({ type: z.literal("editorial_line"), editorial_line_id: z.string().uuid() }),
   z.object({ type: z.literal("editorial_week"), entry_id: z.string().uuid() }),
+  z.object({ type: z.literal("posts_week"), entry_id: z.string().uuid() }),
 ]);
 export type GenerateRequest = z.infer<typeof generateRequest>;

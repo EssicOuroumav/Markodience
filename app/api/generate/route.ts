@@ -10,12 +10,13 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/payments/admin";
 import { createJob, deleteJob, finishJob, getJob, purgeOldJobs } from "@/lib/jobs";
 import { AiError, AI_MESSAGES, generateJson } from "@/lib/ai/anthropic";
-import { mockAudit, mockLiveScripts, mockLiveStructure, mockEditorial, mockIdentity, mockExtend, mockPillars, mockTone } from "@/lib/ai/mock";
-import { liveScriptsPrompt, liveStepPrompt, liveStructurePrompt, type LiveContext, auditPrompt, editorialLinePrompt, editorialWeekPrompt, identityPrompt, identityExtendPrompt, pillarsPrompt, tonePrompt, type BrandContext, type EditorialContext } from "@/lib/ai/prompts";
+import { mockAudit, mockLiveScripts, mockLiveStructure, mockEditorial, mockPosts, mockIdentity, mockExtend, mockPillars, mockTone } from "@/lib/ai/mock";
+import { liveScriptsPrompt, liveStepPrompt, liveStructurePrompt, type LiveContext, auditPrompt, editorialLinePrompt, editorialWeekPrompt, postsWeekPrompt, identityPrompt, identityExtendPrompt, pillarsPrompt, tonePrompt, type BrandContext, type EditorialContext } from "@/lib/ai/prompts";
 import type { LiveStep } from "@/lib/lives";
 import { OBJECTIVES, type Objective } from "@/lib/lives";
 import { pillarRotation, weeksForPeriod, type PeriodMonths } from "@/lib/editorial";
-import { identityExtendOutput } from "@/lib/identity";
+import { identityExtendOutput, parseFoundations } from "@/lib/identity";
+import { addDays, hashtagsText, postsOutput, postsPerWeek, spreadDays, weekStartDate } from "@/lib/posts";
 import { liveScriptsOutput, liveStepOutput, liveStructureOutput, auditOutput, editorialOutput, generateRequest, type GenerateRequest, identityOutput, pillarsOutput, toneOutput } from "@/lib/ai/schemas";
 
 export const runtime = "nodejs";
@@ -114,6 +115,7 @@ async function run(supabase: Supa, req: GenerateRequest): Promise<NextResponse> 
     if (req.type === "editorial_line" || req.type === "editorial_week") {
       return await handleEditorial(supabase, req);
     }
+    if (req.type === "posts_week") return await handlePosts(supabase, req);
     if (req.type === "live_structure" || req.type === "live_step" || req.type === "live_scripts") {
       return await handleLives(supabase, req);
     }
@@ -212,7 +214,7 @@ type Supa = Awaited<ReturnType<typeof createClient>>;
 
 function requiredFeature(type: string): Feature | null {
   if (type === "audit") return "audit";
-  if (type.startsWith("editorial")) return "editorial";
+  if (type.startsWith("editorial") || type.startsWith("posts")) return "editorial";
   if (type.startsWith("live_")) return "lives";
   return null;
 }
@@ -243,6 +245,48 @@ async function loadEditorialContext(supabase: Supa, lineId: string) {
 
 function daysBetween(a: string, b: string) {
   return (Date.parse(b) - Date.parse(a)) / 86_400_000;
+}
+
+/** Rédige les publications d'une semaine de la ligne éditoriale ; remplace les brouillons de cette semaine, jamais les publications prêtes ou publiées. */
+async function handlePosts(supabase: Supa, req: { type: "posts_week"; entry_id: string }) {
+  const { data: entry } = await supabase
+    .from("editorial_entries")
+    .select("id, week_number, theme, content_type, format, frequency, suggested_time, editorial_line_id")
+    .eq("id", req.entry_id)
+    .maybeSingle();
+  if (!entry) return fail(404, "Semaine introuvable.", "not_found");
+  const loaded = await loadEditorialContext(supabase, entry.editorial_line_id);
+  if (!loaded) return fail(404, "Ligne éditoriale introuvable.", "not_found");
+  const { line, ctx } = loaded;
+  if (!line.period_start) return fail(409, "Cette ligne éditoriale n'a pas de date de début.", "no_period");
+  const { data: identity } = await supabase.from("brand_identity").select("foundations").eq("brand_profile_id", line.brand_profile_id).maybeSingle();
+  const foundations = parseFoundations(identity?.foundations);
+
+  const days = spreadDays(postsPerWeek(entry.frequency));
+  const result = await generateJson(
+    postsWeekPrompt({ ...ctx, foundations: foundations ? { slogan: foundations.slogan, key_message: foundations.key_message, promise: foundations.promise } : null }, entry, days),
+    postsOutput,
+    () => mockPosts(days),
+    "heavy",
+  );
+
+  const start = weekStartDate(line.period_start, entry.week_number ?? 1);
+  const rows = result.posts.map((p) => ({
+    brand_profile_id: line.brand_profile_id,
+    editorial_entry_id: entry.id,
+    channel: line.channel,
+    scheduled_date: addDays(start, p.day_offset),
+    caption: p.caption,
+    visual_idea: p.visual_idea,
+    hashtags: hashtagsText(p.hashtags),
+    call_to_action: p.call_to_action,
+    status: "brouillon",
+  }));
+  const { error: delErr } = await supabase.from("posts").delete().eq("editorial_entry_id", entry.id).eq("status", "brouillon");
+  if (delErr) return fail(500, "Les anciens brouillons n'ont pas pu être remplacés.", "db");
+  const { error } = await supabase.from("posts").insert(rows);
+  if (error) return fail(500, "Les publications n'ont pas pu être enregistrées.", "db");
+  return NextResponse.json({ ok: true, data: { count: rows.length } });
 }
 
 async function handleEditorial(

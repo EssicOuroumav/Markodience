@@ -220,3 +220,26 @@ Structure JSON exacte :
 { "scripts": [{ "situation": string, "content": string }], "quick_replies": [{ "situation": string, "content": string }] }
 Réponds uniquement par le JSON.`;
 }
+
+export function postsWeekPrompt(
+  ctx: EditorialContext & { foundations?: { slogan?: string; key_message?: string; promise?: string } | null },
+  week: { theme: string | null; content_type: string | null; format: string | null; frequency: string | null; suggested_time: string | null },
+  days: number[],
+): string {
+  return `Rédige ${days.length} publication(s) prêtes à poster pour la semaine suivante du canal « ${ctx.channel} ».
+<contexte>
+${JSON.stringify({ marque: ctx.brand.name, secteur: ctx.brand.sector, piliers: ctx.pillars, tonalite: ctx.tone, fondations: ctx.foundations ?? null, semaine: week }, null, 2)}
+</contexte>
+
+Règles :
+- Chaque publication développe le thème de la semaine sous un angle différent, dans le format indiqué et la tonalité de la marque.
+- La légende est complète, écrite pour le canal (longueur, ton, emojis avec modération), en français, sans promesse que la marque ne peut pas tenir.
+- "visual_idea" : ce qu'il faut photographier, filmer ou dessiner, concret et réalisable avec un téléphone.
+- "hashtags" : 3 à 6, sans le signe #. "call_to_action" : une phrase courte (peut être vide).
+- Respecte les sujets à éviter de la tonalité.
+- "day_offset" : jour de la semaine, dans cet ordre exact : ${JSON.stringify(days)} (0 = premier jour).
+
+Structure JSON exacte :
+{ "posts": [{ "day_offset": number, "caption": string, "visual_idea": string, "hashtags": string[], "call_to_action": string }] }
+Une publication par jour listé. Réponds uniquement par le JSON.`;
+}
