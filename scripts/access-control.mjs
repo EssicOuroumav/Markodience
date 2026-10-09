@@ -26,6 +26,18 @@ async function mk(tag, appMeta) {
 }
 const web = (u, path, init = {}) => fetch(BASE + path, { redirect: "manual", ...init, headers: { ...(init.headers || {}), ...(u ? { cookie: u.cookie } : {}) } });
 const api = (u, path, body) => web(u, path, { method: "POST", headers: J, body: JSON.stringify(body) }).then(async (r) => ({ s: r.status, j: await r.json().catch(() => null) }));
+// /api/generate répond 202 puis travaille en arrière-plan : on suit la demande (table ai_jobs, clé service) jusqu'à son résultat.
+// Les refus immédiats (401, 403, 429…) arrivent directement ; les refus du travail (404 objet introuvable…) dans le résultat.
+async function gen(u, body) {
+  const r = await api(u, "/api/generate", { ...body, request_id: crypto.randomUUID() });
+  if (r.s !== 202 || !r.j?.job) return r;
+  for (let i = 0; i < 60; i++) {
+    await new Promise((res) => setTimeout(res, 1000));
+    const job = (await sb(`/rest/v1/ai_jobs?id=eq.${r.j.job.id}&select=status,result,http_status`)).j?.[0];
+    if (job && job.status !== "running") return { s: job.http_status, j: job.result };
+  }
+  return { s: 0, j: { error: "délai dépassé" } };
+}
 const SECRET = `ALPHA-SECRET-${stamp}`;
 try {
   const a = await mk("a"), b = await mk("b"), d = await mk("d", { role: "admin" });
@@ -57,7 +69,7 @@ try {
     ["guide de live", { type: "live_scripts", live_guide_id: guideId }],
     ["audit", { type: "audit", brand_profile_id: brand, audit_id: crypto.randomUUID(), files: [auditFile] }],
   ]) {
-    const r = await api(b, "/api/generate", body);
+    const r = await gen(b, body);
     check(`/api/generate ${name} sur l'objet de A : refusé (404 ou 403)`, r.s === 404 || r.s === 403, `${r.s} ${JSON.stringify(r.j)}`);
   }
   const v = await api(b, "/api/editorial/validation", { entry_id: entryId, action: "validate" });
@@ -84,7 +96,7 @@ try {
   const meta = await sb(`/auth/v1/user`, { token: b.token, key: A_KEY, method: "PUT", body: { data: { role: "admin" }, app_metadata: { role: "admin" } } });
   check("B ne peut pas s'attribuer le rôle admin (métadonnées)", (await sb(`/auth/v1/user`, { token: b.token, key: A_KEY })).j?.app_metadata?.role !== "admin");
   for (const [name, body] of [["audit", (() => { const bid = crypto.randomUUID(), aid = crypto.randomUUID(); return { type: "audit", brand_profile_id: bid, audit_id: aid, files: [`${bid}/${aid}/f.png`] }; })()], ["ligne éditoriale", { type: "editorial_line", editorial_line_id: crypto.randomUUID() }], ["live", { type: "live_scripts", live_guide_id: crypto.randomUUID() }]]) {
-    const r = await api(b, "/api/generate", body); check(`palier gratuit : ${name} refusé (403 plan_required)`, r.s === 403, `${r.s}`);
+    const r = await gen(b, body); check(`palier gratuit : ${name} refusé (403 plan_required)`, r.s === 403, `${r.s}`);
   }
   const ok = await api(d, "/api/admin/action", { action: "reset_quota", user_id: a.id });
   check("témoin : l'administrateur peut utiliser /api/admin/action", ok.s === 200, `${ok.s}`);

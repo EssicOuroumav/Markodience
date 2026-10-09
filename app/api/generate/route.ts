@@ -1,12 +1,14 @@
 import type Anthropic from "@anthropic-ai/sdk";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { z } from "zod";
 import { isAdmin } from "@/lib/admin";
 import { MAX_FILE_BYTES, MAX_TOTAL_BYTES } from "@/lib/audit";
 import { normalizeObjectives } from "@/lib/objectives";
 import { hasFeature, isPlanId, type Feature } from "@/lib/plans";
 import { consumeQuota, quotaMessage, refundQuota } from "@/lib/quota";
 import { createClient } from "@/lib/supabase/server";
-import { withHeartbeat } from "@/lib/stream";
+import { createAdminClient } from "@/lib/payments/admin";
+import { createJob, deleteJob, finishJob, getJob, purgeOldJobs } from "@/lib/jobs";
 import { AiError, AI_MESSAGES, generateJson } from "@/lib/ai/anthropic";
 import { mockAudit, mockLiveScripts, mockLiveStructure, mockEditorial, mockIdentity, mockPillars, mockTone } from "@/lib/ai/mock";
 import { liveScriptsPrompt, liveStepPrompt, liveStructurePrompt, type LiveContext, auditPrompt, editorialLinePrompt, editorialWeekPrompt, identityPrompt, pillarsPrompt, tonePrompt, type BrandContext, type EditorialContext } from "@/lib/ai/prompts";
@@ -22,6 +24,13 @@ function fail(status: number, error: string, code = "error") {
   return NextResponse.json({ ok: false, code, error }, { status });
 }
 
+const requestId = z.object({ request_id: z.string().uuid() });
+
+/**
+ * Génération en arrière-plan : la route valide, réserve la demande (idempotente) et le crédit, lance le travail, puis répond
+ * tout de suite (202). Le navigateur consulte ensuite la demande (table ai_jobs) par de petites requêtes : une coupure de
+ * connexion pendant l'attente ne perd plus rien, et rejouer la même demande ne consomme pas de nouveau crédit.
+ */
 export async function POST(request: Request) {
   const supabase = await createClient();
   const {
@@ -35,9 +44,11 @@ export async function POST(request: Request) {
   } catch {
     return fail(400, "Requête invalide.", "bad_request");
   }
+  const rid = requestId.safeParse(body);
   const parsed = generateRequest.safeParse(body);
-  if (!parsed.success) return fail(400, "Données invalides. Vérifiez les champs du formulaire.", "bad_request");
+  if (!rid.success || !parsed.success) return fail(400, "Données invalides. Vérifiez les champs du formulaire.", "bad_request");
   const req = parsed.data;
+  const jobId = rid.data.request_id;
 
   const owner = isAdmin(user);
   const { data: planRaw } = await supabase.rpc("my_plan");
@@ -47,24 +58,54 @@ export async function POST(request: Request) {
     return fail(403, "Cette fonctionnalité est réservée aux paliers payants.", "plan_required");
   }
 
-  // Quota quotidien : consommé avant l'appel, rendu si la génération échoue.
-  // Le propriétaire (rôle admin) n'est soumis à aucun quota.
-  if (owner) return withHeartbeat(run(supabase, req));
-  let quota;
-  try {
-    quota = await consumeQuota(user.id, plan);
-  } catch {
-    return fail(503, "Le service est momentanément indisponible. Réessayez dans un instant.", "quota_unavailable");
+  const admin = createAdminClient();
+  // Idempotence : la même demande rejouée retrouve la ligne existante (sans relancer le travail ni consommer de crédit).
+  const created = await createJob(admin, { id: jobId, userId: user.id, type: req.type });
+  if (!created.ok) {
+    if (created.reason === "exists") {
+      const existing = await getJob(admin, jobId);
+      if (existing && existing.user_id === user.id) return NextResponse.json({ ok: true, job: { id: jobId, status: existing.status } }, { status: 202 });
+      return fail(409, "Cette demande existe déjà.", "conflict");
+    }
+    return fail(503, "Le service est momentanément indisponible. Réessayez dans un instant.", "jobs_unavailable");
   }
-  if (!quota.ok) return fail(429, quotaMessage(plan, quota.limit), "quota");
+  if (Math.random() < 0.02) void purgeOldJobs(admin).catch(() => undefined);
 
-  // Le remboursement du quota dépend du résultat du travail, pas de la réponse envoyée au navigateur (qui peut être un flux).
-  const work = run(supabase, req);
-  work.then(
-    async (response) => { if (!response.ok) await refundQuota(user.id).catch(() => undefined); },
-    async () => { await refundQuota(user.id).catch(() => undefined); },
-  );
-  return withHeartbeat(work);
+  // Quota quotidien : consommé avant le travail, rendu si la génération échoue. Le propriétaire n'a aucun quota.
+  if (!owner) {
+    let quota;
+    try {
+      quota = await consumeQuota(user.id, plan);
+    } catch {
+      await deleteJob(admin, jobId).catch(() => undefined);
+      return fail(503, "Le service est momentanément indisponible. Réessayez dans un instant.", "quota_unavailable");
+    }
+    if (!quota.ok) {
+      await deleteJob(admin, jobId).catch(() => undefined);
+      return fail(429, quotaMessage(plan, quota.limit), "quota");
+    }
+  }
+
+  after(async () => {
+    let outcome: { ok: boolean; body: unknown; status: number };
+    try {
+      const response = await run(supabase, req);
+      const text = await response.text();
+      let parsedBody: unknown;
+      try {
+        parsedBody = JSON.parse(text);
+      } catch {
+        parsedBody = { ok: false, code: "unknown", error: AI_MESSAGES.unknown };
+      }
+      outcome = { ok: response.ok, body: parsedBody, status: response.status };
+    } catch {
+      outcome = { ok: false, body: { ok: false, code: "unknown", error: AI_MESSAGES.unknown }, status: 500 };
+    }
+    if (!outcome.ok && !owner) await refundQuota(user.id).catch(() => undefined);
+    await finishJob(admin, jobId, outcome).catch(() => undefined);
+  });
+
+  return NextResponse.json({ ok: true, job: { id: jobId, status: "running" } }, { status: 202 });
 }
 
 async function run(supabase: Supa, req: GenerateRequest): Promise<NextResponse> {

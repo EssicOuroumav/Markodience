@@ -123,6 +123,20 @@ try {
     check("une seule facture en attente par utilisateur", first.status === 201 && second.status === 409, `${first.status} / ${second.status}`);
   }
 
+  // Demandes de génération (ai_jobs, migration 20261001000800) : lecture de ses propres demandes seulement, aucune écriture utilisateur
+  const jobId = crypto.randomUUID();
+  const ins = await admin("/rest/v1/ai_jobs", { method: "POST", body: { id: jobId, user_id: a.id, type: "tone" } });
+  check("ai_jobs (migration appliquée) : le serveur peut créer une demande", ins.status === 201, `${ins.status} ${JSON.stringify(ins.json)}`);
+  if (ins.status === 201) {
+    check("l'utilisateur lit sa propre demande", (await rest(a, `ai_jobs?id=eq.${jobId}&select=status`)).json?.[0]?.status === "running");
+    check("un autre utilisateur ne voit pas la demande", (await rest(b, `ai_jobs?id=eq.${jobId}&select=id`)).json?.length === 0);
+    check("l'utilisateur ne peut pas créer de demande", (await rest(a, "ai_jobs", { method: "POST", body: { id: crypto.randomUUID(), user_id: a.id, type: "tone" } })).status === 403);
+    await rest(a, `ai_jobs?id=eq.${jobId}`, { method: "PATCH", body: { status: "done", result: { ok: true } } });
+    check("l'utilisateur ne peut pas modifier une demande", (await admin(`/rest/v1/ai_jobs?id=eq.${jobId}&select=status`)).json?.[0]?.status === "running");
+    check("l'utilisateur ne peut pas supprimer une demande", (await (async () => { await rest(a, `ai_jobs?id=eq.${jobId}`, { method: "DELETE" }); return admin(`/rest/v1/ai_jobs?id=eq.${jobId}&select=id`); })()).json?.length === 1);
+    check("la même demande rejouée ne se crée pas deux fois (clé unique)", (await admin("/rest/v1/ai_jobs", { method: "POST", body: { id: jobId, user_id: a.id, type: "tone" } })).status === 409);
+  }
+
   // Expiration
   await admin(`/rest/v1/subscriptions?user_id=eq.${a.id}`, { method: "PATCH", body: { current_period_end: "2020-01-01" } });
   check("pro expiré : retour au palier gratuit", (await call("/rest/v1/rpc/my_plan", { method: "POST", token: a.token, body: {} })).json === "gratuit");
