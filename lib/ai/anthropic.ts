@@ -21,6 +21,15 @@ export function modelFor(tier: ModelTier, env: Record<string, string | undefined
   return tierEnv || DEFAULT_MODELS[tier];
 }
 
+/**
+ * Les modèles de la famille 5 raisonnent par défaut avant de répondre : pour une sortie JSON à structure imposée, ce raisonnement
+ * consomme le budget de jetons (réponse vide sur les longues générations) et ajoute du délai et du coût. On le coupe ; la qualité vient des consignes.
+ */
+export const thinkingFor = (model: string) => (/^claude-(sonnet|opus|fable)-5/.test(model) ? ({ thinking: { type: "between_tools" } } as Record<string, unknown>) : {});
+
+/** Consommation de jetons des appels réels (mesure des coûts : essais et journaux). */
+export const usageLog: { model: string; input: number; output: number }[] = [];
+
 export type AiErrorCode =
   | "not_configured"
   | "credits"
@@ -61,6 +70,7 @@ export async function generateJson<T>(
   schema: ZodType<T>,
   mock: () => T,
   tier: ModelTier = "heavy",
+  opts: { thinking?: "off"; maxTokens?: number } = {},
 ): Promise<T> {
   if (process.env.AI_MOCK === "1") return schema.parse(mock());
 
@@ -68,18 +78,24 @@ export async function generateJson<T>(
   if (!apiKey) throw new AiError("not_configured", AI_MESSAGES.not_configured);
   const client = new Anthropic({ apiKey, timeout: 90_000, maxRetries: 1 });
 
+  let lastText = "";
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const res = await client.messages.create({
         model: modelFor(tier),
-        max_tokens: 4096,
+        max_tokens: opts.maxTokens ?? 4096,
+        ...(opts.thinking === "off" ? thinkingFor(modelFor(tier)) : {}),
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userPrompt }],
       });
+      usageLog.push({ model: modelFor(tier), input: res.usage?.input_tokens ?? 0, output: res.usage?.output_tokens ?? 0 });
       const text = res.content.map((b) => (b.type === "text" ? b.text : "")).join("");
+      lastText = text;
+      if (process.env.AI_DEBUG === "1") console.error("[IA] arrêt :", res.stop_reason, "· jetons sortis :", res.usage?.output_tokens);
       return schema.parse(extractJson(text));
     } catch (err) {
       const isFormat = err instanceof SyntaxError || (err as { name?: string }).name === "ZodError" || (err as Error).message === "no_json";
+      if (isFormat && process.env.AI_DEBUG === "1") console.error("[IA] réponse refusée :", JSON.stringify((err as { issues?: unknown }).issues ?? (err as Error).message).slice(0, 800), "| début :", lastText.slice(0, 200), "| fin :", lastText.slice(-150));
       if (isFormat && attempt === 0) continue;
       if (isFormat) throw new AiError("malformed", AI_MESSAGES.malformed);
       throw classify(err);
