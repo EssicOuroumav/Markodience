@@ -10,6 +10,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "test:security": "node --env-file=.env.local scripts/rls-smoke.mjs",
+    "test:access": "node --env-file=.env.local scripts/access-control.mjs",
     "check:launch": "node scripts/launch-check.mjs"
   },
   "dependencies": {
