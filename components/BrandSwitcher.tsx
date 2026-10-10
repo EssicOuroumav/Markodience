@@ -11,7 +11,7 @@ export function setActiveBrandCookie(id: string) {
   document.cookie = `active_brand=${id}; path=/; max-age=31536000; samesite=lax`;
 }
 
-export default function BrandSwitcher({ profiles, activeId, canCreate }: { profiles: BrandProfile[]; activeId: string; canCreate: boolean }) {
+export default function BrandSwitcher({ profiles, activeId, canCreate, variant = "compact" }: { profiles: BrandProfile[]; activeId: string; canCreate: boolean; variant?: "compact" | "sidebar" }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -45,14 +45,18 @@ export default function BrandSwitcher({ profiles, activeId, canCreate }: { profi
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="btn-secondary max-w-[200px] gap-2"
+        className={variant === "sidebar" ? "flex w-full items-center gap-3 rounded-2xl border border-black/10 bg-white px-3 py-2.5 text-left shadow-card transition hover:border-black/20" : "btn-secondary max-w-[200px] gap-2"}
       >
-        <BrandLogo src={active.logo_url} name={active.name} color={active.primary_color} size="xs" className="!border-0 !p-0 !shadow-none" />
-        <span className="truncate">{active.name}</span>
+        <BrandLogo src={active.logo_url} name={active.name} color={active.primary_color} size={variant === "sidebar" ? "sm" : "xs"} className="!border-0 !p-0 !shadow-none" />
+        {variant === "sidebar" ? (
+          <span className="min-w-0 flex-1"><span className="block truncate text-[15px] font-semibold leading-tight">{active.name}</span><span className="caption block truncate">{active.sector ?? "Secteur non renseigné"}</span></span>
+        ) : (
+          <span className="truncate">{active.name}</span>
+        )}
         <span aria-hidden className="text-ink-secondary">▾</span>
       </button>
       {open && (
-        <div role="listbox" className="glass-float pop-in absolute right-0 mt-2 w-72 origin-top-right rounded-[20px] p-2 shadow-pop">
+        <div role="listbox" className={`glass-float pop-in absolute z-50 mt-2 w-72 rounded-[20px] p-2 shadow-pop ${variant === "sidebar" ? "left-0 origin-top-left" : "right-0 origin-top-right"}`}>
           {profiles.map((p) => (
             <button
               key={p.id}

@@ -17,3 +17,27 @@ export const TABS = [
 ] as const;
 
 export type TabSlug = (typeof TABS)[number]["slug"];
+
+/** Regroupement de la navigation : ce qu'on définit, ce qu'on produit, ce qu'on mesure. */
+export const TAB_GROUPS = [
+  { id: "strategie", label: "Stratégie" },
+  { id: "production", label: "Production" },
+  { id: "analyse", label: "Analyse" },
+] as const;
+export type TabGroupId = (typeof TAB_GROUPS)[number]["id"];
+
+export const TAB_GROUP: Record<TabSlug, TabGroupId> = {
+  plan: "strategie",
+  identity: "strategie",
+  charter: "strategie",
+  pillars: "strategie",
+  tone: "strategie",
+  organic: "strategie",
+  rules: "strategie",
+  editorial: "production",
+  posts: "production",
+  library: "production",
+  lives: "production",
+  audit: "analyse",
+  kpi: "analyse",
+};

@@ -112,3 +112,16 @@ Migration `20261010000100_strategy_plan.sql` (table `brand_strategy` ; colonnes 
 - Mise en place : identité (mission, valeurs, tonalité par registre, exemple à éviter/suivre), piliers pondérés, tonalité, une ligne éditoriale de 52 semaines par réseau (phases et campagnes), publications prévues (idée, accroche, pilier, format) rédigeables une à une ou par semaine ; règles numérotées, plan d'indicateurs et onglet **Stratégie organique** (leviers à cocher).
 - Mode simulé complet (`AI_MOCK=1`) : tout le parcours se teste sans crédit.
 
+## Refonte du produit (2026-10-10) — demande du propriétaire
+Le propriétaire a supprimé les données de test (ONG AICHA et CIV'ART) : le tableau de bord repart de zéro. Cadre fixé par ses documents de référence (aicha_ui, analyse des piliers, outil de pilotage du community manager) :
+- **Interface** : tableau de bord pleine largeur, façon Buffer (menu latéral complet, contenu sans marge centrale) ; couleur du tableau de bord = couleur principale du logo.
+- **Inscription, étape 2** : logo, site web, liens des réseaux, documents (liens), présentation ; tout facultatif ; sert à remplir la fiche de la **Vue d'ensemble**.
+- **Vue d'ensemble** : fiche de la marque + une carte par onglet avec son état en direct + prochaines publications.
+- **Le « plan stratégique » éclate en onglets** : Cibles et personas ; Piliers et idées (banque d'idées) ; Calendrier éditorial (kanban, liste, mois ; statuts Brouillon / À valider / Programmé / Publié ; lignes par réseau au format aicha_ui) ; Médiathèque ; Communauté et modération (FAQ, crise, suivi des interactions) ; Performance (KPI personnalisables : départ, objectif, période, source, fréquence, seuil d'alerte, responsable, action corrective ; bilan et actions) ; Audit (état de la marque, évolution). Chaîne objectif → pilier → idée → publication → résultat.
+- **Fonctions d'IA** : diagnostic, stratégie, rédaction, calendrier, créatif, analyse, recommandations, communauté, rapports, risques.
+- [x] Lot A — socle : menu latéral Buffer, pleine largeur, groupes Stratégie / Production / Analyse ; couleur détectée sur le logo ; fiche de marque (site, réseaux, liens, présentation) à l'inscription et à la modification ; Vue d'ensemble refaite. Migration `20261010000200_brand_info.sql`.
+- [ ] Lot B — Cibles et personas ; piliers (méthode en 6 étapes, test des 4 questions, sous-thèmes, CTA, KPI) ; banque d'idées ; chaîne objectif → pilier → idée.
+- [ ] Lot C — Calendrier éditorial (vues, statuts, workflow de validation, présentation aicha_ui) ; Médiathèque.
+- [ ] Lot D — Communauté et modération ; Performance (KPI personnalisables, bilan et actions) ; Audit (évolution).
+- [ ] Lot E — Assistant IA et rapports ; fusion Tonalité/Charte dans Identité ; PDF du plan.
+

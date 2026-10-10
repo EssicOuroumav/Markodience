@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
 import { Check, ChevronRight, CreditCard, Crown, Home, Layers, Lock, LogOut, ShieldCheck, UserCog } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { hasFeature, PLANS, type PlanId } from "@/lib/plans";
-import { TABS, type TabSlug } from "@/lib/tabs";
+import Image from "next/image";
+import { TABS, TAB_GROUP, TAB_GROUPS, type TabSlug } from "@/lib/tabs";
 import { TAB_ICONS } from "@/lib/tabIcons";
-import BrandLogo, { type Shape } from "./BrandLogo";
 import UserMenu from "./UserMenu";
 
 type Props = {
@@ -19,6 +18,8 @@ type Props = {
   progress: { percent: number; done: Partial<Record<TabSlug, boolean>> };
   brandCount: number;
   brandMax: number | null;
+  /** Sélecteur de marque, affiché en haut du menu. */
+  switcher: React.ReactNode;
 };
 
 const SECTION = "px-3 pb-1.5 pt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-secondary/70";
@@ -38,11 +39,9 @@ function NavItem({ href, active, Icon, label, children }: { href: string; active
   );
 }
 
-export default function Sidebar({ plan, owner, email, brand, progress, brandCount, brandMax }: Props) {
+export default function Sidebar({ plan, owner, email, progress, brandCount, brandMax, switcher }: Props) {
   const pathname = usePathname();
   const router = useRouter();
-  const [shape, setShape] = useState<Shape | null>(null);
-  const stacked = shape === "wide";
 
   async function logout() {
     await createClient().auth.signOut();
@@ -51,51 +50,34 @@ export default function Sidebar({ plan, owner, email, brand, progress, brandCoun
   }
 
   return (
-    <aside aria-label="Navigation du profil de marque" className="border-b border-[var(--color-border-soft)] bg-gradient-to-b from-white via-white to-accent-soft/70 md:fixed md:bottom-0 md:left-0 md:top-14 md:flex md:w-[284px] md:flex-col md:border-b-0 md:border-r">
-      {/* Carte de la marque : cliquable, ramène à la vue d'ensemble */}
-      <Link href="/dashboard" aria-label={`${brand.name} : retour à la vue d'ensemble`} className="group relative hidden overflow-hidden border-b hairline p-5 pb-4 outline-offset-[-2px] md:block">
-        <span aria-hidden className="absolute inset-x-0 top-0 h-1" style={{ background: `linear-gradient(90deg, ${brand.primary_color ?? "var(--color-accent)"}, transparent)` }} />
-        <span aria-hidden className="absolute inset-0 bg-gradient-to-br from-accent-soft/70 via-transparent to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />
-        <div className={`relative flex ${stacked ? "flex-col items-start gap-3" : "items-center gap-3.5"}`}>
-          <BrandLogo src={brand.logo_url} name={brand.name} color={brand.primary_color} size="md" onShape={setShape} className="!transition-all duration-300 group-hover:-translate-y-0.5 group-hover:scale-[1.04] group-hover:shadow-card-hover" />
-          <div className="min-w-0 max-w-full">
-            {stacked ? (
-              <p className="caption truncate" title={brand.name}><span className="font-medium text-ink/80">{brand.name}</span> · {brand.sector ?? "Secteur non renseigné"}</p>
-            ) : (
-              <>
-                <p className="truncate text-[16px] font-semibold tracking-heading" title={brand.name}>{brand.name}</p>
-                <p className="caption truncate">{brand.sector ?? "Secteur non renseigné"}</p>
-              </>
-            )}
-          </div>
-          <ChevronRight aria-hidden size={16} className={`${stacked ? "absolute right-0 top-1" : "ml-auto"} shrink-0 text-ink-secondary/60 transition duration-300 group-hover:translate-x-0.5 group-hover:text-accent`} />
-        </div>
-        {/* Progression de la stratégie */}
-        <div className="relative mt-4">
-          <div className="flex items-center justify-between text-[12px]"><span className="font-medium text-ink-secondary">Stratégie complète</span><span className="num font-semibold text-ink">{progress.percent} %</span></div>
-          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-black/[0.06]" role="progressbar" aria-valuenow={progress.percent} aria-valuemin={0} aria-valuemax={100} aria-label="Progression de la stratégie">
-            <div className="bar-in h-full rounded-full bg-gradient-to-r from-accent to-accent-light" style={{ width: `${progress.percent}%` }} />
-          </div>
-        </div>
+    <aside aria-label="Navigation du profil de marque" className="border-b border-[var(--color-border-soft)] bg-white md:fixed md:inset-y-0 md:left-0 md:flex md:w-[256px] md:flex-col md:border-b-0 md:border-r">
+      <Link href="/dashboard" className="hidden h-14 shrink-0 items-center gap-2 px-5 text-ink md:flex">
+        <Image src="/logo-mark.png" alt="" width={26} height={26} />
+        <span className="text-[17px] font-semibold tracking-heading">Markodience</span>
       </Link>
+      <div className="hidden px-3 pb-2 md:block">{switcher}</div>
 
-      <nav aria-label="Onglets" className="flex gap-1 overflow-x-auto px-3 py-2 md:flex-1 md:flex-col md:gap-0.5 md:overflow-y-auto md:px-3 md:pb-4 md:pt-1">
-        <p className={`${SECTION} hidden md:block`}>Votre marque</p>
+      <nav aria-label="Onglets" className="flex gap-1 overflow-x-auto px-3 py-2 md:flex-1 md:flex-col md:gap-0.5 md:overflow-y-auto md:px-3 md:pb-4 md:pt-0">
         <NavItem href="/dashboard" active={pathname === "/dashboard"} Icon={Home} label="Vue d’ensemble" />
-        {TABS.map((t) => {
-          const Icon = TAB_ICONS[t.slug];
-          const locked = !hasFeature(plan, t.feature);
-          const done = !!progress.done[t.slug] && !locked;
-          return (
-            <NavItem key={t.slug} href={`/dashboard/${t.slug}`} active={pathname === `/dashboard/${t.slug}`} Icon={Icon} label={t.label}>
-              {locked ? (
-                <span className="flex shrink-0 items-center gap-1 rounded-pill bg-black/[0.05] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-secondary" title="Réservé aux paliers payants"><Lock size={10} aria-label="Verrouillé" />Pro</span>
-              ) : done ? (
-                <span aria-label="Terminé" title="Terminé" className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-success text-white"><Check size={11} strokeWidth={3.5} /></span>
-              ) : null}
-            </NavItem>
-          );
-        })}
+        {TAB_GROUPS.map((g) => (
+          <div key={g.id} className="contents">
+            <p className={`${SECTION} hidden md:block`}>{g.label}</p>
+            {TABS.filter((t) => TAB_GROUP[t.slug] === g.id).map((t) => {
+              const Icon = TAB_ICONS[t.slug];
+              const locked = !hasFeature(plan, t.feature);
+              const done = !!progress.done[t.slug] && !locked;
+              return (
+                <NavItem key={t.slug} href={`/dashboard/${t.slug}`} active={pathname === `/dashboard/${t.slug}`} Icon={Icon} label={t.label}>
+                  {locked ? (
+                    <span className="flex shrink-0 items-center gap-1 rounded-pill bg-black/[0.05] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-secondary" title="Réservé aux paliers payants"><Lock size={10} aria-label="Verrouillé" />Pro</span>
+                  ) : done ? (
+                    <span aria-label="Terminé" title="Terminé" className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-success text-white"><Check size={11} strokeWidth={3.5} /></span>
+                  ) : null}
+                </NavItem>
+              );
+            })}
+          </div>
+        ))}
 
         <p className={`${SECTION} hidden !pt-3 md:block`}>Gestion</p>
         <NavItem href="/dashboard/brands" active={pathname.startsWith("/dashboard/brands")} Icon={Layers} label="Mes marques">

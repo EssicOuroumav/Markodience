@@ -8,5 +8,9 @@ export type BrandProfile = {
   logo_url: string | null;
   primary_color: string | null;
   status: BrandStatus | null;
+  website?: string | null;
+  socials?: Record<string, string> | null;
+  links?: { label: string; url: string }[] | null;
+  about?: string | null;
   created_at: string;
 };

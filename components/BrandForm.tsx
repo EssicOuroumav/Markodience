@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ImagePlus, X } from "lucide-react";
+import { ImagePlus, Plus, Sparkles, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { SECTORS } from "@/lib/sectors";
+import { MAX_ABOUT, MAX_LINKS, SOCIAL_NETWORKS, parseBrandInfoInput, readBrandInfo } from "@/lib/brandInfo";
+import { colorFromImageFile } from "@/lib/logoColor";
 import { setActiveBrandCookie } from "@/components/BrandSwitcher";
 import type { BrandProfile, BrandStatus } from "@/types";
 
@@ -21,6 +23,13 @@ export default function BrandForm({ userId, submitLabel, onCreated, onLimit, bra
   const [logo, setLogo] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(brand?.logo_url ?? null);
   const [keepExisting, setKeepExisting] = useState(!!brand?.logo_url);
+  const [detected, setDetected] = useState<string | null>(null);
+  const [colorTouched, setColorTouched] = useState(!!brand);
+  const initialInfo = brand ? readBrandInfo(brand) : null;
+  const [website, setWebsite] = useState(initialInfo?.website ?? "");
+  const [socials, setSocials] = useState<Record<string, string>>(initialInfo?.socials ?? {});
+  const [links, setLinks] = useState<{ label: string; url: string }[]>(initialInfo?.links ?? []);
+  const [about, setAbout] = useState(initialInfo?.about ?? "");
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,11 +44,18 @@ export default function BrandForm({ userId, submitLabel, onCreated, onLimit, bra
     setLogo(file);
     setKeepExisting(false);
     setPreview(URL.createObjectURL(file));
+    // La couleur de l'interface suit celle du logo, sauf si l'utilisateur en a déjà choisi une.
+    void colorFromImageFile(file).then((c) => {
+      setDetected(c);
+      if (c && !colorTouched) setColor(c);
+    });
   }
 
   async function submit() {
     setError(null);
     if (!name.trim()) return setError("Donnez un nom à votre marque.");
+    const info = parseBrandInfoInput({ website, socials, links, about });
+    if (!info.ok) return setError(info.error);
     setLoading(true);
 
     let logoUrl: string | null = brand && keepExisting ? brand.logo_url : null;
@@ -54,7 +70,7 @@ export default function BrandForm({ userId, submitLabel, onCreated, onLimit, bra
       logoUrl = supabase.storage.from("logos").getPublicUrl(path).data.publicUrl;
     }
 
-    const fields = { name: name.trim(), sector: sector || null, logo_url: logoUrl, primary_color: color, status };
+    const fields = { name: name.trim(), sector: sector || null, logo_url: logoUrl, primary_color: color, status, ...info.info };
 
     if (brand) {
       const { error: updErr } = await supabase.from("brand_profiles").update(fields).eq("id", brand.id);
@@ -138,13 +154,49 @@ export default function BrandForm({ userId, submitLabel, onCreated, onLimit, bra
         <label className="label" htmlFor="color">Couleur principale</label>
         <div className="flex flex-wrap items-center gap-2.5">
           {SWATCHES.map((c) => (
-            <button key={c} type="button" aria-label={`Couleur ${c}`} aria-pressed={color.toUpperCase() === c} onClick={() => setColor(c)}
+            <button key={c} type="button" aria-label={`Couleur ${c}`} aria-pressed={color.toUpperCase() === c} onClick={() => { setColor(c); setColorTouched(true); }}
               className={`h-9 w-9 rounded-full border-2 transition ${color.toUpperCase() === c ? "scale-110 border-ink shadow-card" : "border-white shadow-[0_0_0_1px_rgba(0,0,0,0.1)] hover:scale-105"}`} style={{ background: c }} />
           ))}
-          <input id="color" type="color" value={color} onChange={(e) => setColor(e.target.value)} aria-label="Choisir une autre couleur" className="h-9 w-12 cursor-pointer rounded-xl border border-black/10 bg-white p-1" />
+          <input id="color" type="color" value={color} onChange={(e) => { setColor(e.target.value); setColorTouched(true); }} aria-label="Choisir une autre couleur" className="h-9 w-12 cursor-pointer rounded-xl border border-black/10 bg-white p-1" />
           <span className="caption num">{color.toUpperCase()}</span>
         </div>
+        {detected && (
+          <p className="mt-2 flex flex-wrap items-center gap-2 text-[13px] text-ink-secondary"><Sparkles size={14} className="text-accent" />Couleur détectée sur votre logo : <span className="inline-block h-3.5 w-3.5 rounded-full border border-black/10 align-middle" style={{ background: detected }} /> <span className="num">{detected}</span>
+            {color.toUpperCase() !== detected && <button type="button" className="font-medium text-accent" onClick={() => { setColor(detected); setColorTouched(true); }}>La reprendre</button>}</p>
+        )}
+        <p className="caption mt-1.5">Le tableau de bord prend cette couleur. Vous pourrez la changer plus tard.</p>
       </div>
+
+      <details className="rounded-2xl border border-black/10 bg-white p-4" open={!!initialInfo && (!!initialInfo.website || Object.keys(initialInfo.socials).length > 0 || initialInfo.links.length > 0 || !!initialInfo.about)}>
+        <summary className="cursor-pointer text-[15px] font-semibold">Pour aller plus vite <span className="font-normal text-ink-secondary">(facultatif)</span></summary>
+        <p className="caption mt-1">Ces liens servent à remplir la fiche de votre marque et à mieux guider l&apos;IA. Rien n&apos;est publié.</p>
+        <div className="mt-4 space-y-4">
+          <div><label className="label" htmlFor="website">Site web</label><input id="website" className="input" placeholder="monsite.ci" value={website} onChange={(e) => setWebsite(e.target.value)} /></div>
+          <div>
+            <span className="label">Réseaux sociaux</span>
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              {SOCIAL_NETWORKS.map((n) => (
+                <div key={n} className="flex items-center gap-2"><span className="w-[84px] shrink-0 text-[14px] font-medium">{n}</span>
+                  <input aria-label={`Adresse ${n}`} className="input" placeholder={n === "WhatsApp" ? "Numéro ou lien" : "Lien de la page ou @nom"} value={socials[n] ?? ""} onChange={(e) => setSocials((s) => ({ ...s, [n]: e.target.value }))} /></div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <span className="label">Documents et autres liens <span className="font-normal text-ink-secondary">(dossier partagé, brochure, présentation…)</span></span>
+            <div className="space-y-2">
+              {links.map((l, i) => (
+                <div key={i} className="flex gap-2">
+                  <input aria-label={`Nom du lien ${i + 1}`} className="input max-w-[170px]" placeholder="Nom" value={l.label} onChange={(e) => setLinks((ls) => ls.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
+                  <input aria-label={`Adresse du lien ${i + 1}`} className="input" placeholder="Adresse du document" value={l.url} onChange={(e) => setLinks((ls) => ls.map((x, j) => (j === i ? { ...x, url: e.target.value } : x)))} />
+                  <button type="button" className="btn-ghost !px-2" aria-label="Retirer ce lien" onClick={() => setLinks((ls) => ls.filter((_, j) => j !== i))}><X size={16} /></button>
+                </div>
+              ))}
+            </div>
+            {links.length < MAX_LINKS && <button type="button" className="btn-ghost mt-1 !px-3 text-accent" onClick={() => setLinks((ls) => [...ls, { label: "", url: "" }])}><Plus size={16} />Ajouter un lien</button>}
+          </div>
+          <div><label className="label" htmlFor="about">En deux phrases, qui êtes-vous ?</label><textarea id="about" rows={3} maxLength={MAX_ABOUT} className="input" placeholder="Ex. : une association qui soutient les enfants vulnérables d'Abidjan en éducation et en santé." value={about} onChange={(e) => setAbout(e.target.value)} /></div>
+        </div>
+      </details>
 
       {error && <p role="alert" className="rounded-2xl bg-danger/10 px-4 py-3 text-[15px]">{error}</p>}
       <button type="button" className="btn-primary w-full" onClick={submit} disabled={loading}>{loading ? "Création…" : submitLabel}</button>
