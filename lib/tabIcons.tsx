@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, CalendarCheck, FolderOpen, Fingerprint, LayoutGrid, Palette, Sprout, Wand2, ListChecks, MessageCircleHeart, Radio, ScanSearch, type LucideIcon } from "lucide-react";
+import { BarChart3, CalendarDays, CalendarCheck, FolderOpen, Fingerprint, Lightbulb, LayoutGrid, Palette, Sprout, Users, Wand2, ListChecks, MessageCircleHeart, Radio, ScanSearch, type LucideIcon } from "lucide-react";
 import type { TabSlug } from "./tabs";
 import type { IllustrationName } from "@/components/illustrations";
 
@@ -6,6 +6,8 @@ export const TAB_ICONS: Record<TabSlug, LucideIcon> = {
   plan: Wand2,
   identity: Fingerprint,
   charter: Palette,
+  personas: Users,
+  ideas: Lightbulb,
   audit: ScanSearch,
   pillars: LayoutGrid,
   tone: MessageCircleHeart,
@@ -22,6 +24,8 @@ export const TAB_ILLUSTRATIONS: Record<TabSlug, IllustrationName> = {
   plan: "start",
   identity: "identity",
   charter: "identity",
+  personas: "identity",
+  ideas: "start",
   audit: "audit",
   pillars: "pillars",
   tone: "chat",

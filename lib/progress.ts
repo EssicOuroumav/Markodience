@@ -10,7 +10,7 @@ export type ProgressStep = { slug: TabSlug; label: string; done: boolean; featur
 export const getBrandProgress = cache(async () => {
   const { supabase, active, plan } = await getDashboardContext();
   const month = monthStart(new Date());
-  const [identity, pillars, tone, lines, audit, kpi, brand, guides, rules, kpiEver, posts] = await Promise.all([
+  const [identity, pillars, tone, lines, audit, kpi, brand, guides, rules, kpiEver, posts, personas] = await Promise.all([
     supabase.from("brand_identity").select("positioning, visual_guide").eq("brand_profile_id", active.id).maybeSingle(),
     supabase.from("content_pillars").select("id", { count: "exact", head: true }).eq("brand_profile_id", active.id),
     supabase.from("tone_voice").select("do_list").eq("brand_profile_id", active.id).maybeSingle(),
@@ -22,6 +22,7 @@ export const getBrandProgress = cache(async () => {
     supabase.from("operational_rules").select("id", { count: "exact", head: true }).eq("brand_profile_id", active.id).neq("content", ""),
     supabase.from("kpi_reports").select("id", { count: "exact", head: true }).eq("brand_profile_id", active.id).not("submitted_at", "is", null),
     supabase.from("posts").select("id", { count: "exact", head: true }).eq("brand_profile_id", active.id),
+    supabase.from("personas").select("id", { count: "exact", head: true }).eq("brand_profile_id", active.id),
   ]);
 
   const lineIds = (lines.data ?? []).map((l) => l.id);
@@ -29,6 +30,7 @@ export const getBrandProgress = cache(async () => {
 
   const steps: ProgressStep[] = [
     { slug: "identity", label: "Identité de marque", done: !!identity.data?.positioning, feature: "identity" },
+    { slug: "personas", label: "Cibles & personas", done: (personas.count ?? 0) > 0, feature: "identity" },
     { slug: "charter", label: "Charte graphique", done: !!identity.data?.visual_guide, feature: "identity" },
     { slug: "pillars", label: "Piliers de contenu", done: (pillars.count ?? 0) > 0, feature: "pillars" },
     { slug: "tone", label: "Tonalité & voix", done: !!tone.data?.do_list, feature: "tone" },

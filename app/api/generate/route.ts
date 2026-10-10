@@ -7,20 +7,21 @@ import { normalizeObjectives } from "@/lib/objectives";
 import { hasFeature, isPlanId, type Feature } from "@/lib/plans";
 import { consumeQuota, quotaMessage, refundQuota } from "@/lib/quota";
 import { handlePlan, type PlanRequest } from "@/lib/plan/handler";
+import { handleIdeas, handlePersonas, handlePillars } from "@/lib/strategy/handlers";
 import { CREDITS } from "@/lib/plan/store";
 import type { Gen } from "@/lib/plan/stages";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/payments/admin";
 import { createJob, deleteJob, finishJob, getJob, purgeOldJobs } from "@/lib/jobs";
 import { AiError, AI_MESSAGES, generateJson } from "@/lib/ai/anthropic";
-import { mockAudit, mockLiveScripts, mockLiveStructure, mockEditorial, mockPosts, mockPostsFill, mockIdentity, mockExtend, mockPillars, mockTone } from "@/lib/ai/mock";
-import { liveScriptsPrompt, liveStepPrompt, liveStructurePrompt, type LiveContext, auditPrompt, editorialLinePrompt, editorialWeekPrompt, postsWeekPrompt, postsFillPrompt, identityPrompt, identityExtendPrompt, pillarsPrompt, tonePrompt, type BrandContext, type EditorialContext } from "@/lib/ai/prompts";
+import { mockAudit, mockLiveScripts, mockLiveStructure, mockEditorial, mockPosts, mockPostsFill, mockIdentity, mockExtend, mockTone } from "@/lib/ai/mock";
+import { liveScriptsPrompt, liveStepPrompt, liveStructurePrompt, type LiveContext, auditPrompt, editorialLinePrompt, editorialWeekPrompt, postsWeekPrompt, postsFillPrompt, identityPrompt, identityExtendPrompt, tonePrompt, type BrandContext, type EditorialContext } from "@/lib/ai/prompts";
 import type { LiveStep } from "@/lib/lives";
 import { OBJECTIVES, type Objective } from "@/lib/lives";
 import { pillarRotation, weeksForPeriod, type PeriodMonths } from "@/lib/editorial";
 import { identityExtendOutput, parseFoundations } from "@/lib/identity";
 import { addDays, hashtagsText, postsFillOutput, postsOutput, postsPerWeek, spreadDays, weekStartDate } from "@/lib/posts";
-import { liveScriptsOutput, liveStepOutput, liveStructureOutput, auditOutput, editorialOutput, generateRequest, type GenerateRequest, identityOutput, pillarsOutput, toneOutput } from "@/lib/ai/schemas";
+import { liveScriptsOutput, liveStepOutput, liveStructureOutput, auditOutput, editorialOutput, generateRequest, type GenerateRequest, identityOutput, toneOutput } from "@/lib/ai/schemas";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -125,9 +126,13 @@ async function run(supabase: Supa, req: GenerateRequest): Promise<NextResponse> 
     }
     if (req.type === "posts_week") return await handlePosts(supabase, req);
     if (req.type === "post_write") return await handlePostWrite(supabase, req);
-    if (req.type === "plan_extract" || req.type === "plan_stage") {
+    if (req.type === "plan_extract" || req.type === "plan_stage" || req.type === "personas" || req.type === "pillars" || req.type === "ideas") {
       const gen: Gen = (prompt, schema, tier = "heavy", mock) => generateJson(prompt, schema, mock ?? (() => { throw new Error("réponse simulée manquante"); }), tier, { thinking: "off", maxTokens: 8192 });
-      const out = await handlePlan(supabase, req as PlanRequest, gen);
+      const out =
+        req.type === "personas" ? await handlePersonas(supabase, req.brand_profile_id, gen)
+        : req.type === "pillars" ? await handlePillars(supabase, req.brand_profile_id, req.brief ?? { priority: "notoriete", problem: "" }, gen)
+        : req.type === "ideas" ? await handleIdeas(supabase, req.brand_profile_id, req.pillar_id, req.count, gen)
+        : await handlePlan(supabase, req as PlanRequest, gen);
       return NextResponse.json(out.body, { status: out.status });
     }
     if (req.type === "live_structure" || req.type === "live_step" || req.type === "live_scripts") {
@@ -189,7 +194,7 @@ async function run(supabase: Supa, req: GenerateRequest): Promise<NextResponse> 
 
     if (req.type === "audit") return await handleAudit(supabase, brand, req);
 
-    // pillars / tone : contexte = identité existante
+    // tone : contexte = identité existante
     const { data: identity } = await supabase
       .from("brand_identity")
       .select("positioning, target_segments, visual_palette, marketing_objectives")
@@ -199,17 +204,6 @@ async function run(supabase: Supa, req: GenerateRequest): Promise<NextResponse> 
       return fail(409, "Générez d'abord l'identité de marque.", "identity_missing");
     }
     const ctx: BrandContext = { name: brand.name, sector: brand.sector, identity };
-
-    if (req.type === "pillars") {
-      const result = await generateJson(pillarsPrompt(ctx), pillarsOutput, mockPillars, "heavy");
-      const { error: delErr } = await supabase.from("content_pillars").delete().eq("brand_profile_id", brand.id);
-      if (delErr) return fail(500, "Les anciens piliers n'ont pas pu être remplacés.", "db");
-      const { error } = await supabase.from("content_pillars").insert(
-        result.pillars.map((p) => ({ brand_profile_id: brand.id, ...p })),
-      );
-      if (error) return fail(500, "Les piliers n'ont pas pu être enregistrés.", "db");
-      return NextResponse.json({ ok: true, data: result });
-    }
 
     const result = await generateJson(tonePrompt(ctx), toneOutput, mockTone, "light");
     const { error } = await supabase.from("tone_voice").upsert(

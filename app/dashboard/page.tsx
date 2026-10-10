@@ -31,6 +31,8 @@ export default async function DashboardHome() {
   const status: Record<TabSlug, { headline: string; sub: string }> = {
     plan: { headline: ov.planBuilt ? "Plan en place" : "À construire", sub: ov.planBuilt ? "Identité, calendrier, règles et indicateurs" : "Décrivez votre organisation : l'IA bâtit le plan" },
     identity: { headline: ov.hasIdentity ? "Identité définie" : "À définir", sub: ov.mission ? ov.mission.slice(0, 90) : "Mission, valeurs, cibles et objectifs" },
+    personas: { headline: ov.personas.length ? plural(ov.personas.length, "cible", "cibles") : "Aucune cible", sub: ov.personas.length ? ov.personas.slice(0, 3).map((p) => p.name).join(" · ") : "Besoins, freins, ton, leviers" },
+    ideas: { headline: ov.ideas.total ? plural(ov.ideas.total, "idée", "idées") : "Banque vide", sub: ov.ideas.total ? `${ov.ideas.toSort} à trier · ${ov.ideas.kept} retenue${ov.ideas.kept > 1 ? "s" : ""}` : "Idées brutes, veille, benchmarks" },
     charter: { headline: pr.done.charter ? "Charte prête" : "À compléter", sub: "Couleurs, typographie, logo, visuels" },
     pillars: { headline: ov.pillars.length ? plural(ov.pillars.length, "pilier", "piliers") : "Aucun pilier", sub: ov.pillars.length ? ov.pillars.slice(0, 3).map((p) => (p.pct != null ? `${p.name} ${p.pct} %` : p.name)).join(" · ") : "Les grands thèmes de vos publications" },
     tone: { headline: pr.done.tone ? "Voix définie" : "À définir", sub: "Ce qu'on dit, ce qu'on évite" },

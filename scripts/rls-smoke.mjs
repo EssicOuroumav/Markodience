@@ -56,6 +56,18 @@ try {
   check("publications : A (gratuit) les lit", (await rest(a, `posts?brand_profile_id=eq.${aProfile}`)).json?.length === 1);
   check("gratuit : écriture posts refusée", (await rest(a, "posts", { method: "POST", body: { brand_profile_id: aProfile, caption: "x" } })).status === 403);
   check("publications : B ne peut pas écrire chez A", (await rest(b, "posts", { method: "POST", body: { brand_profile_id: aProfile, caption: "x" } })).status === 403);
+  // Cibles et banque d'idées : ouvertes à tous les paliers, isolées par marque
+  const per = await rest(a, "personas", { method: "POST", body: { brand_profile_id: aProfile, name: "Cible A" } });
+  check("personas : A crée une cible (palier gratuit)", per.status === 201, per.status);
+  check("personas : B ne voit pas celles de A", (await rest(b, `personas?brand_profile_id=eq.${aProfile}`)).json?.length === 0);
+  check("personas : B ne peut pas écrire chez A", (await rest(b, "personas", { method: "POST", body: { brand_profile_id: aProfile, name: "X" } })).status === 403);
+  const idea = await rest(a, "content_ideas", { method: "POST", body: { brand_profile_id: aProfile, title: "Idée A" } });
+  check("idées : A crée une idée (palier gratuit)", idea.status === 201, idea.status);
+  check("idées : B ne voit pas celles de A", (await rest(b, `content_ideas?brand_profile_id=eq.${aProfile}`)).json?.length === 0);
+  check("idées : B ne peut pas écrire chez A", (await rest(b, "content_ideas", { method: "POST", body: { brand_profile_id: aProfile, title: "X" } })).status === 403);
+  check("idées : lien non web refusé par la base", (await rest(a, "content_ideas", { method: "POST", body: { brand_profile_id: aProfile, title: "X", url: "javascript:alert(1)" } })).status >= 400);
+  check("idées : statut inconnu refusé", (await rest(a, "content_ideas", { method: "POST", body: { brand_profile_id: aProfile, title: "X", status: "autre" } })).status >= 400);
+
   // Plan stratégique : réservé aux paliers payants, isolé par marque
   check("gratuit : écriture brand_strategy refusée", (await rest(a, "brand_strategy", { method: "POST", body: { brand_profile_id: aProfile, brief: {} } })).status === 403);
   const stratRow = await admin("/rest/v1/brand_strategy", { method: "POST", body: { brand_profile_id: aProfile, brief: { x: 1 } } });

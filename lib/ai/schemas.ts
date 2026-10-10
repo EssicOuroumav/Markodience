@@ -2,6 +2,7 @@ import { z } from "zod";
 import { AUDIT_NETWORKS, MAX_FILES } from "../audit";
 import { objectiveInputSchema } from "../objectives";
 import { foundationsSchema, visualGuideSchema } from "../identity";
+import { pillarsBrief } from "../strategy/schemas";
 import { briefSchema } from "../plan/brief";
 import { MAX_DESCRIPTION } from "../plan/extract";
 import { STAGES as PLAN_STAGES } from "../plan/store";
@@ -109,7 +110,9 @@ export type Questionnaire = z.infer<typeof questionnaireSchema>;
 export const generateRequest = z.discriminatedUnion("type", [
   z.object({ type: z.literal("identity"), brand_profile_id: z.string().uuid(), questionnaire: questionnaireSchema }),
   z.object({ type: z.literal("identity_extend"), brand_profile_id: z.string().uuid() }),
-  z.object({ type: z.literal("pillars"), brand_profile_id: z.string().uuid() }),
+  z.object({ type: z.literal("pillars"), brand_profile_id: z.string().uuid(), brief: pillarsBrief.optional() }),
+  z.object({ type: z.literal("personas"), brand_profile_id: z.string().uuid() }),
+  z.object({ type: z.literal("ideas"), brand_profile_id: z.string().uuid(), pillar_id: z.string().uuid(), count: z.number().int().min(3).max(10).default(6) }),
   z.object({ type: z.literal("tone"), brand_profile_id: z.string().uuid() }),
   z.object({
     type: z.literal("audit"),
