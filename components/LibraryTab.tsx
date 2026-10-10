@@ -115,7 +115,7 @@ export default function LibraryTab({ brandId, initial, initialUrls, initialLinks
       <PageHeader tab="library"><SaveIndicator state={save} /></PageHeader>
 
       <article className="card-flat mb-6">
-        <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="section-title flex items-center gap-2"><Link2 size={19} className="text-accent" />Liens et ressources</h2><Link href="/dashboard/charter" className="btn-secondary !py-1.5 text-[14px]"><Palette size={15} />Charte graphique</Link></div>
+        <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="section-title flex items-center gap-2"><Link2 size={19} className="text-accent" />Liens et ressources</h2><Link href="/dashboard/identity#charter" className="btn-secondary !py-1.5 text-[14px]"><Palette size={15} />Charte graphique</Link></div>
         <p className="mt-1 text-[15px] text-ink-secondary">Les dossiers de médias, modèles Canva ou Figma et documents de la marque, à un clic. Les fichiers eux-mêmes se déposent plus bas.</p>
         {(links.length > 0 || ficheLinks.length > 0) && (
           <ul className="mt-4 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">

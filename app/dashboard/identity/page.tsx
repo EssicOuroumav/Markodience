@@ -1,10 +1,14 @@
 import IdentityTab, { type Identity } from "@/components/IdentityTab";
 import { getDashboardContext } from "@/lib/brand";
+import { parseVisualGuide } from "@/lib/identity";
+import { PLANS } from "@/lib/plans";
+import { footerBrand } from "@/lib/whiteLabel";
+import CharterTab from "@/components/CharterTab";
 import ToneTab from "@/components/ToneTab";
 import { ToneSection, type ToneRow } from "@/components/StrategyBlocks";
 
 export default async function IdentityPage() {
-  const { supabase, active } = await getDashboardContext();
+  const { supabase, user, active, plan } = await getDashboardContext();
   const { data } = await supabase
     .from("brand_identity")
     .select("positioning, target_segments, visual_palette, marketing_objectives, questionnaire, foundations, visual_guide, tone_table, rewrite, logo_note")
@@ -25,6 +29,11 @@ export default async function IdentityPage() {
       kpiReports={kpi ?? []}
     />
     {tone.length > 0 && <ToneSection rows={tone} rewrite={(data?.rewrite as { avoid: string; follow: string } | null) ?? null} logoNote={(data?.logo_note as string | null) ?? null} />}
+    <div id="charter" className="mt-12 scroll-mt-6">
+      <CharterTab embedded key={`charter-${active.id}`} brandId={active.id} brandName={active.name} brandColor={active.primary_color} logoUrl={active.logo_url}
+        hasIdentity={!!data?.positioning} palette={(data?.visual_palette as { color: string; usage: string }[] | null) ?? []} guide={parseVisualGuide(data?.visual_guide)}
+        watermark={PLANS[plan].exportWatermark} footer={footerBrand(plan, user.user_metadata)} />
+    </div>
     <div id="tone" className="mt-12 scroll-mt-6">
       <ToneTab embedded key={`tone-${active.id}`} brandId={active.id} hasIdentity={!!data?.positioning}
         initial={toneRow ? { do_list: (toneRow.do_list as string[]) ?? [], dont_list: (toneRow.dont_list as string[]) ?? [] } : null} />

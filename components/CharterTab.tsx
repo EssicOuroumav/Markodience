@@ -24,8 +24,8 @@ function Card({ Icon, title, children, className = "" }: { Icon: typeof Palette;
   );
 }
 
-export default function CharterTab({ brandId, brandName, brandColor, logoUrl, hasIdentity, palette: initialPalette, guide: initialGuide, watermark, footer }: {
-  brandId: string; brandName: string; brandColor: string | null; logoUrl: string | null; hasIdentity: boolean; palette: Color[]; guide: VisualGuide | null; watermark: boolean; footer?: string;
+export default function CharterTab({ brandId, brandName, brandColor, logoUrl, hasIdentity, palette: initialPalette, guide: initialGuide, watermark, footer, embedded = false }: {
+  embedded?: boolean; brandId: string; brandName: string; brandColor: string | null; logoUrl: string | null; hasIdentity: boolean; palette: Color[]; guide: VisualGuide | null; watermark: boolean; footer?: string;
 }) {
   const supabase = createClient();
   const [palette, setPalette] = useState<Color[]>(initialPalette);
@@ -56,6 +56,9 @@ export default function CharterTab({ brandId, brandName, brandColor, logoUrl, ha
     }
   }
 
+  // Intégrée à la page Identité : cette page propose déjà de créer l'identité et sa charte, on n'affiche rien tant qu'elles manquent.
+  if (embedded && (!hasIdentity || !guide)) return null;
+
   if (!hasIdentity) {
     return (
       <section>
@@ -80,11 +83,13 @@ export default function CharterTab({ brandId, brandName, brandColor, logoUrl, ha
 
   return (
     <section className="rise">
-      <PageHeader tab="charter">
-        <SaveIndicator state={save} />
-        <button type="button" className="btn-primary" onClick={exportGuide} disabled={exporting}><FileDown size={17} />{exporting ? "Préparation…" : "Guide de marque (PDF)"}</button>
-      </PageHeader>
-      <p className="caption -mt-4 mb-2">Cliquez sur un texte pour le modifier : les changements sont enregistrés automatiquement. {watermark && "Le PDF du palier Gratuit porte un filigrane."}</p>
+      {(() => {
+        const actions = (<><SaveIndicator state={save} /><button type="button" className="btn-primary" onClick={exportGuide} disabled={exporting}><FileDown size={17} />{exporting ? "Préparation…" : "Guide de marque (PDF)"}</button></>);
+        return embedded ? (
+          <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-[24px] leading-tight">Charte graphique</h2><p className="mt-1 text-[15px] text-ink-secondary">Couleurs, typographie, règles du logo et style de visuels.</p></div><div className="flex items-center gap-3">{actions}</div></div>
+        ) : <PageHeader tab="charter">{actions}</PageHeader>;
+      })()}
+      <p className={`caption mb-2 ${embedded ? "mt-2" : "-mt-4"}`}>Cliquez sur un texte pour le modifier : les changements sont enregistrés automatiquement. {watermark && "Le PDF du palier Gratuit porte un filigrane."}</p>
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-2">
         <Card Icon={Palette} title="Couleurs de la marque">
           <div className="space-y-3">
