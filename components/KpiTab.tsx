@@ -22,7 +22,7 @@ const toForm = (raw: unknown): KpiData => {
 };
 const num = (v: string) => (v === "" ? 0 : Math.max(0, Math.floor(Number(v)) || 0));
 
-export default function KpiTab({ brandId, brandName, brandColor, deadlineDay: initialDay, initial, watermark, customIndicators = [], footer }: Props) {
+export default function KpiTab({ brandId, brandName, brandColor, deadlineDay: initialDay, initial, watermark, customIndicators = [], footer, lead }: Props & { lead?: React.ReactNode }) {
   const supabase = createClient();
   const months = recentMonths(new Date());
   const [reports, setReports] = useState<KpiReport[]>(initial);
@@ -127,6 +127,7 @@ export default function KpiTab({ brandId, brandName, brandColor, deadlineDay: in
             )}
           </div>
         </PageHeader>
+      {lead}
 
       {state === "submitted" && bannerReport?.submitted_at && (
         <p role="status" className="mt-4 text-[15px] text-ink-secondary">Rapport de {monthLabel(bannerMonth)} envoyé le {dateLabel(bannerReport.submitted_at)}.</p>

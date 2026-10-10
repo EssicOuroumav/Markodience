@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { callGenerate } from "@/lib/api";
 import { ACCEPTED, AUDIT_NETWORKS, MAX_FILES, MAX_TOTAL_BYTES, formatMegabytes, storageName, validateFile, validateTotal, type AuditNetwork } from "@/lib/audit";
 import AuditReport from "./AuditReport";
+import AuditTrend from "./AuditTrend";
 import GenerateError from "./GenerateError";
 import PageHeader from "./PageHeader";
 import EmptyState from "./EmptyState";
@@ -161,6 +162,8 @@ export default function AuditTab({ brandId, initial }: { brandId: string; initia
           <AuditReport data={current.report_data} />
         </div>
       )}
+
+      <AuditTrend rows={audits} />
 
       <div className="mt-14">
         <h2 className="section-title">Historique des audits</h2>

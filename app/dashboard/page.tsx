@@ -42,8 +42,9 @@ export default async function DashboardHome() {
     posts: { headline: plural(ov.posts.draft + ov.posts.ready + ov.posts.published, "publication", "publications"), sub: `${ov.posts.draft} brouillon · ${ov.posts.ready} prêt · ${ov.posts.published} publié` },
     library: { headline: ov.assets ? plural(ov.assets, "fichier", "fichiers") : "Vide", sub: "Logos, photos, visuels, documents" },
     lives: { headline: guides ? plural(guides, "guide", "guides") : "Aucun guide", sub: "Trame, équipe, scripts" },
+    community: { headline: ov.community ? plural(ov.community, "réponse type", "réponses types") : "Aucun guide", sub: "Réponses, scripts, crise, interactions" },
     audit: { headline: typeof auditScore === "number" ? `Score ${Math.round(auditScore)}/100` : "Aucun audit", sub: "État de la marque et évolution" },
-    kpi: { headline: kpiState === "submitted" ? "Rapport envoyé" : kpiState === "late" ? "Rapport en retard" : "Rapport à soumettre", sub: `${monthLabel(month)} · échéance ${dateLabel(kpiDeadline)}` },
+    kpi: { headline: ov.kpiDefs ? `${plural(ov.kpiDefs, "indicateur", "indicateurs")} · ` + (kpiState === "submitted" ? "rapport envoyé" : kpiState === "late" ? "rapport en retard" : "rapport à soumettre") : kpiState === "submitted" ? "Rapport envoyé" : kpiState === "late" ? "Rapport en retard" : "Rapport à soumettre", sub: `${monthLabel(month)} · échéance ${dateLabel(kpiDeadline)}` },
   };
 
   return (

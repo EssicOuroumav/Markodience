@@ -13,7 +13,8 @@ export const TABS = [
   { slug: "library", optional: true, description: "Fichiers, dossiers de médias, modèles Canva et Figma, charte graphique : tout au même endroit.", label: "Médiathèque", ready: true, feature: "library" as Feature, pitch: "Rangez les logos, photos, visuels et documents de chaque marque au même endroit, prêts à être retrouvés et téléchargés." },
   { slug: "ideas", optional: true, description: "Toutes vos idées au même endroit : idées brutes, veille, concurrents, suggestions de l'IA, et leur passage en publication.", label: "Banque d'idées", ready: true, feature: "identity" as Feature, pitch: "" },
   { slug: "organic", optional: true, description: "Des leviers de portée sans budget publicitaire, chacun avec une action concrète à cocher.", label: "Stratégie organique", ready: true, feature: "editorial" as Feature, pitch: "Douze leviers pour toucher plus de monde sans budget publicitaire, chacun avec une action concrète, datée et à cocher." },
-  { slug: "kpi", description: "Saisie mensuelle, échéance et export PDF de vos rapports de performance.", label: "KPIs & Reporting", ready: true, feature: "kpi" as Feature, pitch: "Saisie mensuelle, rappel d'échéance et export PDF de vos rapports de performance." },
+  { slug: "community", optional: true, description: "Réponses types, scripts, gestion de crise et suivi des interactions : modérer sans improviser.", label: "Communauté & modération", ready: true, feature: "rules" as Feature, pitch: "Réponses types, scripts pour les situations difficiles, protocole de crise et suivi des interactions chaudes." },
+  { slug: "kpi", description: "Saisie mensuelle, échéance et export PDF de vos rapports de performance.", label: "Performance", ready: true, feature: "kpi" as Feature, pitch: "Saisie mensuelle, rappel d'échéance et export PDF de vos rapports de performance." },
   { slug: "rules", description: "Les règles de travail de la marque, section par section.", label: "Règles opérationnelles", ready: true, feature: "rules" as Feature, pitch: "Centralisez les règles de travail de chaque marque : planning, visuels, communauté, confidentialité." },
   { slug: "lives", description: "Préparez vos lives : trame, équipe, scripts et réponses rapides.", label: "Guide Lives", ready: true, feature: "lives" as Feature, pitch: "Préparez vos lives : trame par objectif, équipe, scripts et réponses rapides en un clic." },
 ] as const;
@@ -42,6 +43,7 @@ export const TAB_GROUP: Record<TabSlug, TabGroupId> = {
   posts: "production",
   library: "production",
   lives: "production",
+  community: "production",
   audit: "analyse",
   kpi: "analyse",
 };

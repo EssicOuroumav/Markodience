@@ -13,7 +13,7 @@ export const getOverview = cache(async () => {
     const q = supabase.from(table).select("id", { count: "exact", head: true }).eq("brand_profile_id", id);
     return (filter ? (filter(q as never) as typeof q) : q).then((r) => r.count ?? 0);
   };
-  const [identity, pillars, strategy, upcoming, draft, ready, published, assets, rules, guides, personas, ideas] = await Promise.all([
+  const [identity, pillars, strategy, upcoming, draft, ready, published, assets, rules, guides, community, kpiDefs, personas, ideas] = await Promise.all([
     supabase.from("brand_identity").select("positioning, foundations").eq("brand_profile_id", id).maybeSingle(),
     supabase.from("content_pillars").select("name, pct").eq("brand_profile_id", id).order("pct", { ascending: false, nullsFirst: false }),
     supabase.from("brand_strategy").select("organic, organic_done, built_at").eq("brand_profile_id", id).maybeSingle(),
@@ -24,6 +24,8 @@ export const getOverview = cache(async () => {
     count("assets"),
     count("operational_rules", (q) => (q as never as { neq: (a: string, b: string) => unknown }).neq("content", "")),
     count("live_guides"),
+    count("community_items"),
+    count("kpi_definitions"),
     supabase.from("personas").select("name, priority").eq("brand_profile_id", id).order("position"),
     supabase.from("content_ideas").select("status").eq("brand_profile_id", id),
   ]);
@@ -43,6 +45,8 @@ export const getOverview = cache(async () => {
     assets,
     rules,
     guides,
+    community,
+    kpiDefs,
     personas: (personas.data ?? []) as { name: string; priority: string }[],
     ideas: { total: (ideas.data ?? []).length, toSort: (ideas.data ?? []).filter((i) => i.status === "a_trier").length, kept: (ideas.data ?? []).filter((i) => i.status === "retenue").length },
   };

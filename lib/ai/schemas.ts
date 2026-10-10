@@ -112,6 +112,7 @@ export const generateRequest = z.discriminatedUnion("type", [
   z.object({ type: z.literal("identity_extend"), brand_profile_id: z.string().uuid() }),
   z.object({ type: z.literal("pillars"), brand_profile_id: z.string().uuid(), brief: pillarsBrief.optional() }),
   z.object({ type: z.literal("personas"), brand_profile_id: z.string().uuid() }),
+  z.object({ type: z.literal("community"), brand_profile_id: z.string().uuid() }),
   z.object({ type: z.literal("ideas"), brand_profile_id: z.string().uuid(), pillar_id: z.string().uuid(), count: z.number().int().min(3).max(10).default(6) }),
   z.object({ type: z.literal("tone"), brand_profile_id: z.string().uuid() }),
   z.object({

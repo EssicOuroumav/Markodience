@@ -89,6 +89,25 @@ try {
   check("médiathèque : lien non web refusé", (await admin("/rest/v1/media_links", { method: "POST", body: { brand_profile_id: aProfile, label: "X", url: "javascript:alert(1)" } })).status >= 400);
   check("médiathèque : B ne voit pas les liens de A", (await rest(b, `media_links?brand_profile_id=eq.${aProfile}`)).json?.length === 0);
 
+  // Lot D : communauté, interactions, indicateurs
+  const bProfile = (await admin("/rest/v1/brand_profiles", { method: "POST", body: { user_id: b.id, name: "B1" } })).json?.[0]?.id;
+  check("communauté : écriture réservée aux paliers payants", (await rest(a, "community_items", { method: "POST", body: { brand_profile_id: aProfile, kind: "faq", title: "Q", body: "R" } })).status === 403);
+  check("interactions : écriture réservée aux paliers payants", (await rest(a, "interactions", { method: "POST", body: { brand_profile_id: aProfile, person: "X" } })).status === 403);
+  check("indicateurs : écriture réservée aux paliers payants", (await rest(a, "kpi_definitions", { method: "POST", body: { brand_profile_id: aProfile, name: "K" } })).status === 403);
+  const ci = await admin("/rest/v1/community_items", { method: "POST", body: { brand_profile_id: aProfile, kind: "crise", title: "Q", body: "R", level: "grave" } });
+  check("communauté : création par le service", ci.status === 201, ci.status);
+  check("communauté : type inconnu refusé", (await admin("/rest/v1/community_items", { method: "POST", body: { brand_profile_id: aProfile, kind: "autre", title: "Q", body: "R" } })).status >= 400);
+  check("communauté : B ne voit pas les éléments de A", (await rest(b, `community_items?brand_profile_id=eq.${aProfile}`)).json?.length === 0);
+  const kd = await admin("/rest/v1/kpi_definitions", { method: "POST", body: { brand_profile_id: aProfile, name: "Messages", target: 100, direction: "hausse" } });
+  check("indicateurs : création par le service", kd.status === 201, kd.status);
+  const kdId = kd.json?.[0]?.id;
+  check("indicateurs : sens inconnu refusé", (await admin("/rest/v1/kpi_definitions", { method: "POST", body: { brand_profile_id: aProfile, name: "X", direction: "diagonale" } })).status >= 400);
+  check("indicateurs : B ne voit pas ceux de A", (await rest(b, `kpi_definitions?brand_profile_id=eq.${aProfile}`)).json?.length === 0);
+  check("valeurs : une valeur ne peut pas viser l'indicateur d'une autre marque", (await admin("/rest/v1/kpi_values", { method: "POST", body: { definition_id: kdId, brand_profile_id: bProfile, month: "2026-10-01", value: 5 } })).status >= 400);
+  check("valeurs : valeur valide acceptée", (await admin("/rest/v1/kpi_values", { method: "POST", body: { definition_id: kdId, brand_profile_id: aProfile, month: "2026-10-01", value: 5 } })).status === 201);
+  check("valeurs : un mois ne peut être saisi qu'une fois", (await admin("/rest/v1/kpi_values", { method: "POST", body: { definition_id: kdId, brand_profile_id: aProfile, month: "2026-10-01", value: 6 } })).status === 409);
+  check("actions : une action ne peut pas viser l'indicateur d'une autre marque", (await admin("/rest/v1/kpi_actions", { method: "POST", body: { brand_profile_id: bProfile, definition_id: kdId, title: "x" } })).status >= 400);
+
   // Plan stratégique : réservé aux paliers payants, isolé par marque
   check("gratuit : écriture brand_strategy refusée", (await rest(a, "brand_strategy", { method: "POST", body: { brand_profile_id: aProfile, brief: {} } })).status === 403);
   const stratRow = await admin("/rest/v1/brand_strategy", { method: "POST", body: { brand_profile_id: aProfile, brief: { x: 1 } } });
