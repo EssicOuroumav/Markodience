@@ -1,9 +1,21 @@
 import { z } from "zod";
 
-export const POST_STATUSES = ["brouillon", "pret", "publie"] as const;
+export const POST_STATUSES = ["brouillon", "a_valider", "programme", "publie"] as const;
 export type PostStatus = (typeof POST_STATUSES)[number];
-export const POST_STATUS_LABEL: Record<PostStatus, string> = { brouillon: "Brouillon", pret: "Prêt", publie: "Publié" };
-export const nextPostStatus = (s: PostStatus): PostStatus => POST_STATUSES[(POST_STATUSES.indexOf(s) + 1) % POST_STATUSES.length];
+export const POST_STATUS_LABEL: Record<PostStatus, string> = { brouillon: "Brouillon", a_valider: "À valider", programme: "Programmé", publie: "Publié" };
+
+/** Prochaine étape du circuit : un brouillon se soumet, une publication à valider se valide, une publication programmée se publie. */
+export const NEXT_STEP: Partial<Record<PostStatus, { to: PostStatus; label: string }>> = {
+  brouillon: { to: "a_valider", label: "Demander la validation" },
+  a_valider: { to: "programme", label: "Valider" },
+  programme: { to: "publie", label: "Marquer comme publié" },
+};
+export const POST_FORMATS = ["Reel", "Carrousel", "Post", "Story", "Live", "Vidéo", "Article"] as const;
+export const STATUS_CLS: Record<PostStatus, string> = { brouillon: "bg-black/10 text-ink", a_valider: "bg-warning/25 text-ink", programme: "bg-accent-soft text-accent", publie: "bg-success/25 text-ink" };
+export const DOT_CLS: Record<PostStatus, string> = { brouillon: "bg-black/30", a_valider: "bg-warning", programme: "bg-accent", publie: "bg-success" };
+
+/** Texte court d'une publication pour les vues compactes (kanban, liste) : légende, sinon accroche, sinon idée du plan. */
+export const postTitle = (p: Pick<Post, "caption" | "hook" | "idea">) => (p.caption || p.hook || p.idea || "Sans texte").replace(/\s+/g, " ").trim().slice(0, 110);
 
 export type Post = {
   id: string;
@@ -21,6 +33,10 @@ export type Post = {
   hook?: string;
   pillar?: string | null;
   format?: string | null;
+  assignee?: string | null;
+  design_link?: string | null;
+  review_note?: string | null;
+  asset_id?: string | null;
 };
 
 /** Ce que l'IA renvoie pour une semaine : quelques publications réparties sur les jours (0 = premier jour de la semaine). */

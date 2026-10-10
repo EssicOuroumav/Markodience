@@ -36,23 +36,27 @@ export function ToneSection({ rows, rewrite, logoNote }: { rows: ToneRow[]; rewr
   );
 }
 
-export function NetworkInfo({ profile }: { profile: NetworkStage }) {
+export function NetworkInfo({ profile, eyebrow }: { profile: NetworkStage; eyebrow?: string }) {
   return (
-    <div className="mt-6 space-y-4">
+    <div className="mt-6 space-y-5">
       <div>
-        <h2 className="text-[22px] leading-tight">{profile.headline}</h2>
-        <p className="mt-1 max-w-3xl text-[15px] text-ink-secondary">{profile.lead}</p>
+        {eyebrow && <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-warning">{eyebrow}</p>}
+        <h2 className="mt-1 text-[30px] font-semibold leading-tight tracking-heading">{profile.headline}</h2>
+        <p className="mt-2 max-w-3xl text-[16px] text-ink-secondary">{profile.lead}</p>
       </div>
-      <div className="grid gap-3 md:grid-cols-3">
-        {[["Fréquence", profile.frequency], ["Format prioritaire", profile.format], ["Heure optimale", profile.best_hours]].map(([k, v]) => (
-          <div key={k} className="rounded-2xl bg-white p-4 shadow-card"><p className="caption font-semibold uppercase">{k}</p><p className="mt-1 text-[15px] font-medium">{v}</p></div>
+      <div className="grid overflow-hidden rounded-2xl border border-black/10 bg-white md:grid-cols-3">
+        {([["Fréquence", profile.frequency], ["Format prioritaire", profile.format], ["Heure optimale", profile.best_hours]] as const).map(([k, v], i) => (
+          <div key={k} className={`p-4 ${i === 2 ? "bg-warning/15" : ""} ${i > 0 ? "border-t border-black/10 md:border-l md:border-t-0" : ""}`}>
+            <p className={`text-[11px] font-bold uppercase tracking-[0.06em] ${i === 2 ? "text-warning" : "text-ink-secondary"}`}>{k}</p>
+            <p className="mt-1 text-[15px] font-semibold">{v}</p>
+          </div>
         ))}
       </div>
-      <details className="card-flat">
-        <summary className="cursor-pointer text-[16px] font-semibold">{profile.rules_title}</summary>
-        <ul className="mt-3 space-y-2 text-[15px]">{profile.rules.map((r) => <li key={r.label}><span className="font-semibold">{r.label} :</span> {r.text}</li>)}</ul>
-      </details>
-      <p className="rounded-2xl bg-canvas px-5 py-3 text-[15px]"><span className="font-semibold">Méthode.</span> {profile.method}</p>
+      <div className="rounded-2xl border border-warning/30 bg-warning/15 p-5">
+        <h3 className="text-[17px] font-semibold text-warning">{profile.rules_title}</h3>
+        <ul className="mt-3 space-y-2 text-[15px]">{profile.rules.map((r) => <li key={r.label}>— <span className="font-semibold">{r.label} :</span> {r.text}</li>)}</ul>
+      </div>
+      <p className="rounded-2xl border border-success/30 bg-success/10 px-5 py-3.5 text-[15px]"><span className="font-semibold text-success">Méthode :</span> {profile.method}</p>
     </div>
   );
 }

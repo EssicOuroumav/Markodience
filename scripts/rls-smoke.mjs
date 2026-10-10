@@ -68,6 +68,27 @@ try {
   check("idées : lien non web refusé par la base", (await rest(a, "content_ideas", { method: "POST", body: { brand_profile_id: aProfile, title: "X", url: "javascript:alert(1)" } })).status >= 400);
   check("idées : statut inconnu refusé", (await rest(a, "content_ideas", { method: "POST", body: { brand_profile_id: aProfile, title: "X", status: "autre" } })).status >= 400);
 
+  // Calendrier : nouveaux statuts, validation par lien, liens de la médiathèque
+  const okPost = await admin("/rest/v1/posts", { method: "POST", body: { brand_profile_id: aProfile, caption: "x", status: "a_valider" } });
+  check("publications : statut « À valider » accepté", okPost.status === 201, okPost.status);
+  check("publications : l'ancien statut « pret » est refusé", (await admin("/rest/v1/posts", { method: "POST", body: { brand_profile_id: aProfile, caption: "x", status: "pret" } })).status >= 400);
+  check("publications : lien de visuel non web refusé", (await admin("/rest/v1/posts", { method: "POST", body: { brand_profile_id: aProfile, caption: "x", design_link: "javascript:alert(1)" } })).status >= 400);
+  const postId = (await admin(`/rest/v1/posts?brand_profile_id=eq.${aProfile}&status=eq.a_valider&select=id`)).json?.[0]?.id;
+  check("validation : A (gratuit) ne peut pas créer de lien", (await rest(a, "validation_requests", { method: "POST", body: { brand_profile_id: aProfile, token_hash: "h".repeat(64), reviewer: "X", post_ids: [postId], expires_at: "2099-01-01" } })).status === 403);
+  const vr = await admin("/rest/v1/validation_requests", { method: "POST", body: { brand_profile_id: aProfile, token_hash: "a".repeat(64), reviewer: "Direction", post_ids: [postId], expires_at: "2099-01-01" } });
+  check("validation : création par le service", vr.status === 201, vr.status);
+  check("validation : B ne voit pas les liens de A", (await rest(b, `validation_requests?brand_profile_id=eq.${aProfile}`)).json?.length === 0);
+  check("validation : un jeton identique est refusé (empreinte unique)", (await admin("/rest/v1/validation_requests", { method: "POST", body: { brand_profile_id: aProfile, token_hash: "a".repeat(64), reviewer: "Y", post_ids: [postId], expires_at: "2099-01-01" } })).status === 409);
+  await admin("/rest/v1/post_reviews", { method: "POST", body: { post_id: postId, reviewer: "Direction", decision: "modifs", comment: "Changer la photo" } });
+  check("validation : A lit les retours de ses publications", (await rest(a, `post_reviews?post_id=eq.${postId}`)).json?.length === 1);
+  check("validation : B ne lit pas les retours de A", (await rest(b, `post_reviews?post_id=eq.${postId}`)).json?.length === 0);
+  check("validation : personne ne peut écrire un retour depuis son compte", (await rest(a, "post_reviews", { method: "POST", body: { post_id: postId, reviewer: "Moi", decision: "approuve" } })).status === 403);
+  check("médiathèque : liens réservés aux paliers payants", (await rest(a, "media_links", { method: "POST", body: { brand_profile_id: aProfile, label: "Canva", url: "https://canva.com/x", kind: "canva" } })).status === 403);
+  const ml = await admin("/rest/v1/media_links", { method: "POST", body: { brand_profile_id: aProfile, label: "Canva", url: "https://canva.com/x", kind: "canva" } });
+  check("médiathèque : création par le service", ml.status === 201, ml.status);
+  check("médiathèque : lien non web refusé", (await admin("/rest/v1/media_links", { method: "POST", body: { brand_profile_id: aProfile, label: "X", url: "javascript:alert(1)" } })).status >= 400);
+  check("médiathèque : B ne voit pas les liens de A", (await rest(b, `media_links?brand_profile_id=eq.${aProfile}`)).json?.length === 0);
+
   // Plan stratégique : réservé aux paliers payants, isolé par marque
   check("gratuit : écriture brand_strategy refusée", (await rest(a, "brand_strategy", { method: "POST", body: { brand_profile_id: aProfile, brief: {} } })).status === 403);
   const stratRow = await admin("/rest/v1/brand_strategy", { method: "POST", body: { brand_profile_id: aProfile, brief: { x: 1 } } });

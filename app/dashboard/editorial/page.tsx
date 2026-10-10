@@ -2,6 +2,7 @@ import EditorialTab, { type Entry, type Line } from "@/components/EditorialTab";
 import { getDashboardContext } from "@/lib/brand";
 import { lockedView } from "@/lib/gate";
 import { networkStage } from "@/lib/plan/schemas";
+import type { LineRow } from "@/components/editorial/LineView";
 
 export default async function EditorialPage() {
   const { supabase, active, plan } = await getDashboardContext();
@@ -10,6 +11,10 @@ export default async function EditorialPage() {
   const [{ data: lines }, { count: pillarCount }] = await Promise.all([
     supabase.from("editorial_lines").select("id, channel, period_start, period_end").eq("brand_profile_id", active.id).order("period_start", { ascending: true }),
     supabase.from("content_pillars").select("id", { count: "exact", head: true }).eq("brand_profile_id", active.id),
+  ]);
+  const [{ data: postRows }, { data: pillarRows }] = await Promise.all([
+    supabase.from("posts").select("id, editorial_entry_id, scheduled_date, idea, hook, pillar, format, caption, status").eq("brand_profile_id", active.id).not("editorial_entry_id", "is", null).limit(2000),
+    supabase.from("content_pillars").select("name, role").eq("brand_profile_id", active.id),
   ]);
   const { data: strategy } = await supabase.from("brand_strategy").select("networks").eq("brand_profile_id", active.id).maybeSingle();
   const profiles = Object.fromEntries(Object.entries((strategy?.networks ?? {}) as Record<string, { profile?: unknown }>).flatMap(([k, v]) => { const p = networkStage.safeParse(v?.profile); return p.success ? [[k, p.data]] : []; }));
@@ -28,6 +33,8 @@ export default async function EditorialPage() {
       initialEntries={(entries as Entry[]) ?? []}
       hasPillars={(pillarCount ?? 0) > 0}
       profiles={profiles}
+      initialRows={(postRows as LineRow[]) ?? []}
+      pillarRoles={Object.fromEntries((pillarRows ?? []).map((p) => [p.name ?? "", p.role ?? ""]))}
     />
   );
 }

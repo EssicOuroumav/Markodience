@@ -19,7 +19,7 @@ export const getOverview = cache(async () => {
     supabase.from("brand_strategy").select("organic, organic_done, built_at").eq("brand_profile_id", id).maybeSingle(),
     supabase.from("posts").select("id, channel, scheduled_date, status, idea, caption").eq("brand_profile_id", id).neq("status", "publie").gte("scheduled_date", today).order("scheduled_date", { ascending: true }).limit(5),
     count("posts", (q) => (q as never as { eq: (a: string, b: string) => unknown }).eq("status", "brouillon")),
-    count("posts", (q) => (q as never as { eq: (a: string, b: string) => unknown }).eq("status", "pret")),
+    count("posts", (q) => (q as never as { eq: (a: string, b: string) => unknown }).eq("status", "programme")),
     count("posts", (q) => (q as never as { eq: (a: string, b: string) => unknown }).eq("status", "publie")),
     count("assets"),
     count("operational_rules", (q) => (q as never as { neq: (a: string, b: string) => unknown }).neq("content", "")),

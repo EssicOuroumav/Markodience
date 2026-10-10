@@ -1,7 +1,9 @@
 "use client";
 
-import { Download, FileText, Trash2, UploadCloud } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { Download, ExternalLink, FileText, FolderOpen, Link2, Palette, Plus, Trash2, UploadCloud } from "lucide-react";
+import Link from "next/link";
+import { cleanUrl } from "@/lib/brandInfo";
+import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { ASSET_CATEGORIES, ASSET_CATEGORY_LABEL, LIBRARY_MAX_FILES, assetPath, displayName, guessCategory, isImage, totalBytes, validateAssetFile, type Asset, type AssetCategory, type LibraryMime } from "@/lib/library";
 import { formatMegabytes } from "@/lib/audit";
@@ -10,9 +12,11 @@ import EmptyState from "./EmptyState";
 import PageHeader from "./PageHeader";
 import SaveIndicator, { type SaveState } from "./SaveIndicator";
 
+export type MediaLink = { id: string; label: string; url: string; kind: "dossier" | "canva" | "figma" | "charte" | "document" | "autre" };
+const LINK_KINDS: Record<MediaLink["kind"], string> = { dossier: "Dossier de médias", canva: "Modèle Canva", figma: "Fichier Figma", charte: "Charte graphique", document: "Document", autre: "Autre" };
 const COLUMNS = "id, brand_profile_id, name, category, path, mime, size_bytes, created_at";
 
-export default function LibraryTab({ brandId, initial, initialUrls }: { brandId: string; initial: Asset[]; initialUrls: Record<string, string> }) {
+export default function LibraryTab({ brandId, initial, initialUrls, initialLinks = [], ficheLinks = [] }: { brandId: string; initial: Asset[]; initialUrls: Record<string, string>; initialLinks?: MediaLink[]; ficheLinks?: { label: string; url: string }[] }) {
   const supabase = createClient();
   const [assets, setAssets] = useState<Asset[]>(initial);
   const [filter, setFilter] = useState<AssetCategory | "all">("all");
@@ -22,14 +26,38 @@ export default function LibraryTab({ brandId, initial, initialUrls }: { brandId:
   const [problems, setProblems] = useState<string[]>([]);
   const [save, setSave] = useState<SaveState>("idle");
   const input = useRef<HTMLInputElement>(null);
+  const [links, setLinks] = useState<MediaLink[]>(initialLinks);
+  const [linkForm, setLinkForm] = useState({ label: "", url: "", kind: "dossier" as MediaLink["kind"] });
+  const [linkError, setLinkError] = useState<string | null>(null);
+
+  async function addLink() {
+    setLinkError(null);
+    const url = cleanUrl(linkForm.url);
+    if (url === null || url === "invalid") return setLinkError("Collez une adresse valide (exemple : canva.com/design/…).");
+    if (!linkForm.label.trim()) return setLinkError("Donnez un nom à ce lien.");
+    setSave("saving");
+    const { data, error } = await supabase.from("media_links").insert({ brand_profile_id: brandId, label: linkForm.label.trim().slice(0, 120), url, kind: linkForm.kind, position: links.length }).select("id, label, url, kind").single();
+    if (error || !data) { setSave("error"); return setLinkError(error?.code === "42501" ? "Limite de 60 liens atteinte ou palier insuffisant." : "Le lien n'a pas pu être enregistré."); }
+    setLinks((l) => [...l, data as MediaLink]);
+    setLinkForm({ label: "", url: "", kind: linkForm.kind });
+    setSave("saved");
+  }
+
+  async function removeLink(id: string) {
+    setSave("saving");
+    const { error } = await supabase.from("media_links").delete().eq("id", id);
+    if (error) return setSave("error");
+    setLinks((l) => l.filter((x) => x.id !== id));
+    setSave("saved");
+  }
 
   // Liens temporaires (1 h) pour les aperçus : le dossier est privé.
-  const sign = useCallback(async (list: Asset[]) => {
+  async function sign(list: Asset[]) {
     const need = list.filter((a) => isImage(a.mime));
     if (!need.length) return;
     const { data } = await supabase.storage.from("library").createSignedUrls(need.map((a) => a.path), 3600);
     setUrls((u) => ({ ...u, ...Object.fromEntries((data ?? []).flatMap((d) => (d.signedUrl && d.path ? [[d.path, d.signedUrl] as const] : []))) }));
-  }, [supabase]);
+  }
 
   async function upload(files: File[]) {
     setProblems([]);
@@ -85,6 +113,35 @@ export default function LibraryTab({ brandId, initial, initialUrls }: { brandId:
   return (
     <section className="rise">
       <PageHeader tab="library"><SaveIndicator state={save} /></PageHeader>
+
+      <article className="card-flat mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="section-title flex items-center gap-2"><Link2 size={19} className="text-accent" />Liens et ressources</h2><Link href="/dashboard/charter" className="btn-secondary !py-1.5 text-[14px]"><Palette size={15} />Charte graphique</Link></div>
+        <p className="mt-1 text-[15px] text-ink-secondary">Les dossiers de médias, modèles Canva ou Figma et documents de la marque, à un clic. Les fichiers eux-mêmes se déposent plus bas.</p>
+        {(links.length > 0 || ficheLinks.length > 0) && (
+          <ul className="mt-4 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+            {links.map((l) => (
+              <li key={l.id} className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white p-3">
+                <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent"><FolderOpen size={18} /></span>
+                <a href={l.url} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1"><span className="block truncate text-[15px] font-semibold">{l.label}</span><span className="caption inline-flex items-center gap-1">{LINK_KINDS[l.kind]} <ExternalLink size={11} /></span></a>
+                <button type="button" className="btn-ghost !px-2 text-ink-secondary hover:text-danger" aria-label={`Retirer le lien ${l.label}`} onClick={() => removeLink(l.id)}><Trash2 size={15} /></button>
+              </li>
+            ))}
+            {ficheLinks.map((l) => (
+              <li key={l.url} className="flex items-center gap-3 rounded-2xl border border-dashed border-black/15 bg-canvas p-3">
+                <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-ink-secondary"><Link2 size={18} /></span>
+                <a href={l.url} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1"><span className="block truncate text-[15px] font-semibold">{l.label}</span><span className="caption inline-flex items-center gap-1">Fiche de la marque <ExternalLink size={11} /></span></a>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="mt-4 grid gap-2.5 md:grid-cols-[1fr_1.4fr_170px_auto]">
+          <input aria-label="Nom du lien" className="input" maxLength={120} placeholder="Nom (ex. : Modèles Canva)" value={linkForm.label} onChange={(e) => setLinkForm({ ...linkForm, label: e.target.value })} />
+          <input aria-label="Adresse du lien" className="input" placeholder="Adresse du dossier ou du fichier" value={linkForm.url} onChange={(e) => setLinkForm({ ...linkForm, url: e.target.value })} />
+          <select aria-label="Type de lien" className="input" value={linkForm.kind} onChange={(e) => setLinkForm({ ...linkForm, kind: e.target.value as MediaLink["kind"] })}>{Object.entries(LINK_KINDS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+          <button type="button" className="btn-primary" onClick={addLink}><Plus size={16} />Ajouter</button>
+        </div>
+        {linkError && <p role="alert" className="mt-2 text-[14px] text-danger">{linkError}</p>}
+      </article>
 
       <div
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)}

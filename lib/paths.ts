@@ -13,6 +13,8 @@ export const PRIVATE_PREFIXES = ["/dashboard", "/admin", "/reset-password", "/pa
 
 const under = (path: string, prefix: string) => path === prefix || path.startsWith(`${prefix}/`);
 
-export const isPublicPath = (path: string) => PUBLIC_PATHS.includes(path) || path.startsWith("/opengraph-image");
+// /validation/<lien> et /api/validation/decide : le validateur n'a pas de compte, le lien secret fait office de clé (vérifié par les routes).
+export const PUBLIC_PREFIXES = ["/opengraph-image", "/validation/", "/api/validation/decide"];
+export const isPublicPath = (path: string) => PUBLIC_PATHS.includes(path) || PUBLIC_PREFIXES.some((p) => path.startsWith(p));
 export const isApiPath = (path: string) => under(path, "/api");
 export const requiresSession = (path: string) => !isPublicPath(path) && (isApiPath(path) || PRIVATE_PREFIXES.some((p) => under(path, p)));

@@ -4,13 +4,13 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { callGenerate } from "@/lib/api";
-import { nextStatus, periodRange, type EntryStatus, type PeriodMonths } from "@/lib/editorial";
-import EditableText from "./EditableText";
+import { periodRange, type EntryStatus, type PeriodMonths } from "@/lib/editorial";
 import GenerateError from "./GenerateError";
 import SaveIndicator, { type SaveState } from "./SaveIndicator";
 import PageHeader from "./PageHeader";
 import EmptyState from "./EmptyState";
 import { NetworkInfo } from "./StrategyBlocks";
+import LineView, { type LineRow } from "./editorial/LineView";
 import type { NetworkStage } from "@/lib/plan/schemas";
 
 export type Entry = {
@@ -37,18 +37,6 @@ export type Line = { id: string; channel: string | null; period_start: string | 
 const ENTRY_COLUMNS =
   "id, editorial_line_id, week_number, position, theme, content_type, format, frequency, suggested_time, status, validation_status, validated_by, validated_at, validation_requested_by, validation_requested_at, phase, campaign";
 const CHANNEL_OPTIONS = ["Facebook", "Instagram", "TikTok", "YouTube", "Site web", "Autre"];
-const STATUS_UI: Record<EntryStatus, { label: string; cls: string }> = {
-  a_venir: { label: "À venir", cls: "bg-black/10 text-ink" },
-  en_cours: { label: "En cours", cls: "bg-warning/20 text-ink" },
-  termine: { label: "Terminé", cls: "bg-success/20 text-ink" },
-};
-const PHASE_UI: Record<string, { label: string; cls: string }> = {
-  avant: { label: "Avant", cls: "bg-accent-soft text-accent" },
-  pendant: { label: "Pendant", cls: "bg-success/20 text-ink" },
-  apres: { label: "Après", cls: "bg-warning/25 text-ink" },
-  evergreen: { label: "Permanent", cls: "bg-black/10 text-ink" },
-};
-const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : "");
 
 export default function EditorialTab({
   brandId,
@@ -56,16 +44,21 @@ export default function EditorialTab({
   initialEntries,
   hasPillars,
   profiles = {},
+  initialRows = [],
+  pillarRoles = {},
 }: {
   brandId: string;
   initialLines: Line[];
   initialEntries: Entry[];
   hasPillars: boolean;
   profiles?: Record<string, NetworkStage>;
+  initialRows?: LineRow[];
+  pillarRoles?: Record<string, string>;
 }) {
   const supabase = createClient();
   const [lines, setLines] = useState<Line[]>(initialLines);
   const [entries, setEntries] = useState<Entry[]>(initialEntries);
+  const [rows, setRows] = useState<LineRow[]>(initialRows);
   const [activeId, setActiveId] = useState<string | null>(initialLines[0]?.id ?? null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -75,7 +68,6 @@ export default function EditorialTab({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [save, setSave] = useState<SaveState>("idle");
-  const dragId = useRef<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -88,6 +80,16 @@ export default function EditorialTab({
   const lineEntries = entries
     .filter((e) => e.editorial_line_id === activeId)
     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+
+  const rowsByEntry = new Map<string, LineRow[]>();
+  for (const r of rows) if (r.editorial_entry_id) rowsByEntry.set(r.editorial_entry_id, [...(rowsByEntry.get(r.editorial_entry_id) ?? []), r]);
+
+  async function patchRow(id: string, patch: { idea?: string; hook?: string; format?: string }) {
+    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    setSave("saving");
+    const { error: err } = await supabase.from("posts").update(patch).eq("id", id);
+    setSave(err ? "error" : "saved");
+  }
 
   async function reloadEntries() {
     const ids = lines.map((l) => l.id);
@@ -148,37 +150,6 @@ export default function EditorialTab({
     setSave(err ? "error" : "saved");
   }
 
-  async function validation(id: string, action: "request" | "validate") {
-    setSave("saving");
-    const res = await fetch("/api/editorial/validation", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ entry_id: id, action }),
-    });
-    if (!res.ok) return setSave("error");
-    await reloadEntries();
-    setSave("saved");
-  }
-
-  async function dropOn(targetId: string) {
-    const from = dragId.current;
-    dragId.current = null;
-    if (!from || from === targetId) return;
-    const list = [...lineEntries];
-    const fi = list.findIndex((e) => e.id === from);
-    const ti = list.findIndex((e) => e.id === targetId);
-    if (fi < 0 || ti < 0) return;
-    const [moved] = list.splice(fi, 1);
-    list.splice(ti, 0, moved);
-    const renumbered = list.map((e, i) => ({ ...e, position: i, week_number: i + 1 }));
-    setEntries((es) => [...es.filter((e) => e.editorial_line_id !== activeId), ...renumbered]);
-    setSave("saving");
-    const results = await Promise.all(
-      renumbered.map((e) => supabase.from("editorial_entries").update({ position: e.position, week_number: e.week_number }).eq("id", e.id)),
-    );
-    setSave(results.some((r) => r.error) ? "error" : "saved");
-  }
-
   if (!hasPillars) {
     return (
       <section>
@@ -226,7 +197,7 @@ export default function EditorialTab({
         </div>
       )}
 
-      {active && profiles[active.channel ?? ""] && <NetworkInfo profile={profiles[active.channel ?? ""]} />}
+      {active && profiles[active.channel ?? ""] && <NetworkInfo profile={profiles[active.channel ?? ""]} eyebrow={`Section ${String(lines.findIndex((l) => l.id === active.id) + 1).padStart(2, "0")} — Ligne éditoriale ${active.channel}`} />}
 
       {adding && (
         <div className="card mt-6 space-y-4">
@@ -276,49 +247,8 @@ export default function EditorialTab({
       )}
 
       {active && lineEntries.length > 0 && (
-        <>
-          <p className="caption mt-4">Glissez-déposez une semaine pour la réordonner. Cliquez sur un texte pour le modifier.</p>
-          <ol className="mt-4 grid gap-4 lg:grid-cols-2">
-            {lineEntries.map((e) => {
-              const st = STATUS_UI[e.status ?? "a_venir"];
-              const v = e.validation_status ?? "non_requis";
-              return (
-                <li key={e.id} draggable onDragStart={() => (dragId.current = e.id)} onDragOver={(ev) => ev.preventDefault()} onDrop={() => dropOn(e.id)}
-                  className={`card relative cursor-grab overflow-hidden !pl-8 active:cursor-grabbing ${busy === e.id ? "opacity-50" : ""}`} aria-label={`Semaine ${e.week_number}`}>
-                  <span aria-hidden className={`absolute inset-y-0 left-0 w-1.5 ${e.status === "termine" ? "bg-success" : e.status === "en_cours" ? "bg-warning" : "bg-black/10"}`} />
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="caption whitespace-nowrap font-semibold uppercase tracking-wide">⠿ Semaine {e.week_number}</span>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {e.phase && PHASE_UI[e.phase] && <span className={`rounded-pill px-2.5 py-0.5 text-[12px] font-medium ${PHASE_UI[e.phase].cls}`} title={e.campaign ?? undefined}>{PHASE_UI[e.phase].label}{e.campaign ? ` · ${e.campaign}` : ""}</span>}
-                      {v === "en_attente" && <span className="rounded-pill bg-accent/10 px-2 py-0.5 text-[12px] text-accent" title={`Demandé par ${e.validation_requested_by ?? ""}`}>En attente de validation · {fmt(e.validation_requested_at)}</span>}
-                      {v === "valide" && <span className="rounded-pill bg-success/20 px-2 py-0.5 text-[12px]" title={`Validé le ${fmt(e.validated_at)} par ${e.validated_by ?? ""}`}>Validé</span>}
-                      <button type="button" aria-label={`Statut : ${st.label}. Cliquer pour changer`} className={`rounded-pill px-3 py-1 text-[13px] font-medium ${st.cls}`}
-                        onClick={() => patchEntry(e.id, { status: nextStatus(e.status ?? "a_venir") })}>
-                        {st.label}
-                      </button>
-                    </div>
-                  </div>
-                  <EditableText label={`Thème semaine ${e.week_number}`} className="mt-2 text-[18px] font-semibold" value={e.theme ?? ""} onSave={(x) => patchEntry(e.id, { theme: x })} />
-                  <dl className="mt-2 grid grid-cols-2 gap-x-2 text-[14px]">
-                    {([["content_type", "Type"], ["format", "Format"], ["frequency", "Fréquence"], ["suggested_time", "Heure"]] as const).map(([k, lab]) => (
-                      <div key={k}>
-                        <dt className="caption px-2">{lab}</dt>
-                        <dd><EditableText label={`${lab} semaine ${e.week_number}`} value={e[k] ?? ""} onSave={(x) => patchEntry(e.id, { [k]: x })} /></dd>
-                      </div>
-                    ))}
-                  </dl>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button type="button" className="btn-secondary" disabled={busy !== null} onClick={() => regenerateWeek(e.id)}>
-                      {busy === e.id ? "Régénération…" : "Régénérer cette semaine"}
-                    </button>
-                    {v === "non_requis" && <button type="button" className="btn-secondary" onClick={() => validation(e.id, "request")}>Demander une validation</button>}
-                    {v === "en_attente" && <button type="button" className="btn-primary !px-4 !py-2 !text-[15px]" onClick={() => validation(e.id, "validate")}>Valider</button>}
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
-        </>
+        <LineView channel={active.channel ?? ""} periodStart={active.period_start ?? new Date().toISOString().slice(0, 10)} entries={lineEntries} rowsByEntry={rowsByEntry} pillarRoles={pillarRoles}
+          onEntry={(id, p) => patchEntry(id, p)} onRow={patchRow} onRegenerate={regenerateWeek} busyId={busy === "line" ? null : busy} />
       )}
     </section>
   );

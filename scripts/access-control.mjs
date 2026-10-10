@@ -108,6 +108,15 @@ try {
   }
   { const r = await web(null, "/api/cron/reminders"); check("GET /api/cron/reminders sans secret : 401 ou 503 (jamais 200)", r.status === 401 || r.status === 503, `${r.status}`);
     const r2 = await web(null, "/api/cron/reminders", { headers: { Authorization: "Bearer mauvais-secret" } }); check("GET /api/cron/reminders avec un mauvais secret : 401 ou 503", r2.status === 401 || r2.status === 503, `${r2.status}`); }
+  { const fake = "A".repeat(43);
+    const page = await web(null, `/validation/${fake}`); const body = await page.text();
+    check("lien de validation inconnu : page neutre (200, rien de la marque)", page.status === 200 && body.includes("n'est plus valable") && !body.includes("Bonjour"), `${page.status}`);
+    check("lien de validation de forme invalide : même page neutre", (await web(null, "/validation/pas-un-jeton")).status === 200);
+    const d = await web(null, "/api/validation/decide", { method: "POST", headers: J, body: JSON.stringify({ token: fake, post_id: crypto.randomUUID(), decision: "approuve" }) });
+    check("décision avec un faux lien : 404", d.status === 404, `${d.status}`);
+    const d2 = await web(null, "/api/validation/decide", { method: "POST", headers: J, body: JSON.stringify({ token: "court", post_id: "x", decision: "approuve" }) });
+    check("décision mal formée : 400", d2.status === 400, `${d2.status}`);
+    for (const p of ["/api/validation/create", "/api/validation/revoke"]) { const r = await web(null, p, { method: "POST", headers: J, body: "{}" }); check(`POST ${p} sans session : 401`, r.status === 401, `${r.status}`); } }
   for (const p of ["/dashboard", "/dashboard/account", "/admin", "/reset-password"]) { const r = await web(null, p); check(`${p} sans session : redirigé vers la connexion`, r.status === 307, `${r.status}`); }
 
   console.log("\n— Paiement : montants et notifications falsifiés —");
