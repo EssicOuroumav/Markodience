@@ -7,6 +7,7 @@ export type Rgb = [number, number, number];
 export const DEFAULT_BRAND_COLOR = "#0071E3";
 const WHITE: Rgb = [255, 255, 255];
 const BLACK: Rgb = [0, 0, 0];
+const CREAM: Rgb = [251, 249, 244];
 
 export function parseHex(hex: string | null | undefined): Rgb | null {
   const m = /^#?([0-9a-f]{6})$/i.exec((hex ?? "").trim());
@@ -48,7 +49,19 @@ export function brandTheme(hex: string | null | undefined): Record<string, strin
   const strong = mix(accent, BLACK, 0.2);
   const light = mix(accent, WHITE, 0.38);
   const soft = mix(accent, WHITE, 0.9);
+  // Habillage « studio » : un titre sombre de la teinte de la marque, un fond crème légèrement teinté, une ligne fine de la même teinte.
+  const deep = mix(accent, BLACK, 0.55);
+  const canvas = mix(CREAM, accent, 0.035);
+  const ink = mix([21, 32, 26], accent, 0.06);
+  const inkSecondary = mix([97, 108, 101], accent, 0.08);
   return {
+    "--rgb-deep": channels(deep),
+    "--rgb-canvas": channels(canvas),
+    "--rgb-ink": channels(ink),
+    "--rgb-ink-secondary": channels(inkSecondary),
+    "--rgb-line": channels(mix(WHITE, accent, 0.22)),
+    "--studio-line": `rgb(${channels(accent)} / 0.16)`,
+    "--studio-shadow": `rgb(${channels(deep)} / 0.30)`,
     "--rgb-accent": channels(accent),
     "--rgb-accent-strong": channels(strong),
     "--rgb-accent-light": channels(light),

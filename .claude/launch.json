@@ -21,6 +21,20 @@
         "3001"
       ],
       "port": 3001
+    },
+    {
+      "name": "markodience-mock",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "AI_MOCK=1",
+        "npm",
+        "run",
+        "start",
+        "--",
+        "-p",
+        "3016"
+      ],
+      "port": 3016
     }
   ]
 }

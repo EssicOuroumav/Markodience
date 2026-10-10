@@ -278,3 +278,52 @@ h1, h2, h3 {
   .text-shimmer-light { animation: none; background: none; color: #8cc4ff; -webkit-background-clip: initial; background-clip: initial; }
   html { scroll-behavior: auto; }
 }
+
+
+/* ───────── Habillage « studio » du tableau de bord : titres serif, crème teinté, lignes fines, cartes qui se soulèvent ───────── */
+.studio h1,
+.studio h2,
+.studio h3 {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: rgb(var(--rgb-deep));
+}
+.studio .eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #a9791e;
+}
+.studio .section-title {
+  font-size: 24px;
+  letter-spacing: -0.01em;
+}
+.studio .card,
+.studio .card-flat {
+  border: 1px solid var(--studio-line);
+  border-radius: 24px;
+  box-shadow: 0 8px 22px -12px var(--studio-shadow);
+}
+.studio .card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 55px -26px var(--studio-shadow);
+}
+.studio .hairline {
+  border-color: var(--studio-line);
+}
+.studio .input {
+  border-color: var(--studio-line);
+  border-radius: 12px;
+  box-shadow: none;
+}
+.studio .btn-secondary {
+  border-color: var(--studio-line);
+  box-shadow: none;
+}
+.studio .chip {
+  font-weight: 700;
+}
+.studio .num {
+  font-family: var(--font-fraunces), Georgia, serif;
+}

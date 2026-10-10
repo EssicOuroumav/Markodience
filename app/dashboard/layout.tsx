@@ -22,7 +22,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const canAdd = owner || canCreateProfile(plan, profiles.length);
   const dismissed = Array.isArray(user.user_metadata?.journey_dismissed) ? (user.user_metadata.journey_dismissed as string[]) : [];
   return (
-    <div className="relative min-h-screen bg-canvas" style={brandTheme(active.primary_color) as React.CSSProperties}>
+    <div className="studio relative min-h-screen bg-canvas" style={brandTheme(active.primary_color) as React.CSSProperties}>
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(60%_100%_at_70%_0%,rgb(var(--rgb-accent)/0.08),transparent)]" />
       <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b border-[var(--color-border-soft)] bg-white/90 px-4 backdrop-blur md:hidden">
         <Link href="/dashboard" className="flex items-center gap-2"><Image src="/logo-mark.png" alt="" width={26} height={26} /><span className="text-[16px] font-semibold tracking-heading">Markodience</span></Link>

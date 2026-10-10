@@ -29,7 +29,7 @@ export default async function ValidationPage({ params }: { params: Promise<{ tok
   if (!req || requestState(req) !== "ok") return <Notice title="Ce lien n'est plus valable" text="Il est expiré, désactivé ou incorrect. Demandez un nouveau lien à la personne qui vous l'a envoyé." />;
   const [posts, { data: brand }] = await Promise.all([reviewPosts(admin, req), admin.from("brand_profiles").select("name, logo_url, primary_color").eq("id", req.brand_profile_id).maybeSingle()]);
   return (
-    <div className="min-h-screen bg-canvas" style={brandTheme(brand?.primary_color) as React.CSSProperties}>
+    <div className="studio min-h-screen bg-canvas" style={brandTheme(brand?.primary_color) as React.CSSProperties}>
       <header className="border-b border-[var(--color-border-soft)] bg-white">
         <div className="mx-auto flex max-w-4xl items-center gap-3 px-5 py-4">
           <BrandLogo src={brand?.logo_url ?? null} name={brand?.name ?? "Marque"} color={brand?.primary_color} size="sm" />
