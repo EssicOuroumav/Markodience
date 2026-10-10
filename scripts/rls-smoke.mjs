@@ -90,7 +90,8 @@ try {
   check("médiathèque : B ne voit pas les liens de A", (await rest(b, `media_links?brand_profile_id=eq.${aProfile}`)).json?.length === 0);
 
   // Lot D : communauté, interactions, indicateurs
-  const bProfile = (await admin("/rest/v1/brand_profiles", { method: "POST", body: { user_id: b.id, name: "B1" } })).json?.[0]?.id;
+  await admin("/rest/v1/brand_profiles", { method: "POST", body: { user_id: b.id, name: "B1" } });
+  const bProfile = (await admin(`/rest/v1/brand_profiles?user_id=eq.${b.id}&select=id`)).json?.[0]?.id;
   check("communauté : écriture réservée aux paliers payants", (await rest(a, "community_items", { method: "POST", body: { brand_profile_id: aProfile, kind: "faq", title: "Q", body: "R" } })).status === 403);
   check("interactions : écriture réservée aux paliers payants", (await rest(a, "interactions", { method: "POST", body: { brand_profile_id: aProfile, person: "X" } })).status === 403);
   check("indicateurs : écriture réservée aux paliers payants", (await rest(a, "kpi_definitions", { method: "POST", body: { brand_profile_id: aProfile, name: "K" } })).status === 403);
@@ -100,7 +101,8 @@ try {
   check("communauté : B ne voit pas les éléments de A", (await rest(b, `community_items?brand_profile_id=eq.${aProfile}`)).json?.length === 0);
   const kd = await admin("/rest/v1/kpi_definitions", { method: "POST", body: { brand_profile_id: aProfile, name: "Messages", target: 100, direction: "hausse" } });
   check("indicateurs : création par le service", kd.status === 201, kd.status);
-  const kdId = kd.json?.[0]?.id;
+  const kdId = (await admin(`/rest/v1/kpi_definitions?brand_profile_id=eq.${aProfile}&name=eq.Messages&select=id`)).json?.[0]?.id;
+  check("indicateurs : identifiants lus", !!kdId && !!bProfile);
   check("indicateurs : sens inconnu refusé", (await admin("/rest/v1/kpi_definitions", { method: "POST", body: { brand_profile_id: aProfile, name: "X", direction: "diagonale" } })).status >= 400);
   check("indicateurs : B ne voit pas ceux de A", (await rest(b, `kpi_definitions?brand_profile_id=eq.${aProfile}`)).json?.length === 0);
   check("valeurs : une valeur ne peut pas viser l'indicateur d'une autre marque", (await admin("/rest/v1/kpi_values", { method: "POST", body: { definition_id: kdId, brand_profile_id: bProfile, month: "2026-10-01", value: 5 } })).status >= 400);
