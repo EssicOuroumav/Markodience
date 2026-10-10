@@ -25,15 +25,14 @@ export function dominantColor(data: ArrayLike<number>): string | null {
   return `#${hex(best.r)}${hex(best.g)}${hex(best.b)}`.toUpperCase();
 }
 
-/** Lit un fichier image dans le navigateur (réduit à 64 px) et en tire la couleur principale. */
-export async function colorFromImageFile(file: File): Promise<string | null> {
-  const url = URL.createObjectURL(file);
+async function colorFromSrc(src: string, cors: boolean): Promise<string | null> {
   try {
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
       const el = new Image();
+      if (cors) el.crossOrigin = "anonymous";
       el.onload = () => resolve(el);
       el.onerror = () => reject(new Error("image illisible"));
-      el.src = url;
+      el.src = src;
     });
     const scale = 64 / Math.max(img.naturalWidth, img.naturalHeight, 1);
     const w = Math.max(1, Math.round(img.naturalWidth * scale)), h = Math.max(1, Math.round(img.naturalHeight * scale));
@@ -45,7 +44,18 @@ export async function colorFromImageFile(file: File): Promise<string | null> {
     return dominantColor(ctx.getImageData(0, 0, w, h).data);
   } catch {
     return null;
+  }
+}
+
+/** Lit un fichier image dans le navigateur (réduit à 64 px) et en tire la couleur principale. */
+export async function colorFromImageFile(file: File): Promise<string | null> {
+  const url = URL.createObjectURL(file);
+  try {
+    return await colorFromSrc(url, false);
   } finally {
     URL.revokeObjectURL(url);
   }
 }
+
+/** Même lecture pour un logo déjà enregistré (adresse publique). */
+export const colorFromImageUrl = (url: string) => colorFromSrc(url, true);

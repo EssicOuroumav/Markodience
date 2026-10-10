@@ -5,7 +5,7 @@ import { ImagePlus, Plus, Sparkles, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { SECTORS } from "@/lib/sectors";
 import { MAX_ABOUT, MAX_LINKS, SOCIAL_NETWORKS, parseBrandInfoInput, readBrandInfo } from "@/lib/brandInfo";
-import { colorFromImageFile } from "@/lib/logoColor";
+import { colorFromImageFile, colorFromImageUrl } from "@/lib/logoColor";
 import { setActiveBrandCookie } from "@/components/BrandSwitcher";
 import type { BrandProfile, BrandStatus } from "@/types";
 
@@ -33,6 +33,19 @@ export default function BrandForm({ userId, submitLabel, onCreated, onLimit, bra
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Marque déjà créée avec un logo : on relit la couleur du logo. Si la couleur enregistrée est encore la couleur par défaut, on la remplace.
+  useEffect(() => {
+    const url = brand?.logo_url;
+    if (!url) return;
+    let alive = true;
+    void colorFromImageUrl(url).then((c) => {
+      if (!alive || !c) return;
+      setDetected(c);
+      if ((brand?.primary_color ?? "#0071E3").toUpperCase() === "#0071E3") setColor(c);
+    });
+    return () => { alive = false; };
+  }, [brand?.logo_url, brand?.primary_color]);
 
   useEffect(() => () => { if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview); }, [preview]);
 
