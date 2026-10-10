@@ -33,7 +33,7 @@ function ListColumn({ title, items, tone, onChange }: { title: string; items: st
   );
 }
 
-export default function ToneTab({ brandId, initial, hasIdentity }: { brandId: string; initial: Lists | null; hasIdentity: boolean }) {
+export default function ToneTab({ brandId, initial, hasIdentity, embedded = false }: { brandId: string; initial: Lists | null; hasIdentity: boolean; embedded?: boolean }) {
   const supabase = createClient();
   const [lists, setLists] = useState<Lists | null>(initial);
   const [loading, setLoading] = useState(false);
@@ -61,7 +61,7 @@ export default function ToneTab({ brandId, initial, hasIdentity }: { brandId: st
   if (!hasIdentity) {
     return (
       <section>
-        <PageHeader tab="tone" />
+        {!embedded && <PageHeader tab="tone" />}
         <EmptyState illustration="chat" title="Commencez par votre identité de marque" text="La tonalité découle de votre positionnement : générez d’abord votre identité.">
           <Link href="/dashboard/identity" className="btn-primary">Aller à l&apos;identité de marque</Link>
         </EmptyState>
@@ -71,7 +71,11 @@ export default function ToneTab({ brandId, initial, hasIdentity }: { brandId: st
 
   return (
     <section>
-      <PageHeader tab="tone"><SaveIndicator state={save} /></PageHeader>
+      {embedded ? (
+        <div className="flex items-center justify-between gap-3"><div><h2 className="text-[24px] leading-tight">Tonalité &amp; voix</h2><p className="mt-1 text-[15px] text-ink-secondary">La voix de la marque : ce qu&apos;on dit, et ce qu&apos;on évite.</p></div><SaveIndicator state={save} /></div>
+      ) : (
+        <PageHeader tab="tone"><SaveIndicator state={save} /></PageHeader>
+      )}
       {lists ? (
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <ListColumn title="On dit / On fait" tone="do" items={lists.do_list ?? []} onChange={(v) => persist({ do_list: v })} />

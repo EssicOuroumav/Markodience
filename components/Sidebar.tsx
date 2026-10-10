@@ -6,7 +6,7 @@ import { Check, ChevronRight, CreditCard, Crown, Home, Layers, Lock, LogOut, Shi
 import { createClient } from "@/lib/supabase/client";
 import { hasFeature, PLANS, type PlanId } from "@/lib/plans";
 import Image from "next/image";
-import { TABS, TAB_GROUP, TAB_GROUPS, type TabSlug } from "@/lib/tabs";
+import { VISIBLE_TABS, TAB_GROUP, TAB_GROUPS, type TabSlug } from "@/lib/tabs";
 import { TAB_ICONS } from "@/lib/tabIcons";
 import UserMenu from "./UserMenu";
 
@@ -62,7 +62,7 @@ export default function Sidebar({ plan, owner, email, progress, brandCount, bran
         {TAB_GROUPS.map((g) => (
           <div key={g.id} className="contents">
             <p className={`${SECTION} hidden md:block`}>{g.label}</p>
-            {TABS.filter((t) => TAB_GROUP[t.slug] === g.id).map((t) => {
+            {VISIBLE_TABS.filter((t) => TAB_GROUP[t.slug] === g.id).map((t) => {
               const Icon = TAB_ICONS[t.slug];
               const locked = !hasFeature(plan, t.feature);
               const done = !!progress.done[t.slug] && !locked;

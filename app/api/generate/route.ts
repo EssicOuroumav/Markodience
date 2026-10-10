@@ -17,6 +17,7 @@ import { AiError, AI_MESSAGES, generateJson } from "@/lib/ai/anthropic";
 import { mockAudit, mockLiveScripts, mockLiveStructure, mockEditorial, mockPosts, mockPostsFill, mockIdentity, mockExtend, mockTone } from "@/lib/ai/mock";
 import { liveScriptsPrompt, liveStepPrompt, liveStructurePrompt, type LiveContext, auditPrompt, editorialLinePrompt, editorialWeekPrompt, postsWeekPrompt, postsFillPrompt, identityPrompt, identityExtendPrompt, tonePrompt, type BrandContext, type EditorialContext } from "@/lib/ai/prompts";
 import type { LiveStep } from "@/lib/lives";
+import { handleAssistant } from "@/lib/assistant/handler";
 import { handleCommunity } from "@/lib/community/handler";
 import { OBJECTIVES, type Objective } from "@/lib/lives";
 import { pillarRotation, weeksForPeriod, type PeriodMonths } from "@/lib/editorial";
@@ -127,10 +128,11 @@ async function run(supabase: Supa, req: GenerateRequest): Promise<NextResponse> 
     }
     if (req.type === "posts_week") return await handlePosts(supabase, req);
     if (req.type === "post_write") return await handlePostWrite(supabase, req);
-    if (req.type === "plan_extract" || req.type === "plan_stage" || req.type === "personas" || req.type === "community" || req.type === "pillars" || req.type === "ideas") {
+    if (req.type === "plan_extract" || req.type === "plan_stage" || req.type === "personas" || req.type === "community" || req.type === "assistant" || req.type === "pillars" || req.type === "ideas") {
       const gen: Gen = (prompt, schema, tier = "heavy", mock) => generateJson(prompt, schema, mock ?? (() => { throw new Error("réponse simulée manquante"); }), tier, { thinking: "off", maxTokens: 8192 });
       const out =
         req.type === "personas" ? await handlePersonas(supabase, req.brand_profile_id, gen)
+        : req.type === "assistant" ? await handleAssistant(supabase, req.brand_profile_id, req.task, req.input, gen)
         : req.type === "community" ? await handleCommunity(supabase, req.brand_profile_id, gen)
         : req.type === "pillars" ? await handlePillars(supabase, req.brand_profile_id, req.brief ?? { priority: "notoriete", problem: "" }, gen)
         : req.type === "ideas" ? await handleIdeas(supabase, req.brand_profile_id, req.pillar_id, req.count, gen)
