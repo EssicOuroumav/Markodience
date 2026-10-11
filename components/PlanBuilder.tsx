@@ -18,7 +18,19 @@ type Phase = "intro" | "fiche" | "build" | "done";
 
 const NETWORKS = ["Facebook", "Instagram", "TikTok", "YouTube", "LinkedIn", "WhatsApp", "Site web"];
 const BUDGETS: [Brief["resources"]["ad_budget"], string][] = [["aucun", "Aucun budget publicitaire"], ["faible", "Petit budget"], ["moyen", "Budget moyen"], ["eleve", "Budget important"]];
-const EXAMPLE = "Exemple : « Notre association aide les orphelins et les veuves à Abidjan en éducation, santé et action sociale. Chaque année, nous lançons « En route pour l'école » avant la rentrée, une campagne de dépistage en octobre, des paniers avant la mi-Ramadan et des habits neufs pour la Tabaski. Nous sommes sur Facebook, Instagram et TikTok, sans budget publicitaire. Un community manager et des bénévoles. Attention aux photos d'enfants et à la neutralité politique. »";
+const EXAMPLES: Record<string, { label: string; text: string }> = {
+  ong: { label: "ONG, association", text: "Exemple : « Notre association aide les orphelins et les veuves à Abidjan en éducation, santé et action sociale. Chaque année, nous lançons « En route pour l'école » avant la rentrée, une campagne de dépistage en octobre, des paniers avant la mi-Ramadan et des habits neufs pour la Tabaski. Nous sommes sur Facebook, Instagram et TikTok, sans budget publicitaire. Un community manager et des bénévoles. Attention aux photos d'enfants et à la neutralité politique. »" },
+  entreprise: { label: "Entreprise, commerce", text: "Exemple : « Nous sommes une boulangerie-pâtisserie à Cocody, ouverte depuis 2019, avec trois points de vente. Nos clients sont des familles du quartier et des bureaux qui commandent des plateaux pour leurs réunions. Temps forts : lancement de la brioche de Pâques en mars, offre de rentrée en septembre, coffrets de fin d'année en décembre. Nous sommes sur Instagram, Facebook et WhatsApp, avec un petit budget publicitaire. Une personne gère les réseaux, un photographe vient une fois par mois. Pas de comparaison avec les concurrents ni de promesse de livraison garantie. »" },
+  createur: { label: "Créateur, personnalité", text: "Exemple : « Je suis styliste et je crée des tenues en tissus locaux, vendues sur commande depuis Abidjan. Je veux me faire connaître des jeunes actives de 25 à 40 ans et recevoir plus de commandes par message. Moments forts : collection de printemps en avril, Fête des mères en mai, collection de fin d'année en novembre. Je suis sur Instagram et TikTok, je gère tout seule, sans budget publicitaire. Je ne veux pas montrer mon atelier à l'arrière ni parler de mes prix de revient. »" },
+  institution: { label: "Institution publique", text: "Exemple : « Nous sommes la direction de la communication d'une mairie de 200 000 habitants. Nous informons les habitants des services (état civil, voirie, marchés), des travaux et des événements de la ville. Temps forts : rentrée scolaire en septembre, campagne de salubrité en octobre, fête de la ville en décembre. Nous sommes sur Facebook et WhatsApp, avec une équipe de deux agents et validation par le cabinet du maire. Neutralité politique stricte, aucune annonce avant validation officielle. »" },
+};
+const guessKind = (sector: string, status: string) => {
+  const t = sector.toLowerCase();
+  if (/ong|association|humanitaire|fondation|caritatif|social/.test(t)) return "ong";
+  if (/institution|mairie|public|administration|minist/.test(t)) return "institution";
+  if (/créat|createur|influen|artiste|personnalit|mode|styl/.test(t) || status === "freelance") return "createur";
+  return "entreprise";
+};
 
 const lines = (s: string) => s.split("\n").map((x) => x.trim()).filter(Boolean);
 
@@ -32,10 +44,11 @@ function Field({ label, hint, gap, children }: { label: string; hint?: string; g
   );
 }
 
-export default function PlanBuilder({ brandId, brandName, hasContent, savedBrief, draftSteps, review }: {
-  brandId: string; brandName: string; hasContent: boolean; savedBrief: Brief | null; draftSteps: string[]; review: ReviewData | null;
+export default function PlanBuilder({ brandId, brandName, sector = "", brandStatus = "", hasContent, savedBrief, draftSteps, review }: {
+  brandId: string; brandName: string; sector?: string; brandStatus?: string; hasContent: boolean; savedBrief: Brief | null; draftSteps: string[]; review: ReviewData | null;
 }) {
   const router = useRouter();
+  const [exampleKind, setExampleKind] = useState(() => guessKind(sector, brandStatus));
   const [phase, setPhase] = useState<Phase>(review ? "done" : "intro");
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -274,9 +287,10 @@ export default function PlanBuilder({ brandId, brandName, hasContent, savedBrief
         </div>
       )}
       <div className="card-flat">
-        <h2 className="section-title">Décrivez votre organisation</h2>
+        <h2 className="section-title">Décrivez votre organisation ou votre marque</h2>
         <p className="mt-1 text-[15px] text-ink-secondary">Parlez comme à un collègue : qui vous êtes, ce que vous faites, vos campagnes de l&apos;année et leurs dates approximatives, vos réseaux, vos moyens, ce qu&apos;il faut protéger. Plus c&apos;est concret, plus le plan l&apos;est. Je lis votre texte, j&apos;en tire une fiche, et vous la corrigez avant toute génération.</p>
-        <textarea aria-label="Description de l'organisation" className="input mt-4" rows={12} maxLength={MAX_DESCRIPTION} placeholder={EXAMPLE} value={text} onChange={(e) => setText(e.target.value)} />
+        <textarea aria-label="Description de l'organisation" className="input mt-4" rows={12} maxLength={MAX_DESCRIPTION} placeholder={EXAMPLES[exampleKind].text} value={text} onChange={(e) => setText(e.target.value)} />
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] text-ink-secondary"><span>Voir un exemple :</span>{Object.entries(EXAMPLES).map(([k, v]) => <button key={k} type="button" aria-pressed={exampleKind === k} onClick={() => setExampleKind(k)} className={`rounded-pill border px-3 py-1 font-medium ${exampleKind === k ? "border-accent bg-accent-soft text-accent" : "border-black/10 bg-white hover:border-black/25"}`}>{v.label}</button>)}</div>
         <div className="mt-2 flex items-center justify-between text-[13px] text-ink-secondary"><span>{text.length} / {MAX_DESCRIPTION} caractères</span><span>Aucune information n&apos;est inventée : ce que vous ne dites pas est signalé.</span></div>
         {error && <p role="alert" className="mt-4 rounded-2xl bg-danger/10 px-5 py-3.5 text-[15px]">{error}</p>}
         <button type="button" className="btn-primary mt-5" onClick={analyze} disabled={busy}>{busy ? <><Loader2 size={17} className="animate-spin" />Lecture en cours…</> : <><Sparkles size={17} />Analyser ma description</>}</button>

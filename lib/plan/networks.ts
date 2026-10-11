@@ -6,7 +6,7 @@ export type NetworkBase = { role: string; days: string[]; formats: string; hours
 
 export const NETWORK_BASES: Record<string, NetworkBase> = {
   Facebook: {
-    role: "contenu long, preuve et transparence ; audience plus âgée et diaspora",
+    role: "contenu long, preuve et transparence ; audience plus âgée, familles et diaspora",
     days: ["Lundi", "Mercredi", "Vendredi"],
     formats: "Carré 1080×1080 ou 4:5 (1080×1350) + texte structuré ; vidéo 1080×1080 ou 9:16",
     hours: "12h-13h ou 19h-20h (heure locale)",

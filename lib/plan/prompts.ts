@@ -55,8 +55,8 @@ ${briefBlock(b)}
 <identite>${JSON.stringify({ mission: id.mission, values: id.values.map((v) => v.name) })}</identite>
 ${feedbackBlock(feedback)}
 ${PRECISION}
-- Les pourcentages sont des entiers dont la somme fait EXACTEMENT 100. Le pilier le plus lourd prouve le travail de l'organisation ; au moins un pilier reste utile les semaines sans activité ; au moins un pilier est dédié à l'appel à l'action ; si l'organisation collecte des fonds, un pilier de transparence est obligatoire.
-- 5 à 6 piliers, nommés en 2 à 4 mots. Chaque pilier a UN rôle : preuve (montrer le travail), appel (appel à l'action ou aux dons), transparence (bilans et comptes), voix (témoignages, personnes), pedagogie (informer, prévenir, expliquer), communaute (bénévoles, partenaires, coulisses). Deux piliers peuvent partager un rôle ; au moins quatre rôles différents.
+- Les pourcentages sont des entiers dont la somme fait EXACTEMENT 100. Le pilier le plus lourd prouve le travail de l'organisation ; au moins un pilier reste utile les semaines sans activité ; au moins un pilier est dédié à l'appel à l'action ; si l'organisation collecte des fonds (dons, cotisations), un pilier de transparence est obligatoire ; sinon, ce rôle devient facultatif.
+- 5 à 6 piliers, nommés en 2 à 4 mots. Chaque pilier a UN rôle : preuve (montrer le travail, le produit ou le service), appel (appel à l'action : don, achat, commande, inscription, contact), transparence (bilans et comptes), voix (témoignages, personnes), pedagogie (informer, prévenir, expliquer), communaute (bénévoles, partenaires, coulisses). Deux piliers peuvent partager un rôle ; au moins quatre rôles différents.
 
 ${EXAMPLES_NOTE}
 - { "title": "Preuves de fabrication", "pct": 30, "purpose": "Montrer chaque étape pour justifier le prix. Sans lui, les promotions sonnent creux.", "formats": "Vidéos du fournil, avant/après de cuisson, témoignages filmés" }
@@ -141,8 +141,8 @@ Ces modèles seront répétés chaque semaine d'une phase, avec le thème de la 
 - « hook » (12 mots max) : l'accroche qui donne envie de lire ; peut contenir {theme}.
 - « pillar » : un titre de pilier ci-dessus. « format » : un format réel du réseau.
 - Phases : avant = mobiliser et annoncer (compte à rebours, objectif chiffré) ; pendant = montrer l'action et la preuve ; apres = bilan chiffré, remerciements, suite ; evergreen = pédagogie, coulisses, lien avec la communauté.
-- Chaque réseau a son angle : le réseau des donateurs porte la preuve et les chiffres, celui des jeunes l'émotion et le visuel, celui du direct les coulisses brutes.
-- Les trois publications d'une semaine déclinent un même fond ; l'appel au don reste sur le réseau qui convertit le mieux.
+- Chaque réseau a son angle : le réseau de la cible la plus décisive (donateurs, clients, partenaires) porte la preuve et les chiffres, celui des plus jeunes l'émotion et le visuel, celui du direct les coulisses brutes.
+- Les trois publications d'une semaine déclinent un même fond ; l'appel à l'action (don, achat, inscription) reste sur le réseau qui convertit le mieux.
 
 ${EXAMPLES_NOTE}
 - phase « pendant » : { "day": "Lundi", "pillar": "Preuves de fabrication", "format": "Album photo", "idea": "Reportage d'ouverture : {theme}. Premières images et premier chiffre du fournil.", "hook": "Ce matin, voici ce qui sort du four." }
@@ -161,7 +161,7 @@ ${feedbackBlock(feedback)}
 ${PRECISION}
 - Chaque levier est ancré dans le contexte local réel de l'organisation (relais physiques, groupes, médias de proximité, WhatsApp, micro-créateurs, partenaires, lieux).
 - « action » (14 mots max) : une action chiffrée et datée RELATIVEMENT à une campagne (« 3 semaines avant le lancement de X », « cette semaine ») ; jamais une date de calendrier fixe qui tomberait avant le début du plan.
-- N'invente aucun partenaire nommé : désigne des catégories (« associations de parents d'élèves »). Équilibre les cibles : ne réserve pas un public à une seule confession ou communauté si la marque s'adresse à tous.
+- N'invente aucun partenaire nommé : désigne des catégories (« associations de parents d'élèves »). Équilibre les cibles : ne réserve pas un public à une seule communauté si la marque s'adresse à tous.
 - Présente les pistes qui supposent des contacts que la marque n'a peut-être pas comme « à tester ».
 
 ${EXAMPLES_NOTE}
