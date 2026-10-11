@@ -64,6 +64,10 @@ try {
     ["identité", { type: "identity", brand_profile_id: brand, questionnaire: { brand_name: "x", offer: "x", segments: ["x"], problem: "x", differentiation: "x", personality: ["a", "b", "c"], goal: "notoriete", channels: ["Facebook"] } }],
     ["piliers", { type: "pillars", brand_profile_id: brand }],
     ["tonalité", { type: "tone", brand_profile_id: brand }],
+    ["cibles", { type: "personas", brand_profile_id: brand }],
+    ["communauté", { type: "community", brand_profile_id: brand }],
+    ["assistant", { type: "assistant", brand_profile_id: brand, task: "analyse", input: "" }],
+    ["idées", { type: "ideas", brand_profile_id: brand, pillar_id: crypto.randomUUID(), count: 3 }],
     ["ligne éditoriale", { type: "editorial_line", editorial_line_id: lineId }],
     ["semaine éditoriale", { type: "editorial_week", entry_id: entryId }],
     ["guide de live", { type: "live_scripts", live_guide_id: guideId }],
@@ -117,7 +121,7 @@ try {
     const d2 = await web(null, "/api/validation/decide", { method: "POST", headers: J, body: JSON.stringify({ token: "court", post_id: "x", decision: "approuve" }) });
     check("décision mal formée : 400", d2.status === 400, `${d2.status}`);
     for (const p of ["/api/validation/create", "/api/validation/revoke"]) { const r = await web(null, p, { method: "POST", headers: J, body: "{}" }); check(`POST ${p} sans session : 401`, r.status === 401, `${r.status}`); } }
-  for (const p of ["/dashboard", "/dashboard/account", "/admin", "/reset-password"]) { const r = await web(null, p); check(`${p} sans session : redirigé vers la connexion`, r.status === 307, `${r.status}`); }
+  for (const p of ["/dashboard", "/dashboard/account", "/dashboard/community", "/dashboard/assistant", "/dashboard/kpi", "/dashboard/personas", "/dashboard/ideas", "/dashboard/posts", "/admin", "/reset-password"]) { const r = await web(null, p); check(`${p} sans session : redirigé vers la connexion`, r.status === 307, `${r.status}`); }
 
   console.log("\n— Paiement : montants et notifications falsifiés —");
   const co = await api(b, "/api/checkout", { plan: "pro", amount: 1, user_id: a.id, status: "completed" });

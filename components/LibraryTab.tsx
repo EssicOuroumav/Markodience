@@ -134,7 +134,7 @@ export default function LibraryTab({ brandId, initial, initialUrls, initialLinks
             ))}
           </ul>
         )}
-        <div className="mt-4 grid gap-2.5 md:grid-cols-[1fr_1.4fr_170px_auto]">
+        <div className="mt-4 grid gap-2.5 sm:grid-cols-2 2xl:grid-cols-[1fr_1.4fr_170px_auto]">
           <input aria-label="Nom du lien" className="input" maxLength={120} placeholder="Nom (ex. : Modèles Canva)" value={linkForm.label} onChange={(e) => setLinkForm({ ...linkForm, label: e.target.value })} />
           <input aria-label="Adresse du lien" className="input" placeholder="Adresse du dossier ou du fichier" value={linkForm.url} onChange={(e) => setLinkForm({ ...linkForm, url: e.target.value })} />
           <select aria-label="Type de lien" className="input" value={linkForm.kind} onChange={(e) => setLinkForm({ ...linkForm, kind: e.target.value as MediaLink["kind"] })}>{Object.entries(LINK_KINDS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>

@@ -7,6 +7,7 @@ import { callGenerate } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 import { DOT_CLS, POST_STATUSES, POST_STATUS_LABEL, STATUS_CLS, dayTitle, groupByDate, monthGrid, monthTitle, postTitle, toIso, type Post, type PostStatus } from "@/lib/posts";
 import { notifyProgress } from "@/lib/progressEvents";
+import Overlay from "./Overlay";
 import PostPanel from "./calendar/PostPanel";
 import ValidationPanel from "./calendar/ValidationPanel";
 import EmptyState from "./EmptyState";
@@ -248,8 +249,8 @@ export default function CalendarTab({ brandId, weeks, initialPosts, channels, pi
         </div>
       )}
 
-      {open && <PostPanel key={open.id} post={open} onClose={() => setOpenId(null)} onPatch={patch} onDelete={remove} onWrite={write} writing={writing === open.id} />}
-      {validating && <ValidationPanel brandId={brandId} pending={posts.filter((p) => p.status === "a_valider")} onClose={() => { setValidating(false); void reload(); }} />}
+      {open && <Overlay><PostPanel key={open.id} post={open} onClose={() => setOpenId(null)} onPatch={patch} onDelete={remove} onWrite={write} writing={writing === open.id} /></Overlay>}
+      {validating && <Overlay><ValidationPanel brandId={brandId} pending={posts.filter((p) => p.status === "a_valider")} onClose={() => { setValidating(false); void reload(); }} /></Overlay>}
     </section>
   );
 }
