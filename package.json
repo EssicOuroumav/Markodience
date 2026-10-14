@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test:security": "node --env-file=.env.local scripts/rls-smoke.mjs",
     "test:access": "node --env-file=.env.local scripts/access-control.mjs",
-    "check:launch": "node scripts/launch-check.mjs"
+    "check:launch": "node scripts/launch-check.mjs",
+    "db:backup": "node --env-file=.env.local scripts/backup.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",

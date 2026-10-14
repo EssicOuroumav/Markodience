@@ -110,6 +110,9 @@ try {
   for (const [m, p] of [["POST", "/api/generate"], ["POST", "/api/checkout"], ["POST", "/api/admin/action"], ["POST", "/api/account/delete"], ["GET", "/api/account/export"], ["POST", "/api/editorial/validation"]]) {
     const r = await web(null, p, { method: m, headers: J, body: m === "POST" ? "{}" : undefined }); check(`${m} ${p} sans session : 401`, r.status === 401, `${r.status}`);
   }
+  { const r = await web(null, "/api/cron/payments"); check("GET /api/cron/payments sans secret : 401 ou 503 (jamais 200)", r.status === 401 || r.status === 503, `${r.status}`);
+    const r2 = await web(null, "/api/cron/payments", { headers: { Authorization: "Bearer mauvais-secret" } }); check("GET /api/cron/payments avec un mauvais secret : 401 ou 503", r2.status === 401 || r2.status === 503, `${r2.status}`);
+    const h = await web(null, "/api/health"); const hb = await h.text(); check("GET /api/health sans session : 200, ne dit que « ok »", h.status === 200 && JSON.parse(hb).ok === true && Object.keys(JSON.parse(hb)).length === 1, `${h.status} ${hb.slice(0, 80)}`); }
   { const r = await web(null, "/api/cron/reminders"); check("GET /api/cron/reminders sans secret : 401 ou 503 (jamais 200)", r.status === 401 || r.status === 503, `${r.status}`);
     const r2 = await web(null, "/api/cron/reminders", { headers: { Authorization: "Bearer mauvais-secret" } }); check("GET /api/cron/reminders avec un mauvais secret : 401 ou 503", r2.status === 401 || r2.status === 503, `${r2.status}`); }
   { const fake = "A".repeat(43);
