@@ -43,7 +43,7 @@ describe("plan complet avec réponses simulées", () => {
     }
     expect(rows.tone.do_list.length).toBeGreaterThan(0);
     expect(rows.identity).toMatchObject({ positioning: plan.identity.mission, logo_note: plan.identity.logo_note });
-  });
+  }, 30_000); // construit un plan complet : près de 5 s sur une machine chargée, la limite par défaut échouait au hasard
 });
 
 describe("cahier des charges", () => {
