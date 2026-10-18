@@ -17,6 +17,7 @@ import { AiError, AI_MESSAGES, generateJson } from "@/lib/ai/anthropic";
 import { mockAudit, mockLiveScripts, mockLiveStructure, mockEditorial, mockPosts, mockPostsFill, mockIdentity, mockExtend, mockTone } from "@/lib/ai/mock";
 import { liveScriptsPrompt, liveStepPrompt, liveStructurePrompt, type LiveContext, auditPrompt, editorialLinePrompt, editorialWeekPrompt, postsWeekPrompt, postsFillPrompt, identityPrompt, identityExtendPrompt, tonePrompt, type BrandContext, type EditorialContext } from "@/lib/ai/prompts";
 import type { LiveStep } from "@/lib/lives";
+import { rateLimit } from "@/lib/rateLimit";
 import { handleAssistant } from "@/lib/assistant/handler";
 import { handleCommunity } from "@/lib/community/handler";
 import { OBJECTIVES, type Objective } from "@/lib/lives";
@@ -45,6 +46,8 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return fail(401, "Connexion requise.", "unauthorized");
+  // Plafond de rafale par utilisateur (le quota quotidien reste le vrai contrôle de coût) : large pour la construction d'un plan, qui enchaîne les étapes.
+  if (!(await rateLimit(`generate:${user.id}`, 120, 600))) return fail(429, "Trop de demandes en peu de temps. Patientez quelques minutes.", "rate_limited");
 
   let body: unknown;
   try {

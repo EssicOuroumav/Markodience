@@ -53,5 +53,6 @@ export async function GET(request: Request) {
   // Un paiement qui reste en attente au-delà de 30 jours n'est plus revérifié : on le signale pour contrôle manuel.
   const { count: stale } = await admin.from("payments").select("id", { count: "exact", head: true }).eq("status", "pending").lt("created_at", new Date(now - MAX_AGE_DAYS * 86_400_000).toISOString());
   if (totals.problems > 0 || (stale ?? 0) > 0) Sentry.captureMessage(`Paiements : ${totals.problems} problème(s), ${stale ?? 0} en attente depuis plus de ${MAX_AGE_DAYS} jours`, "warning");
-  return NextResponse.json({ ok: true, ...totals, stale: stale ?? 0 });
+  const purged = await admin.rpc("purge_rate_limits");
+  return NextResponse.json({ ok: true, ...totals, stale: stale ?? 0, purged_rate_limits: typeof purged.data === "number" ? purged.data : 0 });
 }

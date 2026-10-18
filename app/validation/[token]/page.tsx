@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { ShieldCheck } from "lucide-react";
 import ValidationReview from "@/components/ValidationReview";
 import BrandLogo from "@/components/BrandLogo";
 import { createAdminClient } from "@/lib/payments/admin";
 import { brandTheme } from "@/lib/theme";
+import { ipOf, rateLimit } from "@/lib/rateLimit";
 import { requestState } from "@/lib/validation";
 import { loadRequest, reviewPosts } from "@/lib/validationServer";
 
@@ -23,6 +25,7 @@ function Notice({ title, text }: { title: string; text: string }) {
 /** Page publique du validateur : accessible par le lien secret, sans compte. */
 export default async function ValidationPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
+  if (!(await rateLimit(`validation-page:${ipOf(await headers())}`, 120, 600))) return <Notice title="Trop de demandes" text="Patientez quelques minutes puis rechargez la page." />;
   const admin = createAdminClient();
   const req = await loadRequest(admin, token);
   // Un lien faux, expiré ou désactivé reçoit le même message : on ne confirme jamais l'existence d'un lien.

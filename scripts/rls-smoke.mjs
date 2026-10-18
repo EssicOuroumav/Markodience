@@ -110,6 +110,16 @@ try {
   check("valeurs : un mois ne peut être saisi qu'une fois", (await admin("/rest/v1/kpi_values", { method: "POST", body: { definition_id: kdId, brand_profile_id: aProfile, month: "2026-10-01", value: 6 } })).status === 409);
   check("actions : une action ne peut pas viser l'indicateur d'une autre marque", (await admin("/rest/v1/kpi_actions", { method: "POST", body: { brand_profile_id: bProfile, definition_id: kdId, title: "x" } })).status >= 400);
 
+  // Limitation de débit : table et fonctions réservées au backend
+  check("limiteur : un utilisateur connecté ne peut pas lire la table", (await rest(a, "rate_limits?select=key")).status >= 400 || (await rest(a, "rate_limits?select=key")).json?.length === 0);
+  check("limiteur : un utilisateur connecté ne peut pas écrire dans la table", (await rest(a, "rate_limits", { method: "POST", body: { key: "x", count: 1, reset_at: "2099-01-01" } })).status >= 400);
+  check("limiteur : un utilisateur connecté ne peut pas appeler la fonction", (await rest(a, "rpc/consume_rate_limit", { method: "POST", body: { p_key: "x", p_max: 1, p_window_seconds: 60 } })).status >= 400);
+  check("limiteur : un utilisateur connecté ne peut pas purger", (await rest(a, "rpc/purge_rate_limits", { method: "POST", body: {} })).status >= 400);
+  { const k = "smoke-" + stamp; const call1 = () => admin("/rest/v1/rpc/consume_rate_limit", { method: "POST", body: { p_key: k, p_max: 2, p_window_seconds: 60 } });
+    const r = [(await call1()).json, (await call1()).json, (await call1()).json];
+    check("limiteur : autorise 2 appels puis refuse le 3e (fonction atomique)", r[0] === true && r[1] === true && r[2] === false, JSON.stringify(r)); }
+  check("limiteur : paramètres invalides refusés", (await admin("/rest/v1/rpc/consume_rate_limit", { method: "POST", body: { p_key: "x", p_max: 0, p_window_seconds: 60 } })).status >= 400);
+
   // Plan stratégique : réservé aux paliers payants, isolé par marque
   check("gratuit : écriture brand_strategy refusée", (await rest(a, "brand_strategy", { method: "POST", body: { brand_profile_id: aProfile, brief: {} } })).status === 403);
   const stratRow = await admin("/rest/v1/brand_strategy", { method: "POST", body: { brand_profile_id: aProfile, brief: { x: 1 } } });

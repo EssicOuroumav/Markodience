@@ -5,6 +5,7 @@ import { isAdmin } from "@/lib/admin";
 import { DELETE_PHRASE, purgeUserFiles } from "@/lib/account";
 import { createAdminClient } from "@/lib/payments/admin";
 import { createClient } from "@/lib/supabase/server";
+import { rateLimit } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -17,6 +18,8 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user || !user.email) return reply(401, "Connexion requise.");
   if (isAdmin(user)) return reply(400, "Le compte propriétaire ne peut pas être supprimé depuis cette page.");
+  // Cette route teste un mot de passe : limite stricte pour qu'une session volée ne serve pas à le deviner.
+  if (!(await rateLimit(`account-delete:${user.id}`, 5, 600))) return reply(429, "Trop d'essais. Patientez dix minutes.");
 
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success || parsed.data.confirm.trim() !== DELETE_PHRASE) return reply(400, `Tapez « ${DELETE_PHRASE} » pour confirmer.`);

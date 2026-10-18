@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/payments/admin";
 import { decideBody, decisionError } from "@/lib/validation";
+import { ipOf, rateLimit, tooMany } from "@/lib/rateLimit";
 import { loadRequest, recordDecision } from "@/lib/validationServer";
 
 export const runtime = "nodejs";
@@ -11,6 +12,7 @@ const headers = { "Cache-Control": "no-store" };
  * (même réponse qu'un lien expiré) et ne peut agir que sur les publications de la demande.
  */
 export async function POST(request: Request) {
+  if (!(await rateLimit(`decide:${ipOf(request.headers)}`, 120, 600))) return tooMany();
   const parsed = decideBody.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ ok: false, error: "Demande invalide." }, { status: 400, headers });
   const problem = decisionError(parsed.data);

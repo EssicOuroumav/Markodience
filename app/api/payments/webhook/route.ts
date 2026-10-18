@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { confirmPayment } from "@/lib/payments/confirm";
+import { ipOf, rateLimit } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -8,6 +9,8 @@ export const runtime = "nodejs";
  * puis confirmPayment() vérifie auprès du prestataire (statut + montant) avant d'activer quoi que ce soit.
  */
 export async function POST(request: Request) {
+  // Plafond large : le prestataire envoie peu de notifications ; il protège la base contre une inondation, sans gêner les nouvelles tentatives légitimes.
+  if (!(await rateLimit(`webhook:${ipOf(request.headers)}`, 300, 600))) return new Response("RATE", { status: 429 });
   const raw = await request.text();
   let token: string | undefined;
   const ct = request.headers.get("content-type") ?? "";

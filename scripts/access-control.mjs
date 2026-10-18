@@ -110,6 +110,12 @@ try {
   for (const [m, p] of [["POST", "/api/generate"], ["POST", "/api/checkout"], ["POST", "/api/admin/action"], ["POST", "/api/account/delete"], ["GET", "/api/account/export"], ["POST", "/api/editorial/validation"]]) {
     const r = await web(null, p, { method: m, headers: J, body: m === "POST" ? "{}" : undefined }); check(`${m} ${p} sans session : 401`, r.status === 401, `${r.status}`);
   }
+  { // Limitation de débit : une rafale de décisions avec de faux liens finit par recevoir 429 (jamais d'information sur le lien)
+    const ip = `203.0.113.${Math.floor(Math.random() * 200) + 1}`;
+    const codes = []; for (let i = 0; i < 130; i++) codes.push((await web(null, "/api/validation/decide", { method: "POST", headers: { ...J, "x-forwarded-for": ip }, body: JSON.stringify({ token: "A".repeat(43), post_id: crypto.randomUUID(), decision: "approuve", comment: "" }) })).status);
+    check("rafale sur /api/validation/decide : 404 puis 429 (limiteur actif)", codes.slice(0, 5).every((c) => c === 404) && codes.includes(429), JSON.stringify([...new Set(codes)]));
+    check("une autre adresse n'est pas touchée par la limite de la première", (await web(null, "/api/validation/decide", { method: "POST", headers: { ...J, "x-forwarded-for": "198.51.100.77" }, body: JSON.stringify({ token: "A".repeat(43), post_id: crypto.randomUUID(), decision: "approuve", comment: "" }) })).status === 404);
+    const h = await web(null, "/api/health"); check("/api/health : réponse mise en cache par le réseau (s-maxage)", /s-maxage=\d+/.test(h.headers.get("cache-control") ?? ""), h.headers.get("cache-control") ?? "aucun en-tête"); }
   { const r = await web(null, "/api/cron/payments"); check("GET /api/cron/payments sans secret : 401 ou 503 (jamais 200)", r.status === 401 || r.status === 503, `${r.status}`);
     const r2 = await web(null, "/api/cron/payments", { headers: { Authorization: "Bearer mauvais-secret" } }); check("GET /api/cron/payments avec un mauvais secret : 401 ou 503", r2.status === 401 || r2.status === 503, `${r2.status}`);
     const h = await web(null, "/api/health"); const hb = await h.text(); check("GET /api/health sans session : 200, ne dit que « ok »", h.status === 200 && JSON.parse(hb).ok === true && Object.keys(JSON.parse(hb)).length === 1, `${h.status} ${hb.slice(0, 80)}`); }

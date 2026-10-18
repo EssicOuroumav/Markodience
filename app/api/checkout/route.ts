@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/payments/admin";
 import { appUrl, getProvider } from "@/lib/payments";
 import { PLANS, normalizeSeats, priceFor } from "@/lib/plans";
+import { rateLimit, tooMany } from "@/lib/rateLimit";
 
 const body = z.object({ plan: z.enum(["pro", "agence"]), seats: z.number().int().optional() });
 
@@ -13,6 +14,7 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return fail(401, "Connexion requise.");
+  if (!(await rateLimit(`checkout:${user.id}`, 10, 600))) return tooMany();
 
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return fail(400, "Requête invalide.");

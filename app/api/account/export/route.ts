@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { rateLimit, tooMany } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -12,6 +13,7 @@ export async function GET() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ ok: false, error: "Connexion requise." }, { status: 401 });
+  if (!(await rateLimit(`account-export:${user.id}`, 5, 600))) return tooMany();
 
   const { data: brands } = await supabase.from("brand_profiles").select("*").order("created_at");
   const ids = (brands ?? []).map((b) => b.id);
