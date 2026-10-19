@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { briefSchema, type Brief } from "./brief";
 import { extractPrompt, extractStage, toBriefDraft } from "./extract";
+import { rateLimit } from "../rateLimit";
 import { mockExtract } from "./mock";
 import { MAX_STAGE_RUNS, buildSteps, completedStages, draftNetworks, planToRows, type PlanStage, type StoredDraft } from "./store";
 import { identityRun, kpiRun, networkRun, organicRun, pillarsRun, reviewRun, rulesRun, themesRun, weeksOf, type Draft, type Gen } from "./stages";
@@ -74,6 +75,9 @@ export async function handlePlan(supabase: SupabaseClient, req: PlanRequest, gen
   const brief = draft.brief;
   const key = req.stage === "network" ? `network:${req.network ?? ""}` : req.stage;
   if (req.stage !== "apply" && (draft.stage_runs[key] ?? 0) >= MAX_STAGE_RUNS) return fail(409, "Cette étape a déjà été relancée deux fois pour ce plan. Recommencez un nouveau plan pour la refaire.", "stage_limit");
+  // Le compteur ci-dessus n'avance qu'une fois l'étape terminée : des demandes simultanées passent toutes le contrôle avant qu'il bouge (12 demandes = 12 générations,
+  // mesuré par `handler.race.test.ts`). Ce plafond partagé et atomique, par plan et par étape, borne le coût ; il est large (3 fois le plafond) pour ne pas gêner les nouveaux essais après un échec.
+  if (req.stage !== "apply" && !(await rateLimit(`plan-stage:${brandId}:${draft.started_at}:${key}`, MAX_STAGE_RUNS * 3, 86_400))) return fail(429, "Cette étape a été lancée trop de fois pour ce plan. Recommencez un nouveau plan pour la refaire.", "rate_limited");
 
   const done = async (patch: Partial<StoredDraft>, resetFor?: string): Promise<HandlerResult> => {
     const next: StoredDraft = { ...draft, ...patch, stage_runs: { ...draft.stage_runs, [key]: (draft.stage_runs[key] ?? 0) + 1 } };
