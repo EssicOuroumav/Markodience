@@ -4,7 +4,7 @@ import { AlertTriangle, ArrowRight, Check, Loader2, Plus, Sparkles, X } from "lu
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { callGenerate } from "@/lib/api";
-import { briefProblems, KIND_LABEL, KINDS, type Brief } from "@/lib/plan/brief";
+import { briefIssues, briefProblems, KIND_LABEL, KINDS, type Brief } from "@/lib/plan/brief";
 import { MAX_DESCRIPTION, type Extract } from "@/lib/plan/extract";
 import { buildSteps } from "@/lib/plan/store";
 import { notifyProgress } from "@/lib/progressEvents";
@@ -108,6 +108,8 @@ export default function PlanBuilder({ brandId, brandName, sector = "", brandStat
     if (hasContent && !window.confirm("Le plan va remplacer vos piliers et vos lignes éditoriales (et les publications prévues non rédigées). Vos publications rédigées, vos audits et vos rapports sont conservés. Continuer ?")) return;
     setBusy(true);
     const payload = { ...form, audiences: form.audiences.filter((a) => a.name.trim()), networks: form.networks.filter((n) => n.name.trim()), activities: form.activities.filter((a) => a.name.trim()) };
+    const issues = briefIssues(payload);
+    if (issues.length) { setBusy(false); return setError(`À corriger avant de construire le plan : ${issues.join(" · ")}.`); }
     const res = await callGenerate({ type: "plan_stage", brand_profile_id: brandId, stage: "start", brief: payload });
     setBusy(false);
     if (!res.ok) return setError(res.error);
