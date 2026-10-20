@@ -1,4 +1,3 @@
-import JourneyBar from "@/components/JourneyBar";
 import Image from "next/image";
 import Link from "next/link";
 import ProgressRefresher from "@/components/ProgressRefresher";
@@ -7,7 +6,6 @@ import Sidebar from "@/components/Sidebar";
 import SubscriptionBanner from "@/components/SubscriptionBanner";
 import UpgradeToast from "@/components/UpgradeToast";
 import { getDashboardContext } from "@/lib/brand";
-import { journeySteps, journeyVisible, lockedStepCount } from "@/lib/journey";
 import { PLANS, canCreateProfile } from "@/lib/plans";
 import { getBrandProgress } from "@/lib/progress";
 import { brandTheme } from "@/lib/theme";
@@ -17,10 +15,7 @@ export const metadata = { title: "Mon espace", robots: { index: false, follow: f
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { profiles, active, plan, owner, user, periodEnd } = await getDashboardContext();
   const progress = await getBrandProgress();
-  // Parcours guidé : étapes du palier, masqué une fois la marque terminée ou fermé par l'utilisateur (mémorisé dans son profil).
-  const steps = journeySteps(plan, { ...progress.done, kpi: progress.kpiEver });
   const canAdd = owner || canCreateProfile(plan, profiles.length);
-  const dismissed = Array.isArray(user.user_metadata?.journey_dismissed) ? (user.user_metadata.journey_dismissed as string[]) : [];
   return (
     <div className="studio relative min-h-screen bg-canvas" style={brandTheme(active.primary_color) as React.CSSProperties}>
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(60%_100%_at_70%_0%,rgb(var(--rgb-accent)/0.08),transparent)]" />
@@ -36,7 +31,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <UpgradeToast />
           <ProgressRefresher />
           {children}
-          {journeyVisible(steps, dismissed, active.id) && <JourneyBar steps={steps} brandId={active.id} dismissed={dismissed} lockedCount={lockedStepCount(plan)} />}
         </main>
       </div>
     </div>

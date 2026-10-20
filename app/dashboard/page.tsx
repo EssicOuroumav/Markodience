@@ -1,17 +1,15 @@
 import Link from "next/link";
 import { ArrowRight, Check, ChevronRight, ExternalLink, Globe, Lock, Pencil, Sparkles } from "lucide-react";
 import BrandLogo from "@/components/BrandLogo";
-import JourneyRestore from "@/components/JourneyRestore";
 import ScoreRing from "@/components/ScoreRing";
 import { getDashboardContext } from "@/lib/brand";
 import { hasBrandInfo } from "@/lib/brandInfo";
 import { dateLabel, monthLabel } from "@/lib/kpi";
 import { getOverview } from "@/lib/overview";
-import { journeyComplete, journeySteps } from "@/lib/journey";
 import { hasFeature } from "@/lib/plans";
 import { getBrandProgress } from "@/lib/progress";
 import { POST_STATUS_LABEL, type PostStatus } from "@/lib/posts";
-import { TABS, VISIBLE_TABS, TAB_GROUP, TAB_GROUPS, type TabSlug } from "@/lib/tabs";
+import { TABS, ESSENTIAL_TABS, MORE_TABS, type TabSlug } from "@/lib/tabs";
 import { TAB_ICONS } from "@/lib/tabIcons";
 
 const plural = (n: number, one: string, many: string) => `${n} ${n > 1 ? many : one}`;
@@ -20,8 +18,6 @@ export default async function DashboardHome() {
   const { active, plan, user, owner } = await getDashboardContext();
   const [pr, ov] = await Promise.all([getBrandProgress(), getOverview()]);
   const { percent, next, auditScore, entries, weeksDone, channels, guides, kpiState, kpiDeadline, month } = pr;
-  const dismissed = Array.isArray(user.user_metadata?.journey_dismissed) ? (user.user_metadata.journey_dismissed as string[]) : [];
-  const guideHidden = dismissed.includes(active.id) && !journeyComplete(journeySteps(plan, { ...pr.done, kpi: pr.kpiEver }));
   const nextTab = next ? TABS.find((t) => t.slug === next.slug) : null;
   const firstName = ((user.user_metadata?.full_name as string | undefined) ?? "").split(" ")[0];
   const info = ov.info;
@@ -55,7 +51,6 @@ export default async function DashboardHome() {
           <p className="eyebrow">Vue d’ensemble</p>
           <h1 className="mt-1 text-[32px] leading-tight tracking-[-0.03em]">{firstName ? `Bonjour ${firstName},` : "Bonjour,"} <span className="text-ink-secondary">voici {active.name}.</span></h1>
         </div>
-        {guideHidden && <JourneyRestore brandId={active.id} dismissed={dismissed} />}
       </header>
 
       <section className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
@@ -105,33 +100,42 @@ export default async function DashboardHome() {
         </article>
       </section>
 
-      {TAB_GROUPS.map((g) => (
-        <section key={g.id}>
-          <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.12em] text-ink-secondary">{g.label}</h2>
-          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {VISIBLE_TABS.filter((t) => TAB_GROUP[t.slug] === g.id).map((t) => {
-              const Icon = TAB_ICONS[t.slug];
-              const locked = !hasFeature(plan, t.feature);
-              const done = !!pr.done[t.slug] && !locked;
-              const st = status[t.slug];
-              return (
-                <li key={t.slug}>
-                  <Link href={`/dashboard/${t.slug}`} className="card group flex h-full flex-col">
-                    <div className="flex items-center justify-between">
-                      <span aria-hidden className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-accent"><Icon size={20} strokeWidth={1.8} /></span>
-                      {locked ? <span className="inline-flex items-center gap-1 rounded-pill bg-black/[0.05] px-2 py-0.5 text-[11px] font-semibold uppercase text-ink-secondary"><Lock size={11} />Pro</span> : done ? <span className="flex h-6 w-6 items-center justify-center rounded-full bg-success text-white"><Check size={13} strokeWidth={3.5} /></span> : null}
-                    </div>
-                    <p className="mt-3 text-[13px] font-medium text-ink-secondary">{t.label}</p>
-                    <p className="mt-0.5 text-[19px] font-semibold leading-snug tracking-heading">{locked ? "Palier Pro" : st.headline}</p>
-                    <p className="mt-1 line-clamp-2 text-[14px] text-ink-secondary">{locked ? t.description : st.sub}</p>
-                    <span className="mt-auto pt-3 text-[14px] font-medium text-accent transition group-hover:translate-x-0.5">Ouvrir →</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      ))}
+      {(() => {
+        const showPlan = !pr.done.editorial;
+        const plan0 = MORE_TABS.find((t) => t.slug === "plan");
+        const main = [...(showPlan && plan0 ? [plan0] : []), ...ESSENTIAL_TABS];
+        const more = MORE_TABS.filter((t) => !(showPlan && t.slug === "plan"));
+        const card = (t: (typeof main)[number]) => {
+          const Icon = TAB_ICONS[t.slug];
+          const locked = !hasFeature(plan, t.feature);
+          const done = !!pr.done[t.slug] && !locked;
+          const st = status[t.slug];
+          return (
+            <li key={t.slug}>
+              <Link href={`/dashboard/${t.slug}`} className="card group flex h-full flex-col">
+                <div className="flex items-center justify-between">
+                  <span aria-hidden className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-accent"><Icon size={20} strokeWidth={1.8} /></span>
+                  {locked ? <span className="inline-flex items-center gap-1 rounded-pill bg-black/[0.05] px-2 py-0.5 text-[11px] font-semibold uppercase text-ink-secondary"><Lock size={11} />Pro</span> : done ? <span aria-label="Terminé" className="flex h-5 w-5 items-center justify-center rounded-full bg-success text-white"><Check size={12} strokeWidth={3.5} /></span> : null}
+                </div>
+                <p className="mt-3 text-[13px] font-medium text-ink-secondary">{t.label}</p>
+                <p className="mt-0.5 text-[19px] font-semibold leading-snug tracking-heading">{locked ? "Palier Pro" : st.headline}</p>
+                <p className="mt-1 line-clamp-1 text-[14px] text-ink-secondary">{locked ? t.description : st.sub}</p>
+              </Link>
+            </li>
+          );
+        };
+        return (
+          <>
+            <section>
+              <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{main.map(card)}</ul>
+            </section>
+            <details className="group">
+              <summary className="cursor-pointer list-none text-[14px] font-medium text-ink-secondary hover:text-ink">Autres outils ({more.length}) <span aria-hidden className="inline-block transition group-open:rotate-90">›</span></summary>
+              <ul className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{more.map(card)}</ul>
+            </details>
+          </>
+        );
+      })()}
 
       <section className="card-flat">
         <div className="flex flex-wrap items-center justify-between gap-3">

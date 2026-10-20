@@ -23,6 +23,13 @@ export const TABS = [
 /** Onglets affichés dans la navigation et la vue d'ensemble (la tonalité vit désormais dans Identité de marque). */
 export const VISIBLE_TABS = TABS.filter((t) => !("hidden" in t));
 
+/**
+ * Menu minimal : ce qu'un community manager utilise chaque jour. Le reste n'est pas supprimé : il est rangé sous « Plus »
+ * (toutes les pages et leurs données restent, le plan et l'assistant s'en servent). « Plan stratégique » n'est mis en avant que
+ * tant que la ligne éditoriale n'existe pas : c'est l'assistant de démarrage.
+ */
+export const ESSENTIAL_SLUGS = ["editorial", "posts", "audit", "assistant"] as const;
+
 export type TabSlug = (typeof TABS)[number]["slug"];
 
 /** Regroupement de la navigation : ce qu'on définit, ce qu'on produit, ce qu'on mesure. */
@@ -52,3 +59,9 @@ export const TAB_GROUP: Record<TabSlug, TabGroupId> = {
   assistant: "analyse",
   kpi: "analyse",
 };
+
+const isEssential = (slug: string) => (ESSENTIAL_SLUGS as readonly string[]).includes(slug);
+/** Entrées toujours visibles du menu, dans l'ordre voulu. */
+export const ESSENTIAL_TABS = ESSENTIAL_SLUGS.flatMap((slug) => VISIBLE_TABS.filter((t) => t.slug === slug));
+/** Le reste, rangé sous « Plus ». */
+export const MORE_TABS = VISIBLE_TABS.filter((t) => !isEssential(t.slug));

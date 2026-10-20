@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Check, ChevronRight, CreditCard, Crown, Home, Layers, Lock, LogOut, ShieldCheck, UserCog } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, CreditCard, Crown, Home, Layers, Lock, LogOut, ShieldCheck, UserCog } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { hasFeature, PLANS, type PlanId } from "@/lib/plans";
 import Image from "next/image";
-import { VISIBLE_TABS, TAB_GROUP, TAB_GROUPS, type TabSlug } from "@/lib/tabs";
+import { ESSENTIAL_TABS, MORE_TABS, type TabSlug } from "@/lib/tabs";
 import { TAB_ICONS } from "@/lib/tabIcons";
 import UserMenu from "./UserMenu";
 
@@ -59,25 +59,40 @@ export default function Sidebar({ plan, owner, email, progress, brandCount, bran
 
       <nav aria-label="Onglets" className="flex gap-1 overflow-x-auto px-3 py-2 md:flex-1 md:flex-col md:gap-0.5 md:overflow-y-auto md:px-3 md:pb-4 md:pt-0">
         <NavItem href="/dashboard" active={pathname === "/dashboard"} Icon={Home} label="Vue d’ensemble" />
-        {TAB_GROUPS.map((g) => (
-          <div key={g.id} className="contents">
-            <p className={`${SECTION} hidden md:block`}>{g.label}</p>
-            {VISIBLE_TABS.filter((t) => TAB_GROUP[t.slug] === g.id).map((t) => {
-              const Icon = TAB_ICONS[t.slug];
-              const locked = !hasFeature(plan, t.feature);
-              const done = !!progress.done[t.slug] && !locked;
-              return (
-                <NavItem key={t.slug} href={`/dashboard/${t.slug}`} active={pathname === `/dashboard/${t.slug}`} Icon={Icon} label={t.label}>
-                  {locked ? (
-                    <span className="flex shrink-0 items-center gap-1 rounded-pill bg-black/[0.05] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-secondary" title="Réservé aux paliers payants"><Lock size={10} aria-label="Verrouillé" />Pro</span>
-                  ) : done ? (
-                    <span aria-label="Terminé" title="Terminé" className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-success text-white"><Check size={11} strokeWidth={3.5} /></span>
-                  ) : null}
-                </NavItem>
-              );
-            })}
-          </div>
-        ))}
+        {(() => {
+          const showPlan = !progress.done.editorial;
+          const plan0 = MORE_TABS.find((t) => t.slug === "plan");
+          const main = [...(showPlan && plan0 ? [plan0] : []), ...ESSENTIAL_TABS];
+          const more = MORE_TABS.filter((t) => !(showPlan && t.slug === "plan"));
+          const item = (t: (typeof main)[number]) => {
+            const Icon = TAB_ICONS[t.slug];
+            const locked = !hasFeature(plan, t.feature);
+            const done = !!progress.done[t.slug] && !locked;
+            return (
+              <NavItem key={t.slug} href={`/dashboard/${t.slug}`} active={pathname === `/dashboard/${t.slug}`} Icon={Icon} label={t.label}>
+                {locked ? (
+                  <span className="flex shrink-0 items-center gap-1 rounded-pill bg-black/[0.05] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-secondary" title="Réservé aux paliers payants"><Lock size={10} aria-label="Verrouillé" />Pro</span>
+                ) : done ? (
+                  <span aria-label="Terminé" title="Terminé" className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-success text-white"><Check size={11} strokeWidth={3.5} /></span>
+                ) : null}
+              </NavItem>
+            );
+          };
+          const moreActive = more.some((t) => pathname === `/dashboard/${t.slug}`);
+          return (
+            <>
+              <p className={`${SECTION} hidden md:block`}>Mon travail</p>
+              {main.map(item)}
+              <details className="group/more flex shrink-0 gap-1 md:block" open={moreActive}>
+                <summary className="flex cursor-pointer list-none items-center gap-3 rounded-2xl px-2 py-1 text-[15px] font-medium text-ink-secondary transition hover:text-ink md:px-2.5">
+                  <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[11px] bg-black/[0.04]"><ChevronDown size={18} className="transition group-open/more:rotate-180" /></span>
+                  <span className="flex-1">Plus</span>
+                </summary>
+                <div className="flex gap-1 md:mt-0.5 md:flex-col md:gap-0.5">{more.map(item)}</div>
+              </details>
+            </>
+          );
+        })()}
 
         <p className={`${SECTION} hidden !pt-3 md:block`}>Gestion</p>
         <NavItem href="/dashboard/brands" active={pathname.startsWith("/dashboard/brands")} Icon={Layers} label="Mes marques">

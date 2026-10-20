@@ -4,13 +4,14 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { callGenerate } from "@/lib/api";
+import { addDays } from "@/lib/posts";
 import { periodRange, type EntryStatus, type PeriodMonths } from "@/lib/editorial";
 import GenerateError from "./GenerateError";
 import SaveIndicator, { type SaveState } from "./SaveIndicator";
 import PageHeader from "./PageHeader";
 import EmptyState from "./EmptyState";
 import { NetworkInfo } from "./StrategyBlocks";
-import LineView, { type LineRow } from "./editorial/LineView";
+import LineView, { type LineRow, type RowPatch } from "./editorial/LineView";
 import type { NetworkStage } from "@/lib/plan/schemas";
 
 export type Entry = {
@@ -84,7 +85,36 @@ export default function EditorialTab({
   const rowsByEntry = new Map<string, LineRow[]>();
   for (const r of rows) if (r.editorial_entry_id) rowsByEntry.set(r.editorial_entry_id, [...(rowsByEntry.get(r.editorial_entry_id) ?? []), r]);
 
-  async function patchRow(id: string, patch: { idea?: string; hook?: string; format?: string }) {
+  async function addRow(entryId: string, weekStart: string) {
+    if (!active) return;
+    setError(null);
+    const used = new Set((rowsByEntry.get(entryId) ?? []).map((r) => r.scheduled_date));
+    const date = Array.from({ length: 7 }, (_, k) => addDays(weekStart, k)).find((d) => !used.has(d)) ?? weekStart;
+    setSave("saving");
+    const pillar = Object.keys(pillarRoles)[0] ?? null;
+    const { data, error: err } = await supabase
+      .from("posts")
+      .insert({ brand_profile_id: brandId, channel: active.channel, scheduled_date: date, idea: "", hook: "", caption: "", pillar, format: null, status: "brouillon", editorial_entry_id: entryId })
+      .select("id, editorial_entry_id, scheduled_date, idea, hook, pillar, format, caption, status")
+      .single();
+    if (err || !data) {
+      setSave("error");
+      return setError(err?.code === "42501" ? "Ajouter une publication demande un palier payant, ou la limite de publications est atteinte." : "La publication n'a pas pu être ajoutée.");
+    }
+    setRows((rs) => [...rs, data as LineRow]);
+    setSave("saved");
+  }
+
+  async function deleteRow(id: string) {
+    if (!window.confirm("Supprimer cette publication ?")) return;
+    setSave("saving");
+    const { error: err } = await supabase.from("posts").delete().eq("id", id);
+    if (err) return setSave("error");
+    setRows((rs) => rs.filter((r) => r.id !== id));
+    setSave("saved");
+  }
+
+  async function patchRow(id: string, patch: RowPatch) {
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
     setSave("saving");
     const { error: err } = await supabase.from("posts").update(patch).eq("id", id);
@@ -248,7 +278,7 @@ export default function EditorialTab({
 
       {active && lineEntries.length > 0 && (
         <LineView channel={active.channel ?? ""} periodStart={active.period_start ?? new Date().toISOString().slice(0, 10)} entries={lineEntries} rowsByEntry={rowsByEntry} pillarRoles={pillarRoles}
-          onEntry={(id, p) => patchEntry(id, p)} onRow={patchRow} onRegenerate={regenerateWeek} busyId={busy === "line" ? null : busy} />
+          onEntry={(id, p) => patchEntry(id, p)} onRow={patchRow} onAddRow={addRow} onDeleteRow={deleteRow} onRegenerate={regenerateWeek} busyId={busy === "line" ? null : busy} />
       )}
     </section>
   );
