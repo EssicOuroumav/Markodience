@@ -27,7 +27,8 @@ export default async function PlanPage() {
       brandStatus={active.status ?? ""}
       hasContent={(pillars ?? 0) > 0 || (lines ?? 0) > 0}
       savedBrief={built ? null : ((strategy?.brief as Brief | null) ?? null)}
-      draftSteps={done.length > 1 ? done : []}
+      draftSteps={done.filter((k) => k !== "start")}
+      inProgress={!built && !!draft}
       review={review}
     />
   );

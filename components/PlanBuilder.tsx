@@ -7,7 +7,7 @@ import { callGenerate } from "@/lib/api";
 import { briefIssues, briefProblems, KIND_LABEL, KINDS, type Brief } from "@/lib/plan/brief";
 import { MAX_DESCRIPTION, type Extract } from "@/lib/plan/extract";
 import { buildSteps } from "@/lib/plan/store";
-import { notifyProgress } from "@/lib/progressEvents";
+import { notifyProgress, pauseProgress } from "@/lib/progressEvents";
 import PageHeader from "./PageHeader";
 import PlanReview from "./PlanReview";
 import type { ReviewData } from "./PlanReview";
@@ -44,8 +44,8 @@ function Field({ label, hint, gap, children }: { label: string; hint?: string; g
   );
 }
 
-export default function PlanBuilder({ brandId, brandName, sector = "", brandStatus = "", hasContent, savedBrief, draftSteps, review }: {
-  brandId: string; brandName: string; sector?: string; brandStatus?: string; hasContent: boolean; savedBrief: Brief | null; draftSteps: string[]; review: ReviewData | null;
+export default function PlanBuilder({ brandId, brandName, sector = "", brandStatus = "", hasContent, savedBrief, draftSteps, inProgress = false, review }: {
+  brandId: string; brandName: string; sector?: string; brandStatus?: string; hasContent: boolean; savedBrief: Brief | null; draftSteps: string[]; inProgress?: boolean; review: ReviewData | null;
 }) {
   const router = useRouter();
   const [exampleKind, setExampleKind] = useState(() => guessKind(sector, brandStatus));
@@ -78,6 +78,15 @@ export default function PlanBuilder({ brandId, brandName, sector = "", brandStat
   }
 
   async function runSteps(b: Form, from?: string) {
+    pauseProgress(true);
+    try {
+      await runStepsInner(b, from);
+    } finally {
+      pauseProgress(false);
+    }
+  }
+
+  async function runStepsInner(b: Form, from?: string) {
     setStepError(null);
     const list = buildSteps(b as Brief) as Step[];
     setSteps(list);
@@ -110,9 +119,10 @@ export default function PlanBuilder({ brandId, brandName, sector = "", brandStat
     const payload = { ...form, audiences: form.audiences.filter((a) => a.name.trim()), networks: form.networks.filter((n) => n.name.trim()), activities: form.activities.filter((a) => a.name.trim()) };
     const issues = briefIssues(payload);
     if (issues.length) { setBusy(false); return setError(`À corriger avant de construire le plan : ${issues.join(" · ")}.`); }
+    pauseProgress(true); // le démarrage aussi : sa fin déclenchait une rafale de rechargements au moment où la première étape commence
     const res = await callGenerate({ type: "plan_stage", brand_profile_id: brandId, stage: "start", brief: payload });
     setBusy(false);
-    if (!res.ok) return setError(res.error);
+    if (!res.ok) { pauseProgress(false); return setError(res.error); }
     setPhase("build");
     setStatus({});
     await runSteps(form);
@@ -281,10 +291,10 @@ export default function PlanBuilder({ brandId, brandName, sector = "", brandStat
   return (
     <section className="rise">
       <PageHeader tab="plan" />
-      {draftSteps.length > 0 && savedBrief && (
+      {(inProgress || draftSteps.length > 0) && savedBrief && (
         <div className="card-flat mb-6 border border-accent/20 bg-accent-soft/40">
           <h2 className="text-[18px] font-semibold">Une construction est en cours</h2>
-          <p className="mt-1 text-[15px] text-ink-secondary">{draftSteps.length} étape(s) déjà faite(s). Vous pouvez reprendre là où vous vous étiez arrêté.</p>
+          <p className="mt-1 text-[15px] text-ink-secondary">{draftSteps.filter((k) => k !== "start").length} étape(s) déjà faite(s). Si la page s&apos;est rechargée pendant la construction, vous pouvez reprendre là où vous vous étiez arrêté : rien n&apos;est perdu et aucun crédit de préparation n&apos;est redépensé.</p>
           <button type="button" className="btn-primary mt-3" onClick={() => { setForm(savedBrief); setPhase("build"); void runSteps(savedBrief, buildSteps(savedBrief).find((s) => !draftSteps.includes(s.key))?.key); }}>Reprendre la construction</button>
         </div>
       )}
